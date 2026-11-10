@@ -482,6 +482,9 @@ html.cb-rainbow .cardb,html.cb-rainbow .mb{background:repeating-linear-gradient(
 details.more{border:2px dashed var(--d);padding:0 8px}details.more>summary{font-family:var(--px);font-size:8px;padding:10px 0;cursor:pointer;color:var(--a)}details.more[open]{padding-bottom:8px}
 .rlact{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.rlbar{margin:0}
 .cpbtns{display:grid;grid-template-columns:1fr 2fr;gap:6px}.cpbtns .btn{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.qchip{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;padding:6px 10px;background:var(--e);border:2px solid var(--l);color:var(--l);font-family:var(--px);font-size:8px;text-align:left}
+.qchip.ready{border-color:var(--y);color:var(--y);animation:collpulse 1.4s steps(2) infinite}.qchip.claimed{border-color:var(--d);color:var(--s)}
+.qcard{margin-top:6px;display:flex;flex-direction:column;gap:6px;background:var(--n);border:2px solid var(--l);padding:8px}.qcard .row{margin:0}.qcard p{margin:0}
 #toasts{position:fixed;left:0;right:0;top:0;z-index:20;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:calc(100px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .toast{background:var(--n);border:3px solid var(--y);color:var(--w);padding:8px 12px;font-size:19px;max-width:460px;width:100%;transition:opacity .3s}
 .toast b{color:var(--y)}
@@ -3185,6 +3188,10 @@ function boosts(){
   else s={k:'sum',cls:'sum',short:`WINS +${P(sum)}${mult!==1?` · NEXT x${+mult.toFixed(2)}`:''}`,long:`Your win bonuses${g?' in '+GAMES[g].n:''} add up to +${P(sum)} profit${mult!==1?`, and your next win is multiplied by ${+mult.toFixed(2)}`:''}. Tap any badge for details.`};
   return[s].concat(out);
 }
+function questChip(){const q=S.quest;if(!q||S.louDay!==S.day||S.over)return'';const p=Math.min(q.prog,q.goal),pt=q.money?`${fmt(p)}/${fmt(q.goal)}`:`${Math.floor(p)}/${q.goal}`;
+  const lab=q.claimed?'QUEST ✓':q.done?'QUEST DONE · SEE LOU':'QUEST '+pt;
+  const card=UI.qview?`<div class="qcard"><div class="row ${q.done?'got':''}"><h3>${q.text}</h3><p>${q.claimed?'Reward collected. Lou has a new one tomorrow.':q.done?'Done! Collect your reward from Lou in the park.':'Progress: '+pt}</p><div class="prog"><i style="width:${Math.min(100,p/q.goal*100)}%"></i></div></div><p class="muted">Reward: <b style="color:var(--y)">${q.reward.text}</b></p></div>`:'';
+  return`<button class="qchip ${q.done&&!q.claimed?'ready':''} ${q.claimed?'claimed':''}" data-a="qview" aria-expanded="${!!UI.qview}">${lab}<span>${UI.qview?'▲':'▼'}</span></button>${card}`}
 function boostBar(){const b=boosts();if(!b.length)return'';return`<div class="boosts" role="list" aria-label="Active bonuses">${b.map(x=>`<button class="boost ${x.cls}" role="listitem" data-a="boost" data-v="${x.k}">${x.short}</button>`).join('')}</div>`}
 function hud(){
   const nd=S.debts.slice().sort((a,b)=>a.due-b.due)[0],left=nd.due-S.day;
@@ -3194,7 +3201,7 @@ function hud(){
     <div class="hs"><span>ENERGY</span><b>${S.energy}/${maxEnergy()}</b></div>
     <div class="hs"><span>CASH</span><b class="cash">${fmt(S.cash)}</b></div>
     <button class="ib" data-a="mute" aria-label="Toggle sound">${M.mute?'OFF':'SND'}</button><button class="ib" data-a="settings" aria-label="Settings">SET</button></div>
-    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${boostBar()}${brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<button class="btn red wide collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button>`):''}${hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<button class="btn red wide collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button>`):''}</header>`;
+    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<button class="btn red wide collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button>`):''}${hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<button class="btn red wide collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button>`):''}</header>`;
 }
 const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fill data-anim width="160" height="90" aria-label="${k} scene"></canvas>`;
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
@@ -3702,6 +3709,7 @@ function act(a,v,el){
     case 'introback':UI.introP=0;render();introStart();return;
     case 'introskip':UI.scene='world';UI.room='home';INTRO=null;save();render();toast('Home sweet home. Walk over to the computer to check your debts.');return;
     case 'cppress':cpPress(v);return;
+    case 'qview':UI.qview=!UI.qview;break;
     case 'tierinfo':toast(`Every win at ${GAMES[UI.game].n} counts toward its tier, across all your runs: ${TIERS.map((t,i)=>t[0]+' '+tierNeed(UI.game,i)).join(', ')}. Up to ${MAST_DAY} wins per game count each day (${(S.today.mw&&S.today.mw[UI.game])||0} so far today).`);return;
     case 'pkstake':P().stake=+v;{const bb=STAKES[+v][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}break;
     case 'pkread':{const p=P().seats[+v];if(p&&!p.out){const st=PK_STY[p.sk||'pro'];toast(`<b>${p.n}</b> · ${st.n}: ${st.d}`)}return}
