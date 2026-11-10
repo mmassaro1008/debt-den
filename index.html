@@ -492,6 +492,7 @@ body{-webkit-text-size-adjust:100%}
 .bitem{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:left;background:var(--e);border:2px solid var(--d);padding:7px 8px;color:var(--w)}
 .bitem b{font-family:var(--px);font-size:8px}.bitem small{font-size:16px;line-height:1.15;color:var(--w)}.bitem.on{border-color:var(--y)}
 .bitem.win b{color:var(--l)}.bitem.safe b{color:var(--a)}.bitem.next b{color:var(--y)}.bitem.bad b{color:var(--r)}.bitem.off b{color:var(--s)}.bitem.info b{color:var(--c)}.bitem.later b{color:var(--o)}
+.collrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:6px}.collrow .btn{margin:0}.collpc{border-color:var(--r)}
 #toasts{position:fixed;left:0;right:0;top:0;z-index:20;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:calc(100px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 .toast{background:var(--n);border:3px solid var(--y);color:var(--w);padding:8px 12px;font-size:19px;max-width:460px;width:100%;transition:opacity .3s}
 .toast b{color:var(--y)}
@@ -599,7 +600,7 @@ function trackFor(){if(UI.scene==='settings')return MUS.want;if(UI.scene==='over
 function wakeAudio(){const ac=audio();if(!ac)return;if(ac.state!=='running')ac.resume().then(startMusic).catch(()=>{});else startMusic()}
 window.addEventListener('pointerdown',wakeAudio,{passive:true});window.addEventListener('keydown',wakeAudio);
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend().catch(()=>{});else AC.resume().catch(()=>{})});
-const SET_DEF={master:.8,music:.5,sfx:.8,musicOn:true,sfxOn:true,shake:true,flash:true,banners:true,haptics:true,speed:'normal',text:'normal',confirmBig:true};
+const SET_DEF={master:.8,music:.5,sfx:.8,musicOn:true,sfxOn:true,shake:true,flash:true,banners:true,haptics:true,speed:'normal',text:'normal',confirmBig:true,brokeRibbon:true};
 const SP=()=>M.set.speed==='fast'?.5:1;
 function applySettings(){if(typeof applyCosmetics==='function')applyCosmetics();RM=RM0||M.set.speed==='instant';document.documentElement.classList.toggle('lt',M.set.text==='large');applyVolumes()}
 
@@ -1658,16 +1659,20 @@ function tableMin(g){if(!S||g==='holdem'||!GAMES[g])return 0;const r=gReq(g);con
 const curMin=()=>UI.scene==='game'&&UI.game&&UI.game!=='holdem'?tableMin(UI.game):0;
 /* ================= collectors ================= */
 function portfolio(){let v=0;for(const k in S.stocks){const st=S.stocks[k];v+=st.own*st.p+shortVal(st)}return v}
-function hopeless(){return brokeBase()&&!loanAvail()}
-function brokeChoice(){return brokeBase()&&loanAvail()}
+function hopeless(strict=true){return brokeBase(strict)&&!loanAvail()}
+function brokeChoice(strict=true){return brokeBase(strict)&&loanAvail()}
+const inPlay=()=>{try{return busy()||(S.g.pk&&S.g.pk.seated)}catch(e){return false}};
+const ribbonOn=()=>M.set.brokeRibbon!==false&&!S.hideBroke;
 const loanAvail=()=>shopOpen('loans')&&!S.debts.some(d=>d.loan)&&!mod('trader')&&loanLimit()>=5;
-function brokeBase(){
+function brokeBase(strict=true){
   if(!S||S.over)return false;
+  if(strict&&S.cash>=1)return false;
+  if(inPlay())return false;
   const open=GAME_IDS.filter(g=>gameOpen(g)&&S.paid>=gReq(g)&&g!=='holdem');
   const need=open.length?Math.min(...open.map(g=>tableMin(g)||1)):1;
   if(S.cash>=need)return false;
   if(portfolio()>=1)return false;
-  if(Object.keys(S.trinkets||{}).length)return false;
+  if(shopOpen('pawn')&&Object.keys(S.trinkets||{}).length)return false;
   if(S.heat>=3&&shopOpen('news')&&((S.energy>=ES&&(S.today.work||0)<4)||!S.debts.some(d=>d.due<=S.day&&minRem(d)>0)))return false;
   if(S.quest&&S.quest.done&&!S.quest.claimed)return false;
   if(S.sb&&S.sb.bets&&S.sb.bets.some(b=>b.st==='open'))return false;
@@ -3244,7 +3249,7 @@ function hud(){
     <div class="hs"><span>ENERGY</span><b>${S.energy}/${maxEnergy()}</b></div>
     <div class="hs"><span>CASH</span><b class="cash">${fmt(S.cash)}</b></div>
     <button class="ib" data-a="mute" aria-label="Toggle sound">${M.mute?'OFF':'SND'}</button><button class="ib" data-a="settings" aria-label="Settings">SET</button></div>
-    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<button class="btn red wide collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button>`):''}${hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<button class="btn red wide collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button>`):''}</header>`;
+    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${!ribbonOn()?'':brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<div class="collrow"><button class="btn red collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}${ribbonOn()&&hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<div class="collrow"><button class="btn red collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}</header>`;
 }
 const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fill data-anim width="160" height="90" aria-label="${k} scene"></canvas>`;
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
@@ -3339,7 +3344,10 @@ function pcPanel(){
     body=`<p class="muted">Each paid debt earns a skill point and can open new things around town. A bigger debt shows up right away. Sleep with a debt due today and the collectors come.</p>${list}
     <div class="kv"><span class="muted">Debts paid this run</span><b>${S.paid}</b></div><p class="muted">This run’s casino lineup is shuffled. Open now: ${GAME_IDS.filter(g=>gReq(g)<=S.paid).map(g=>GAMES[g].n).join(', ')}.</p>
     ${nextG?`<p class="muted">Next unlock: <span style="color:var(--y)">${GAMES[nextG].n}</span> at ${gReq(nextG)} debts paid.${!S.martOpen&&S.paid<3?' The Mart’s lease opens up at 3.':''}</p>`:''}
-    ${hopeless()?`<p class="lose">You’re broke and out of options. When you’re ready, face the collectors.</p>`:''}`;
+    ${brokeBase(false)?`<div class="box collpc"><span class="lbl">Out of money</span><p>${loanAvail()?'You can’t cover any table. Borrow from Vinnie, or end the run on your terms.':'You can’t cover any table and nobody will lend to you.'}</p>
+      ${UI.confirm==='collpc'?`<div class="confirm"><p>Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collpcyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:
+      `<div class="g2">${loanAvail()?`<button class="btn green sm" data-a="loan" data-v="${r5(loanLimit()*.5)}">Borrow ${fmt(r5(loanLimit()*.5))}</button>`:'<span></span>'}<button class="btn red sm" data-a="collpc">Face the collectors</button></div>`}
+      ${S.hideBroke||M.set.brokeRibbon===false?`<button class="linkb" data-a="showbroke">Show the reminder ribbon again</button>`:''}</div>`:''}`;
   }else if(UI.tab==='stocks'){
     let val=0;for(const k in S.stocks){const st=S.stocks[k];val+=st.own*st.p+shortVal(st)}
     const idx=Object.keys(TICK).reduce((a,k)=>a+S.stocks[k].p/TICK[k].p,0)/Object.keys(TICK).length;
@@ -3619,7 +3627,8 @@ function vSettings(){
     ${tog('haptics','Vibration','Buzzes on big moments, on phones that support it.')}</div>
   <div class="box"><span class="lbl">Gameplay</span>
     ${opt('speed','Animation speed',[['normal','Normal','full show'],['fast','Fast','half time'],['instant','Instant','no waiting']])}
-    ${tog('confirmBig','Confirm big bets','Ask before you bet half or more of your cash.')}</div>
+    ${tog('confirmBig','Confirm big bets','Ask before you bet half or more of your cash.')}
+    ${tog('brokeRibbon','Broke reminder','Show the red ribbon when you hit $0 with nothing left in play. The same options are always on your computer’s Debts tab.')}</div>
   <div class="box"><span class="lbl">Display</span>
     ${opt('text','Text size',[['normal','Normal','default'],['large','Large','easier to read']])}</div>
   <div class="box"><span class="lbl">Save data</span>
@@ -3717,6 +3726,10 @@ function act(a,v,el){
     case 'facecoll':if(hopeless())UI.confirm='coll';break;
     case 'collyes':if(hopeless())gameOver('faced');return;
     case 'collskip':endCollect();return;
+    case 'hidebroke':S.hideBroke=true;UI.confirm=null;toast('Hidden. It’s still on your computer’s Debts tab.');break;
+    case 'showbroke':S.hideBroke=false;M.set.brokeRibbon=true;break;
+    case 'collpc':if(brokeBase(false))UI.confirm='collpc';break;
+    case 'collpcyes':if(brokeBase(false))gameOver('faced');return;
     case 'vinchoice':if(brokeChoice())UI.confirm='vin';break;
     case 'collyes2':if(brokeChoice())gameOver('faced');return;
     case 'sleep':if(S.debts.some(d=>d.due<=S.day&&!canRoll(d))){UI.confirm='sleep';break}sleep();return;
