@@ -493,8 +493,8 @@ html.cb-rainbow .cardb,html.cb-rainbow .mb{background:repeating-linear-gradient(
 .gtop{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}.gtop .guideb,.gtop .tierb{margin:0;width:100%;text-align:center;padding:8px 4px}
 .btn small{display:block;font-family:var(--vt);font-size:14px;text-transform:none;opacity:.85}
 details.more{border:2px dashed var(--d);padding:0 8px}details.more>summary{font-family:var(--px);font-size:8px;padding:10px 0;cursor:pointer;color:var(--a)}details.more[open]{padding-bottom:8px}
-.rlact{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.rlbar{margin:0}
-.cpbtns{display:grid;grid-template-columns:1fr 2fr;gap:6px}.cpbtns .btn{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.rlact{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.rlact.rl4{grid-template-columns:1fr 1fr 1fr 2fr}.opt{position:relative}.opt .chipm{top:-8px;right:-6px;bottom:auto;z-index:1}.rlbar{margin:0}
+.cpbtns{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.cpbtns .btn{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .qchip{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;padding:6px 10px;background:var(--e);border:2px solid var(--l);color:var(--l);font-family:var(--px);font-size:8px;text-align:left}
 .qchip.ready{border-color:var(--y);color:var(--y);animation:collpulse 1.4s steps(2) infinite}.qchip.claimed{border-color:var(--d);color:var(--s)}
 .qcard{margin-top:6px;display:flex;flex-direction:column;gap:6px;background:var(--n);border:2px solid var(--l);padding:8px}.qcard .row{margin:0}.qcard p{margin:0}
@@ -895,11 +895,11 @@ function newG(){return{
   pl:{busy:false,msg:'',hist:[],lastK:-1,balls:1},
   mn:{phase:'bet',m:3,bet:0,mineSet:null,open:[],boom:-1,msg:''},
   fl:{side:'h',face:'h',busy:false,msg:'',hist:[],streak:0},
-  sn:{pick:0,busy:false,msg:'',pos:[0,0,0,0],win:-1,hist:[]},
+  sn:{bets:{},stack:[],busy:false,msg:'',pos:[0,0,0,0],win:-1,hist:[]},
   pk:{seated:false,seats:[],btn:0,phase:'idle',log:[],msg:'',buyin:0},
   sl:{reels:['7','$','★'],busy:false,msg:''},
-  wh:{pick:'B',busy:false,msg:'',off:0,hist:[]},
-  bc:{pick:'player',p:[],bk:[],msg:''},
+  wh:{bets:{},stack:[],busy:false,msg:'',off:0,hist:[]},
+  bc:{bets:{},stack:[],p:[],bk:[],msg:''},
   cr:{phase:'bet',auto:2,bet:0,crash:1,cur:1,msg:'',hist:[],busted:false},
   tw:{phase:'bet',diff:'easy',bet:0,floor:0,eggs:[],picks:[],msg:''},
   kn:{picks:[],drawn:[],busy:false,msg:''},
@@ -911,7 +911,7 @@ function newG(){return{
   dc:{target:50,mode:'under',busy:false,msg:'',last:null,hist:[]},
   wr:{phase:'bet',bet:0,me:[],dl:[],msg:'',k:0},
   sbo:{pick:'big',dice:[2,4,6],busy:false,msg:'',hist:[],k:0},
-  db:{pick:1,type:'win',busy:false,pos:[0,0,0,0],track:[],rev:[],fin:[],last:null,left:42,msg:'',tick:'',hist:[],k:0,flash:-1}
+  db:{bets:{},stack:[],busy:false,pos:[0,0,0,0],track:[],rev:[],fin:[],last:null,left:42,msg:'',tick:'',hist:[],k:0,flash:-1}
 }}
 const sk=k=>S&&S.skills[k]?1:0;
 const ES=5;
@@ -940,7 +940,7 @@ function newRun(cfg){
   if(cfg.daily){const d=M.daily;if(d.last!==cfg.daily){const y=new Date();y.setDate(y.getDate()-1);d.streak=d.last===dstr(y)?d.streak+1:1;d.last=cfg.daily;d.bestStreak=Math.max(d.bestStreak,d.streak);checkTiers()}}
   UI.bet=10;UI.tab='debts';UI.confirm=null;UI.scene='world';UI.room='home';UI.wx={street:30,home:70,casino:32,mart:32,bar:32};UI.panel=null;S.story=Math.floor(Math.random()*STORIES.length);UI.scene='intro';UI.introP=0;save();render();introStart();
 }
-if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn','db'].forEach(k=>S.g[k].busy=false);if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
+if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn','db'].forEach(k=>S.g[k].busy=false);['bc','sbo','wh','sn','db'].forEach(k=>chipFix(S.g[k]));S.g.rl.stack=S.g.rl.stack||[];S.g.cp.stack=[];if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
 
 /* ================= toasts & achievements ================= */
 function note(h){if(S&&UI.scene==='game'){UI.inbox=(UI.inbox||[]).concat([h]);return}toast(h)}
@@ -1203,7 +1203,7 @@ function drawStreetExtra(x){
 /* ================= betting core ================= */
 function clampBet(){if(!S)return 0;const c=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));let v=Math.round(UI.bet)||0;const mn=curMin();if(v>0&&v<mn)v=mn;return v<=0?0:Math.min(v,c)}
 function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>=1&&clampBet()>=Math.max(1,curMin())}
-function busy(){if(!S)return false;const g=S.g;return g.bj.phase==='play'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||(g.db&&g.db.busy)||!!SBW}
+function busy(){if(!S)return false;const g=S.g;return g.bj.phase==='play'||g.bj.phase==='ins'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||(g.db&&g.db.busy)||!!SBW}
 function placeBet(game,b){cancelFX();
   S.cash-=b;if(game==='plinko'){if(!S.g.pl.session){S.energy-=ecost('plinko');S.g.pl.session=true}}else S.energy-=ecost(game);const st=gs(game);st.r++;st.bet+=b;addXP(2);checkTiers();
   if(!S.today.games.includes(game)){S.today.games.push(game);if(S.today.games.length>=7)ach('tourist')}
@@ -1515,8 +1515,11 @@ function bjHint(h,up){
 function bjAct(v){
   const s=S.g.bj;
   if(v==='deal'){if(!canPlay())return;const b=clampBet();placeBet('bj',b);
-    Object.assign(s,{hn:(s.hn||0)+1,phase:'play',hands:[{c:[draw(),draw()],bet:b,dbl:false,done:false,split:false,res:''}],hi:0,d:[draw(),draw()],msg:''});
+    Object.assign(s,{hn:(s.hn||0)+1,phase:'play',hands:[{c:[draw(),draw()],bet:b,dbl:false,done:false,split:false,res:''}],hi:0,d:[draw(),draw()],msg:'',ins:0});
+    if(s.d[0].r===1){s.phase='ins';s.msg=hv(s.hands[0].c)===21?'Blackjack! The dealer shows an Ace. Take insurance (even money) or risk a push?':'Dealer shows an Ace. Insurance pays 2:1 if the dealer has blackjack.';save();render();return}
     if(hv(s.hands[0].c)===21||hv(s.d)===21)return bjEnd();save();render();return}
+  if(s.phase==='ins'&&(v==='ins'||v==='noins')){if(v==='ins'){const a=Math.floor(s.hands[0].bet/2);if(a>=1&&S.cash>=a){S.cash-=a;s.ins=a;gs('bj').bet+=a;SFX.coin()}}
+    s.phase='play';if(hv(s.hands[0].c)===21||hv(s.d)===21)return bjEnd();s.msg=s.ins?`No dealer blackjack. Insurance (${fmt(s.ins)}) loses. Play on.`:'No dealer blackjack. Play on.';save();render();return}
   if(s.phase!=='play')return;const h=s.hands[s.hi];
   if(v==='hit'){h.c.push(draw());if(hv(h.c)>=21){h.done=true;return bjNext()}}
   else if(v==='stand'){h.done=true;return bjNext()}
@@ -1536,8 +1539,9 @@ function bjEnd(){
     if(ph>21)r='Bust';else if(hn&&dn){g=h.bet;r='Push'}else if(hn){g=h.bet*2.5;r='Blackjack';ach('natural');questEvent('sp','bj_nat')}else if(dn)r='Lose';
     else if(dh>21||ph>dh){g=h.bet*2;r='Win'}else if(ph===dh){g=h.bet;r='Push'}else r='Lose';
     h.res=r;tb+=h.bet;tg+=g;if(h.split&&g>h.bet)splitWin=true});
+  if(s.ins){tb+=s.ins;if(dn)tg+=s.ins*3}
   const r=settle('bj',tb,tg);if(splitWin){ach('split');questEvent('sp','bj_split')}
-  s.phase='done';s.msg=(dn?'Dealer blackjack. ':dh>21?'Dealer busts! ':`Dealer has ${dh}. `)+resText(r);save();render();
+  s.phase='done';s.msg=(dn?`Dealer blackjack.${s.ins?' Insurance pays 2:1.':''} `:(s.ins?'Insurance lost. ':'')+(dh>21?'Dealer busts! ':`Dealer has ${dh}. `))+resText(r);save();render();
 }
 
 /* ================= roulette ================= */
@@ -1572,7 +1576,7 @@ function rlPlace(k){
   const s=S.g.rl;if(s.busy)return;const chip=clampBet();if(chip<1)return;
   if(rlTotal()+chip>S.cash){toast('Not enough cash for another chip that size.');return}
   if(mod('low')&&rlTotal()+chip>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per spin.`);return}
-  s.bets[k]=(s.bets[k]||0)+chip;UI.rlPick=null;SFX.coin();save();render();
+  s.bets[k]=(s.bets[k]||0)+chip;(s.stack=s.stack||[]).push([k,chip]);UI.rlPick=null;SFX.coin();save();render();
 }
 function rlTap(n){
   const s=S.g.rl;if(s.busy)return;const m=s.mode;
@@ -1779,17 +1783,18 @@ function cpAllowed(k){const s=S.g.cp,p=s.point;
   return true}
 function cpBet(k){
   const s=S.g.cp;if(s.busy)return;if(!cpAllowed(k)){toast(k==='podds'?'Odds go behind a Pass Line bet once the point is on, up to 3x.':(k==='pass'||k==='dp')?'Line bets go down before the come-out roll.':'Come bets work once the point is on.');return}
-  if(k==='hardall'){const a=clampBet();if(S.cash<a*4){toast(`All four hard ways cost ${fmt(a*4)}.`);return}[4,6,8,10].forEach(n=>{s.bets['hard'+n]=(s.bets['hard'+n]||0)+a});S.cash-=a*4;gs('craps').bet+=a*4;s.flash=null;SFX.coin();save();render();return}
+  if(k==='hardall'){const a=clampBet();if(S.cash<a*4){toast(`All four hard ways cost ${fmt(a*4)}.`);return}[4,6,8,10].forEach(n=>{s.bets['hard'+n]=(s.bets['hard'+n]||0)+a});(s.stack=s.stack||[]).push([4,6,8,10].map(n=>['hard'+n,a]));S.cash-=a*4;gs('craps').bet+=a*4;s.flash=null;SFX.coin();save();render();return}
   let a=clampBet();if(k==='podds')a=Math.min(a,s.bets.pass*3-(s.bets.podds||0));
   if(a<1||S.cash<a){toast(`You need ${fmt(Math.max(a,1))} for that chip.`);return}
-  S.cash-=a;s.bets[k]=(s.bets[k]||0)+a;gs('craps').bet+=a;s.flash=null;S.lastBet.craps=a;SFX.coin();save();render();
+  S.cash-=a;s.bets[k]=(s.bets[k]||0)+a;(s.stack=s.stack||[]).push([[k,a]]);gs('craps').bet+=a;s.flash=null;S.lastBet.craps=a;SFX.coin();save();render();
 }
 const CP_FIXED=k=>['pass','dp','come','dcome'].includes(k)||k.startsWith('comeN')||k.startsWith('dcomeN');
-function cpTakeDown(){const s=S.g.cp;if(s.busy)return;let back=0;for(const k in s.bets){if(CP_FIXED(k)&&s.point)continue;back+=s.bets[k];delete s.bets[k]}if(back){S.cash+=back;SFX.coin()}s.flash=null;save();render()}
+function cpUndo(){const s=S.g.cp;if(s.busy)return;const grp=(s.stack||[]).pop();if(!grp)return;let back=0;for(const[k,a]of grp){const have=s.bets[k]||0,t=Math.min(have,a);if(!t)continue;s.bets[k]=have-t;if(!s.bets[k])delete s.bets[k];back+=t}S.cash+=back;gs('craps').bet-=back;s.flash=null;SFX.tick();save();render()}
+function cpTakeDown(){const s=S.g.cp;if(s.busy)return;s.stack=(s.stack||[]).filter(g=>g.every(([k])=>s.bets[k]));let back=0;for(const k in s.bets){if(CP_FIXED(k)&&s.point)continue;back+=s.bets[k];delete s.bets[k]}if(back){S.cash+=back;SFX.coin()}s.flash=null;save();render()}
 function cpRoll(){
   const s=S.g.cp;if(s.busy||!cpTot())return;
   if(!s.point){if(S.energy<ecost('craps')){toast(`A new come-out roll takes ${ecost('craps')} energy.`);return}placeBet('craps',0)}
-  s.busy=true;s.flash=null;s.press=null;const d=[1+Math.floor(rnd()*6),1+Math.floor(rnd()*6)];render();
+  s.busy=true;s.flash=null;s.press=null;s.stack=[];const d=[1+Math.floor(rnd()*6),1+Math.floor(rnd()*6)];render();
   if(RM)return cpResolve(d);
   const c=$('canvas[data-s="craps"]');if(c)c.scrollIntoView({block:'center',behavior:RM?'auto':'smooth'});
   const t0=performance.now(),D=1250*SP();let lastFace=0,faces=[3,4];
@@ -1882,7 +1887,7 @@ function gCP(){
   <details class="more" ${b.dp||b.dcome||Object.keys(b).some(k=>k.startsWith('hard')||CP_PROP[k])?'open':''}><summary>More bets: don’t side, hard ways, one-roll</summary>
   <div class="crow"><button class="carea dark ${fx('dcome')}" data-a="cpbet" data-v="dcome" ${dis('dcome')}>DON’T COME<small>bar 12</small>${chip('dcome')}</button><button class="carea dark ${fx('dp')}" data-a="cpbet" data-v="dp" ${dis('dp')}>DON’T PASS<small>bar 12</small>${chip('dp')}</button></div>
   <div class="cprops">${props}</div></details>
-  <!--act-->${betBar(s.busy,'Chip size',true)}<div class="cpbtns"><button class="btn dim" data-a="cptake" ${s.busy||!tot?'disabled':''}>Take down</button><button class="btn green" data-a="cproll" ${s.busy||!tot||need?'disabled':''}>${s.busy?'Rolling...':need?`Need ${ecost('craps')} energy`:p?`Roll · point ${p}`:`Come-out · ${ecost('craps')} energy`}<small>${fmt(tot)} on the table</small></button></div>`;
+  <!--act-->${betBar(s.busy,'Chip size',true)}<div class="cpbtns"><button class="btn dim" data-a="cpundo" ${s.busy||!(s.stack||[]).length?'disabled':''}>Undo</button><button class="btn dim" data-a="cptake" ${s.busy||!tot?'disabled':''}>Take down</button><button class="btn green" data-a="cproll" ${s.busy||!tot||need?'disabled':''}>${s.busy?'Rolling...':need?`Need ${ecost('craps')} energy`:p?`Roll · point ${p}`:`Come-out · ${ecost('craps')} energy`}<small>${fmt(tot)} on the table</small></button></div>`;
 }
 /* ================= sportsbook ================= */
 const SPORTS={
@@ -2190,23 +2195,41 @@ function gWR(){
   ${war?`<div class="g2"><button class="btn red" data-a="wr" data-v="war" ${S.cash>=s.bet?'':'disabled'}>Go to war · ${fmt(s.bet)}</button><button class="btn dim" data-a="wr" data-v="surrender">Surrender</button></div>`:`${betBar(false)}<button class="btn green wide" data-a="wr" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`}`;
 }
 /* ================= sic bo ================= */
-const SBO={small:['Small','Total 4-10, no triples',2],big:['Big','Total 11-17, no triples',2],pair:['Any pair','At least two match',2.1],triple:['Any triple','All three match',31]};
+/* ---- shared chip tables: stack any mix of bets, undo one chip at a time ---- */
+const CHIPG={bc:'baccarat',sbo:'sicbo',wh:'wheel',sn:'snail',db:'derby'},CHIPACT={bc:'bc',sbo:'sbo',wh:'wh',snrace:'sn',db:'db'};
+const chipTot=s=>Object.values(s.bets||{}).reduce((a,b)=>a+b,0);
+function chipFix(s){if(!s.bets||typeof s.bets!=='object')s.bets={};if(!Array.isArray(s.stack))s.stack=[];return s}
+function chipAdd(code,k){const s=chipFix(S.g[code]);if(s.busy)return;const c=clampBet();if(c<1){toast('Set a chip size first.');return}const t=chipTot(s)+c;
+  if(t>S.cash){toast('Not enough cash for another chip that size.');return}if(mod('low')&&t>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per round.`);return}
+  s.bets[k]=(s.bets[k]||0)+c;s.stack.push([k,c]);S.lastBet[UI.game]=c;SFX.coin();save();render()}
+function chipUndo(code){const s=chipFix(S.g[code]);if(s.busy)return;const x=s.stack.pop();if(!x)return;s.bets[x[0]]=(s.bets[x[0]]||0)-x[1];if(s.bets[x[0]]<=0)delete s.bets[x[0]];SFX.tick();save();render()}
+function chipClear(code){const s=chipFix(S.g[code]);if(s.busy)return;s.bets={};s.stack=[];save();render()}
+function chipWhy(code){const s=chipFix(S.g[code]),g=CHIPG[code],t=chipTot(s);if(!S||S.over)return'x';if(!t)return'Tap a bet to place a chip.';if(t>S.cash)return`Your chips (${fmt(t)}) are more than your cash. Undo or clear some.`;if(mod('low')&&t>lowCap())return`Low Roller contract: ${fmt(lowCap())} max per round.`;if(t<tableMin(g))return`Table minimum is ${fmt(tableMin(g))} total.`;if(S.energy<ecost(g))return'Too tired. Go home and sleep.';return''}
+const chipReady=code=>!S.g[code].busy&&!chipWhy(code);
+function chipStart(code){const w=chipWhy(code);if(S.g[code].busy)return 0;if(w){if(w!=='x')toast(w);return 0}const t=chipTot(S.g[code]);placeBet(CHIPG[code],t);return t}
+const chipTag=(s,k)=>s.bets&&s.bets[k]?`<i class="chipm" data-ck="cm${k}-${s.bets[k]}" data-fx="pop">${chipTxt(s.bets[k])}</i>`:'';
+function chipBar(code,act,verb){const s=chipFix(S.g[code]),t=chipTot(s),why=s.busy?'':chipWhy(code);
+  return`${betBar(s.busy,'Chip size',true)}<div class="rlact"><button class="btn dim sm" data-a="chundo" data-v="${code}" ${s.busy||!s.stack.length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="chclear" data-v="${code}" ${s.busy||!t?'disabled':''}>Clear</button><button class="btn green" ${act} ${chipReady(code)?'':'disabled'}>${t?`${verb} · ${fmt(t)}`:'Place chips'}</button></div>${why&&t?`<p class="muted bwarn">${why}</p>`:''}`}
+const chipWins=(arr)=>arr.length?`Paid: ${arr.join(', ')}. `:'';
+
+const SBO={small:['Small','Total 4-10, no triples',2],big:['Big','Total 11-17, no triples',2],odd:['Odd','Odd total, no triples',2],even:['Even','Even total, no triples',2],pair:['Any pair','At least two match',2.1],triple:['Any triple','All three match',31]};
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 const dieHTML=(n,cls)=>`<div class="die ${cls||''}">${Array.from({length:9},(_,i)=>`<i class="${PIPS[n].includes(i)?'on':''}"></i>`).join('')}</div>`;
 function sboWin(p,d){const t=d[0]+d[1]+d[2],tri=d[0]===d[1]&&d[1]===d[2],pr=d[0]===d[1]||d[1]===d[2]||d[0]===d[2];
-  return p==='small'?!tri&&t<=10:p==='big'?!tri&&t>=11:p==='pair'?pr:tri}
+  return p==='small'?!tri&&t<=10:p==='big'?!tri&&t>=11:p==='odd'?!tri&&t%2===1:p==='even'?!tri&&t%2===0:p==='pair'?pr:tri}
 function sboAct(v){
-  const s=S.g.sbo;if(s.busy)return;
-  if(SBO[v]){s.pick=v;save();render();return}
-  if(v!=='roll'||!canPlay())return;const b=clampBet();placeBet('sicbo',b);s.busy=true;s.k=(s.k||0)+1;const d=[1,2,3].map(()=>1+Math.floor(rnd()*6));
-  const fin=()=>{s.dice=d;s.busy=false;const w=sboWin(s.pick,d);const r=settle('sicbo',b,w?b*SBO[s.pick][2]:0);s.hist.unshift(d.join(''));s.hist=s.hist.slice(0,8);s.msg=`${d.join(' · ')} = ${d[0]+d[1]+d[2]}. `+resText(r);if(w&&s.pick==='triple')ach('triple');save();render()};
+  const s=chipFix(S.g.sbo);if(s.busy)return;
+  if(SBO[v]){chipAdd('sbo',v);return}
+  if(v!=='roll')return;const b=chipStart('sbo');if(!b)return;const bets=Object.assign({},s.bets);s.busy=true;s.k=(s.k||0)+1;const d=[1,2,3].map(()=>1+Math.floor(rnd()*6));
+  const fin=()=>{s.dice=d;s.busy=false;let g=0;const won=[];for(const k in bets)if(sboWin(k,d)){g+=bets[k]*SBO[k][2];won.push(SBO[k][0])}
+    const r=settle('sicbo',b,g);s.hist.unshift(d.join(''));s.hist=s.hist.slice(0,8);s.msg=`${d.join(' · ')} = ${d[0]+d[1]+d[2]}. `+chipWins(won)+resText(r);if(bets.triple&&sboWin('triple',d))ach('triple');save();render()};
   if(RM){fin();return}render();let n=0;const iv=setInterval(()=>{const e=$('#sbodice');if(e)e.innerHTML=[0,1,2].map(()=>dieHTML(1+Math.floor(Math.random()*6),'roll')).join('');SFX.tick();if(++n>=10){clearInterval(iv);fin()}},70*SP());
 }
 function gSBO(){
-  const s=S.g.sbo;
+  const s=chipFix(S.g.sbo);
   return`<div class="felt dark"><div class="dice3" id="sbodice" data-ck="sbo${s.k||0}" data-fx="pop">${s.dice.map(n=>dieHTML(n)).join('')}</div><div class="hist">${s.hist.map(h=>`<i class="m">${h}</i>`).join('')}</div></div>
-  <div class="g2">${Object.entries(SBO).map(([k,[n,d,m]])=>`<button class="opt ${s.pick===k?'on':''}" data-a="sbo" data-v="${k}" ${s.busy?'disabled':''}>${n}<small>${d} · ${m}x</small></button>`).join('')}</div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="sbo" data-v="roll" ${!s.busy&&canPlay()?'':'disabled'}>Roll the dice</button>`;
+  <p class="muted">Tap bets to stack chips. Mix as many as you like.</p><div class="g2">${Object.entries(SBO).map(([k,[n,d,m]])=>`<button class="opt ${s.bets[k]?'on':''}" data-a="sbo" data-v="${k}" ${s.busy?'disabled':''}>${n}<small>${d} · ${m}x</small>${chipTag(s,k)}</button>`).join('')}</div>
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${chipBar('sbo','data-a="sbo" data-v="roll"','Roll')}`;
 }
 
 /* ================= ace derby ================= */
@@ -2219,35 +2242,36 @@ function dbRace(){const deck=[];for(let su=0;su<4;su++)for(let r=2;r<=13;r++)dec
     e.pos=pos.slice();e.rev=rev.slice();e.fin=fin.slice();ev.push(e)}
   if(fin.length<2){[0,1,2,3].filter(i=>!fin.includes(i)).sort((a,b)=>pos[b]-pos[a]).forEach(i=>{if(fin.length<2)fin.push(i)});ev[ev.length-1].fin=fin.slice()}
   return{track,ev,fin}}
-function dbBoard(s){const lane=i=>{const p=s.pos[i],me=i===s.pick,done=s.fin.indexOf(i);
+function dbBoard(s){const lane=i=>{const p=s.pos[i],me=s.bets&&(s.bets['w'+i]||s.bets['p'+i]),done=s.fin.indexOf(i);
     return`<span class="dbl ${me?'me':''}">${SU[i]}</span>`+Array.from({length:DB_FIN+1},(_,j)=>`<span class="dbc ${j===0?'gate':''} ${j===DB_FIN?'fin':''}">${j===p?`<span class="mc dbh ${i===1||i===2?'red':''} ${s.flash===i?'hit':''} ${done>=0?'won':''}">A<br>${SU[i]}</span>`:''}</span>`).join('')+`<span class="dbp">${done===0?'1st':done===1?'2nd':''}</span>`};
   const trk=`<span class="dbl"></span><span class="dbc gate"></span>`+Array.from({length:DB_TR},(_,k)=>`<span class="dbc">${s.track[k]&&s.rev[k]?miniFace(s.track[k]):'<span class="mb"></span>'}</span>`).join('')+`<span class="dbc fin"></span><span class="dbp"></span>`;
-  return`<div class="dbt">${trk}${[0,1,2,3].map(lane).join('')}</div><div class="dbdeck">${s.last?miniFace(s.last):'<span class="mb"></span>'}<span>${s.tick||'Pick an ace and start the race.'}</span><small>${s.left} left</small></div>`}
+  return`<div class="dbt">${trk}${[0,1,2,3].map(lane).join('')}</div><div class="dbdeck">${s.last?miniFace(s.last):'<span class="mb"></span>'}<span>${s.tick||'Stack chips on Win or Place, then race.'}</span><small>${s.left} left</small></div>`}
 function dbAct(v){
-  const s=S.g.db;if(s.busy)return;
-  if(/^s[0-3]$/.test(v)){s.pick=+v[1];save();render();return}
-  if(v==='win'||v==='place'){s.type=v;save();render();return}
-  if(v!=='go'||!canPlay())return;const b=clampBet();placeBet('derby',b);s.busy=true;s.k=(s.k||0)+1;
-  const R=dbRace(),pick=s.pick,type=s.type;let knocked=0;
+  const s=chipFix(S.g.db);if(s.busy)return;
+  if(/^[wp][0-3]$/.test(v)){chipAdd('db',v);return}
+  if(v!=='go')return;const b=chipStart('db');if(!b)return;const bets=Object.assign({},s.bets);s.busy=true;s.k=(s.k||0)+1;
+  const R=dbRace(),knocked=[0,0,0,0];
   Object.assign(s,{pos:[0,0,0,0],track:R.track,rev:Array(DB_TR).fill(false),fin:[],last:null,left:48-DB_TR,flash:-1,tick:'And they’re off!',msg:''});
   const apply=e=>{s.pos=e.pos;s.rev=e.rev;s.fin=e.fin;s.last=e.c;s.left=e.left;s.flash=-1;
-    const hit=e.bk.find(x=>x.mv);if(e.bk.length){const x=hit||e.bk[0];s.tick=`Track card ${x.k+1} flips: ${SU[x.s]} ${x.mv?'knocked back!':'no effect.'}`;if(hit){s.flash=hit.s;if(hit.s===pick)knocked++}}
+    const hit=e.bk.find(x=>x.mv);if(e.bk.length){const x=hit||e.bk[0];s.tick=`Track card ${x.k+1} flips: ${SU[x.s]} ${x.mv?'knocked back!':'no effect.'}`;if(hit){s.flash=hit.s;knocked[hit.s]++}}
     else if(e.done!=null)s.tick=`${SU[e.done]} ${DB_NM[e.done]} cross${s.fin.length===1?'es first!':' in second.'}`;
     else s.tick=s.fin.includes(e.c.s)?`${SU[e.c.s]} already finished.`:`${SU[e.c.s]} moves up.`;return!!hit};
-  const fin=()=>{s.busy=false;s.flash=-1;const w=type==='win'?R.fin[0]===pick:R.fin.slice(0,2).includes(pick);
-    const r=settle('derby',b,w?b*DB_PAY[type]:0);s.hist.unshift(SU[R.fin[0]]);s.hist=s.hist.slice(0,10);
-    s.msg=`${SU[R.fin[0]]} wins, ${SU[R.fin[1]]} places. `+resText(r);if(w){questEvent('sp','derby_win');if(knocked)ach('derby')}save();render()};
+  const fin=()=>{s.busy=false;s.flash=-1;let g=0;const won=[];let backWin=false;
+    for(const k in bets){const i=+k[1],ok=k[0]==='w'?R.fin[0]===i:R.fin.slice(0,2).includes(i);if(ok){g+=bets[k]*DB_PAY[k[0]==='w'?'win':'place'];won.push(SU[i]+(k[0]==='w'?' win':' place'));if(knocked[i])backWin=true}}
+    const r=settle('derby',b,g);s.hist.unshift(SU[R.fin[0]]);s.hist=s.hist.slice(0,10);
+    s.msg=`${SU[R.fin[0]]} wins, ${SU[R.fin[1]]} places. `+chipWins(won)+resText(r);if(won.length){questEvent('sp','derby_win');if(backWin)ach('derby')}save();render()};
   if(RM){R.ev.forEach(apply);fin();return}
   render();let i=0;const step=()=>{if(i>=R.ev.length){setTimeout(fin,350*SP());return}const e=R.ev[i++],hit=apply(e);const el=$('#dbtrack');if(el)el.innerHTML=dbBoard(s);
     if(hit)SFX.thunk();else SFX.tick();setTimeout(step,(hit?650:e.done!=null?500:190)*SP())};
   setTimeout(step,400*SP());
 }
 function gDB(){
-  const s=S.g.db;
+  const s=chipFix(S.g.db);
+  const cell=(t,i)=>{const k=t+i;return`<button class="opt ${s.bets[k]?'on':''}" data-a="db" data-v="${k}" ${s.busy?'disabled':''}><span style="font-size:16px;${i===1||i===2?'color:var(--r)':''}">${SU[i]}</span><small>${t==='w'?'Win':'Place'}</small>${chipTag(s,k)}</button>`};
   return`<div class="felt"><div id="dbtrack" data-ck="db${s.k||0}">${dbBoard(s)}</div><div class="hist">${s.hist.map(h=>`<i class="m">${h}</i>`).join('')}</div></div>
-  <div class="opts">${[0,1,2,3].map(i=>`<button class="opt ${s.pick===i?'on':''}" data-a="db" data-v="s${i}" ${s.busy?'disabled':''}><span style="font-size:18px;${i===1||i===2?'color:var(--r)':''}">${SU[i]}</span><small>${DB_NM[i]}</small></button>`).join('')}</div>
-  <div class="g2"><button class="opt ${s.type==='win'?'on':''}" data-a="db" data-v="win" ${s.busy?'disabled':''}>WIN<small>1st · ${DB_PAY.win}x</small></button><button class="opt ${s.type==='place'?'on':''}" data-a="db" data-v="place" ${s.busy?'disabled':''}>PLACE<small>1st or 2nd · ${DB_PAY.place}x</small></button></div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="db" data-v="go" ${!s.busy&&canPlay()?'':'disabled'}>Start the race</button>`;
+  <span class="lbl">Win · 1st place · ${DB_PAY.win}x</span><div class="opts">${[0,1,2,3].map(i=>cell('w',i)).join('')}</div>
+  <span class="lbl">Place · 1st or 2nd · ${DB_PAY.place}x</span><div class="opts">${[0,1,2,3].map(i=>cell('p',i)).join('')}</div>
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${chipBar('db','data-a="db" data-v="go"','Race')}`;
 }
 
 /* ================= game guides ================= */
@@ -2261,13 +2285,13 @@ const GUIDE={
     extra:'Hand ranks, best first: royal flush, straight flush, four of a kind, full house, flush, straight, three of a kind, two pair, one pair, high card.'}),
   bj:()=>({goal:'Beat the dealer’s hand without going over 21.',
     rules:['Cards 2-10 count face value, J/Q/K count 10, aces count 1 or 11.','Hit for another card, stand to stop. Over 21 is a bust and loses.','Double: on your first two cards, double your bet and take exactly one more card.','Split: two cards of the same value become two hands with equal bets, up to 4 hands. Split aces get one card each. 21 on a split hand is not a blackjack.','The dealer draws until reaching 17 or more, and stands on all 17s.'],
-    pays:[['Win','2x (1:1)'],['Blackjack (ace + 10-value on the deal)','2.5x (3:2)'],['Push (tie)','Bet returned'],['Dealer blackjack','You lose unless you also have one']]}),
+    pays:[['Win','2x (1:1)'],['Blackjack (ace + 10-value on the deal)','2.5x (3:2)'],['Push (tie)','Bet returned'],['Dealer blackjack','You lose unless you also have one'],['Insurance (half your bet, offered when the dealer shows an Ace)','3x (2:1) if the dealer has blackjack']]}),
   roulette:()=>({goal:'Guess where the ball lands on a single-zero wheel of 0 to 36.',
-    rules:['Pick a chip size, then tap spots on the board. You can stack many bets on one spin.','Inside bets cover specific numbers. Outside bets cover big groups.','0 is green: every outside bet loses when it hits.',`Spinning costs ${ECOST.roulette} energy, no matter how many chips are down.`],
+    rules:['Pick a chip size, then tap spots on the board. You can stack many bets on one spin. Undo removes your last chip, again and again until the table is empty.','Inside bets cover specific numbers. Outside bets cover big groups.','0 is green: every outside bet loses when it hits.',`Spinning costs ${ECOST.roulette} energy, no matter how many chips are down.`],
     pays:[['Straight up (1 number)','36x (35:1)'],['Split (2 numbers)','18x (17:1)'],['Street (3)','12x (11:1)'],['Corner (4)','9x (8:1)'],['Six line (6)','6x (5:1)'],['Dozen or column (12)','3x (2:1)'],['Red/black, odd/even, 1-18/19-36','2x (1:1)']],
     extra:'House edge on every bet: 2.7%.'}),
   craps:()=>({goal:'Bet on the dice. The shooter tries to roll the point again before rolling a 7.',
-    rules:['Come-out roll: 7 or 11 wins the Pass Line, 2, 3 or 12 (craps) loses. Any other number becomes the point and the puck turns ON.','Point is on: roll the point again to win the Pass Line. Roll a 7 first ("seven out") and it loses.','The come-out roll costs ${ECOST.craps} energy. Every roll after that is free until the point is made or the shooter sevens out.','Place and hard way bets are off on the come-out roll. Take down any bet that isn’t locked in with Take down bets.'],
+    rules:['Come-out roll: 7 or 11 wins the Pass Line, 2, 3 or 12 (craps) loses. Any other number becomes the point and the puck turns ON.','Point is on: roll the point again to win the Pass Line. Roll a 7 first ("seven out") and it loses.','The come-out roll costs ${ECOST.craps} energy. Every roll after that is free until the point is made or the shooter sevens out.','Place and hard way bets are off on the come-out roll. Take down any bet that isn’t locked in with Take down bets. Undo takes back your last chip placed since the last roll.'],
     pays:[['Pass Line / Come','2x (1:1)'],['Don’t Pass / Don’t Come','2x (1:1), a 12 on the come-out pushes'],['Odds behind the Pass Line (up to 3x)','4 or 10 pay 2:1, 5 or 9 pay 3:2, 6 or 8 pay 6:5. No house edge.'],['Place 4 or 10','Wins 9:5'],['Place 5 or 9','Wins 7:5'],['Place 6 or 8','Wins 7:6'],['Field (one roll: 2,3,4,9,10,11,12)','2x, a 2 pays 3x, a 12 pays 4x'],['Hard 4 or 10 (doubles before easy way or 7)','Wins 7:1'],['Hard 6 or 8','Wins 9:1'],['Any 7 (one roll)','5x (4:1)'],['Any craps: 2, 3 or 12 (one roll)','8x (7:1)'],['Yo 11 (one roll)','16x (15:1)'],['Aces 2 or Boxcars 12 (one roll)','31x (30:1)']],
     extra:'Mastery only counts a win when your Pass or Don’t Pass bet wins.'}),
   sports:()=>({goal:'Bet on today’s games across basketball, baseball, soccer, tennis, football and hockey.',
@@ -2282,16 +2306,16 @@ const GUIDE={
     pays:[['3 mines: 1 / 3 / 5 gems',`${mnMult(1,3)}x / ${mnMult(3,3)}x / ${mnMult(5,3)}x`],['5 mines: 1 / 3 / 5 gems',`${mnMult(1,5)}x / ${mnMult(3,5)}x / ${mnMult(5,5)}x`],['10 mines: 1 / 3 gems',`${mnMult(1,10)}x / ${mnMult(3,10)}x`],['24 mines: 1 gem',`${mnMult(1,24)}x`]]}),
   flip:()=>({goal:'Call heads or tails.',rules:['Pick a side, set your bet and flip. A fair 50/50 coin.'],pays:[['Right call','2x (even money)'],['Wrong call','Lose the bet']],extra:'The only game in the house with no edge.'}),
   snail:()=>({goal:'Back the snail you think wins the race.',
-    rules:['Four snails race. Faster favorites win more often but pay less.','Pick one, set your bet and start the race.'],
+    rules:['Four snails race. Faster favorites win more often but pay less.','Pick a chip size and tap snails to stack chips. You can back more than one snail in the same race. Undo removes your last chip.'],
     pays:SNAILS.map(sn=>[`${sn.n} (wins ${gpct(sn.p)})`,`${sn.o}x`])}),
   slots:()=>({goal:'Line up matching symbols on three reels.',rules:['Set a bet and spin. Results show when all three reels stop.'],
     pays:[...Object.entries(SPAY).reverse().map(([k,v])=>[`Three ${k}`,`${v}x`]),['Any two 7s','3x'],['Any other pair','1.2x']]}),
   wheel:()=>({goal:'Pick the color the Money Wheel stops on.',
-    rules:['The wheel has 30 segments. Choose a color and spin.','The black House segment beats every bet.'],
+    rules:['The wheel has 30 segments. Stack chips on as many colors as you like, then spin. Undo removes your last chip.','The black House segment beats every bet.'],
     pays:['B','G','R','Y'].map(k=>[`${WNAME[k]} (${WSEG.filter(x=>x===k).length} of 30)`,`${WPAY[k]}x`]).concat([['House (1 of 30)','Everyone loses']])}),
   baccarat:()=>({goal:'Bet on whether Player or Banker ends closer to 9, or on a tie.',
-    rules:['Cards: aces count 1, 2-9 face value, 10s and face cards count 0. Only the last digit of the total counts (7 + 8 = 5).','Both hands get two cards. Third cards follow the standard drawing rules automatically.','Higher total wins.'],
-    pays:[['Player','2x (1:1)'],['Banker','1.95x (1:1 minus 5% commission)'],['Tie','9x (8:1)'],['Player or Banker bet when it ties','Bet returned']]}),
+    rules:['Cards: aces count 1, 2-9 face value, 10s and face cards count 0. Only the last digit of the total counts (7 + 8 = 5).','Both hands get two cards. Third cards follow the standard drawing rules automatically.','Higher total wins.','Stack chips on any mix of bets, even Player and Banker together. Undo removes your last chip.','Pair bets win when that side’s first two cards are the same rank.'],
+    pays:[['Player','2x (1:1)'],['Banker','1.95x (1:1 minus 5% commission)'],['Tie','9x (8:1)'],['Player Pair / Banker Pair','12x (11:1)'],['Player or Banker bet when it ties','Bet returned']]}),
   crash:()=>({goal:'Cash out before the rocket explodes.',
     rules:['The multiplier climbs from 1.00x until the rocket blows up at a random point.','Tap Cash out to lock in the current multiplier, or set an auto cash-out target.','If it explodes before you cash out, you lose the bet.'],
     pays:[['Cash out at 1.5x (reaches it about 65% of the time)','1.5x'],['Cash out at 2x (about 48%)','2x'],['Cash out at 5x (about 19%)','5x'],['Cash out at 10x (about 10%)','10x']]}),
@@ -2320,10 +2344,10 @@ const GUIDE={
     rules:['You and the dealer each get one card. Aces are high.','Higher card wins. Lower card loses.','Tie: go to war by matching your bet, or surrender and get half your bet back. In a war you each get a new card.'],
     pays:[['Win','2x (1:1)'],['Win the war','Your raise pays 1:1, your original bet comes back'],['Tie again in the war','Both bets pay 1:1'],['Lose the war','Lose both bets'],['Surrender','Half your bet back']]}),
   sicbo:()=>({goal:'Bet on the total of three dice.',
-    rules:['Pick a bet, set your stake and roll three dice.','Small and Big both lose on any triple, even when the total is in range.'],
-    pays:Object.entries(SBO).map(([k,[n,d,m]])=>[`${n}: ${d} (${gpct({small:.486,big:.486,pair:.444,triple:.028}[k])})`,`${m}x`])}),
+    rules:['Pick a chip size and tap bets to stack chips. Mix any of them in one roll. Undo removes your last chip.','Small and Big both lose on any triple, even when the total is in range.'],
+    pays:Object.entries(SBO).map(([k,[n,d,m]])=>[`${n}: ${d} (${gpct({small:.486,big:.486,odd:.486,even:.486,pair:.444,triple:.028}[k])})`,`${m}x`])}),
   derby:()=>({goal:'Back one of the four aces in a card-flip horse race.',
-    rules:['The four aces are the horses. They start at the gate, and the finish is 7 steps away.',`${DB_TR} more cards are dealt face down along the track. Nobody knows their suits.`,'The dealer flips the rest of the deck one card at a time. Each card moves the ace of its suit one step forward.','When every horse still racing has reached a track card, that card flips over. The ace of its suit gets knocked back one step.','Win bets need your ace to cross first. Place bets need it to finish first or second. The race runs until two horses finish.'],
+    rules:['The four aces are the horses. They start at the gate, and the finish is 7 steps away.',`${DB_TR} more cards are dealt face down along the track. Nobody knows their suits.`,'The dealer flips the rest of the deck one card at a time. Each card moves the ace of its suit one step forward.','When every horse still racing has reached a track card, that card flips over. The ace of its suit gets knocked back one step.','Win bets need your ace to cross first. Place bets need it to finish first or second. The race runs until two horses finish.','Stack chips on as many Win and Place bets as you like, on any suits.'],
     pays:[['Win: your ace finishes 1st (25%)',DB_PAY.win+'x'],['Place: your ace finishes 1st or 2nd (50%)',DB_PAY.place+'x']],
     extra:'Every suit has the same chance because the track cards stay hidden until a horse is knocked back. Based on the Horse Race card game, in its variant with hidden track cards.'})
 };
@@ -2841,7 +2865,7 @@ function drawSnails(x,pos,winner){
     if(winner===i){px(x,C.y,X+3,Y-3,7,2)}});
 }
 function snRace(){
-  const s=S.g.sn;if(s.busy||!canPlay())return;const b=clampBet();placeBet('snail',b);s.busy=true;s.msg='And they’re off!';
+  const s=chipFix(S.g.sn);if(s.busy)return;const b=chipStart('sn');if(!b)return;const bets=Object.assign({},s.bets);s.busy=true;s.msg='And they’re off!';
   let u=rnd()*SNAILS.reduce((a,b)=>a+b.p,0),w=0;for(;w<3;w++){if(u<SNAILS[w].p)break;u-=SNAILS[w].p}
   const T=SNAILS.map((_,i)=>i===w?1:1.05+rnd()*.35),F=T.map(t=>Math.min(1,1/t));
   const others=[0,1,2,3].filter(i=>i!==w),lead=rnd()<.45?others[Math.floor(rnd()*3)]:-1,slow=rnd()<.3;
@@ -2850,8 +2874,8 @@ function snRace(){
   const at=(i,e)=>{const k=KN[i],sg=Math.min(3,Math.floor(e*4)),u=Math.min(1,e*4-sg),s2=u*u*(3-2*u);return k[sg]+(k[sg+1]-k[sg])*s2};
   s.lastKN=KN;
   render();
-  const fin=()=>{s.pos=F.slice();s.win=w;const pick=s.pick;const r=settle('snail',b,pick===w?b*SNAILS[pick].o:0);
-    if(pick===w){ach('snail');questEvent('sp','snail_win');if(SNAILS[w].o>=50)ach('longshot')}
+  const fin=()=>{s.pos=F.slice();s.win=w;const hit=bets[w]||0;const r=settle('snail',b,hit*SNAILS[w].o);
+    if(hit){ach('snail');questEvent('sp','snail_win');if(SNAILS[w].o>=50)ach('longshot')}
     s.hist.unshift(w);s.hist=s.hist.slice(0,10);s.busy=false;s.msg=`${SNAILS[w].n} wins! `+resText(r);save();render();
     const c=$('canvas[data-s="snail"]');if(c)drawSnails(c.getContext('2d'),s.pos,w)};
   const c=$('canvas[data-s="snail"]');if(RM||!c)return fin();
@@ -3090,9 +3114,9 @@ function drawWheel(x,pos){
   px(x,C.w,79,42,3,6);
 }
 function whSpin(){
-  const s=S.g.wh;if(s.busy||!canPlay())return;const b=clampBet();placeBet('wheel',b);s.busy=true;s.msg='';render();
+  const s=chipFix(S.g.wh);if(s.busy)return;const b=chipStart('wh');if(!b)return;const bets=Object.assign({},s.bets);s.busy=true;s.msg='';render();
   const t=Math.floor(rnd()*30),start=s.off||0;let end=Math.floor(start)+60+((t-Math.floor(start))%30+30)%30;
-  const fin=()=>{s.off=end%30;const sg=WSEG[t],w=sg===s.pick;const r=settle('wheel',b,w?b*WPAY[sg]:0);if(sg==='Y'&&w)ach('gold');if(w&&sg!=='B')questEvent('sp','wheel_big');
+  const fin=()=>{s.off=end%30;const sg=WSEG[t],w=!!bets[sg];const r=settle('wheel',b,w?bets[sg]*WPAY[sg]:0);if(sg==='Y'&&w)ach('gold');if(w&&sg!=='B')questEvent('sp','wheel_big');
     s.hist.unshift(sg);s.hist=s.hist.slice(0,12);s.busy=false;s.msg=`${WNAME[sg]}${sg==='K'?' (house wins)':''}. `+resText(r);save();render()};
   const c=$('canvas[data-s="wheel"]');if(RM||!c)return fin();
   const x=c.getContext('2d'),D=2600*SP(),t0=performance.now();let lastSeg=-1;
@@ -3103,16 +3127,20 @@ function whSpin(){
 /* ================= baccarat ================= */
 const bv=c=>c.r>=10?0:c.r;
 const btot=cs=>cs.reduce((a,c)=>a+bv(c),0)%10;
+const BC_BETS={player:['Player','2x'],banker:['Banker','1.95x'],tie:['Tie','9x'],ppair:['P Pair','12x'],bpair:['B Pair','12x']};
 function bcPlay(){
-  const s=S.g.bc;if(!canPlay())return;const b=clampBet();placeBet('baccarat',b);
+  const s=chipFix(S.g.bc);const b=chipStart('bc');if(!b)return;const bets=s.bets;
   const Pl=[draw(),draw()],Bk=[draw(),draw()];let pt=btot(Pl),bt=btot(Bk);
   if(pt<8&&bt<8){let p3=null;if(pt<=5){p3=draw();Pl.push(p3)}
     const b2=btot(Bk);let bd;if(p3===null)bd=b2<=5;else{const t=bv(p3);bd=b2<=2||(b2===3&&t!==8)||(b2===4&&t>=2&&t<=7)||(b2===5&&t>=4&&t<=7)||(b2===6&&(t===6||t===7))}
     if(bd)Bk.push(draw())}
   pt=btot(Pl);bt=btot(Bk);const w=pt>bt?'player':bt>pt?'banker':'tie';
-  let g=0;if(s.pick===w)g=b*(w==='player'?2:w==='banker'?1.95:9);else if(w==='tie')g=b;
-  const r=settle('baccarat',b,g);if(w==='tie'&&s.pick==='tie')ach('tie');if(w==='banker'&&s.pick==='banker')questEvent('sp','bc_banker');
-  s.n=(s.n||0)+1;s.p=Pl;s.bk=Bk;s.msg=`Player ${pt}, Banker ${bt}. ${w==='tie'?'Tie':w==='player'?'Player wins':'Banker wins'}. `+resText(r);save();render();
+  const pp=Pl[0].r===Pl[1].r,bp=Bk[0].r===Bk[1].r;let g=0;const won=[];
+  for(const k in bets){const a=bets[k];let x=0;
+    if(k==='player'||k==='banker')x=w===k?(k==='player'?2:1.95):w==='tie'?1:0;else if(k==='tie')x=w==='tie'?9:0;else if(k==='ppair')x=pp?12:0;else if(k==='bpair')x=bp?12:0;
+    if(x){g+=a*x;won.push(BC_BETS[k][0]+(x===1?' (push)':''))}}
+  const r=settle('baccarat',b,Math.round(g));if(w==='tie'&&bets.tie)ach('tie');if(w==='banker'&&bets.banker)questEvent('sp','bc_banker');
+  s.n=(s.n||0)+1;s.p=Pl;s.bk=Bk;s.msg=`Player ${pt}, Banker ${bt}. ${w==='tie'?'Tie':w==='player'?'Player wins':'Banker wins'}${pp?' · Player pair':''}${bp?' · Banker pair':''}. `+chipWins(won)+resText(r);save();render();
 }
 
 /* ================= crash ================= */
@@ -3492,11 +3520,12 @@ function vGame(){
   return hud()+topbar(GAMES[g].n,'casino',`<small>${S.energy} energy · ${ecostLabel(g)}</small>`)+`<div class="gtop"><button class="guideb" data-a="guide" aria-expanded="${UI.guide===g}">${UI.guide===g?'Hide rules':'Rules & payouts'}</button>${badge}</div>`+(UI.guide===g?`<div class="box dark">${guideHTML(g)}</div>`:'')+`<div class="gwrap stack ${gt>=0?'tier-'+TIERS[gt][0].toLowerCase():''}">${bd}</div>`;
 }
 function gBJ(){
-  const s=S.g.bj,hide=s.phase==='play';
+  const s=S.g.bj,hide=s.phase==='play'||s.phase==='ins';
   const dealer=s.d.map((c,i)=>i===1&&hide?back(`bj${s.hn}d1`,3):face(c,`bj${s.hn}d${i}`,i===0?1:i===1?3:10+i)).join('');
   const hands=s.hands.length?s.hands.map((h,i)=>`<div class="hand ${s.phase==='play'&&i===s.hi&&s.hands.length>1?'cur':''}"><span class="hlab">${s.hands.length>1?'HAND '+(i+1):'YOU'} · ${hv(h.c)} · ${fmt(h.bet)}${h.dbl?' · DBL':''}${h.res&&s.phase==='done'?' · '+h.res.toUpperCase():''}</span><div class="cards">${h.c.map((c,j)=>face(c,`bj${s.hn}h${i}c${j}x${c.r}${c.s}`,s.hands.length===1&&!h.split&&j<2?j*2:20+j)).join('')}</div></div>`).join(''):'<div class="hand"><span class="hlab">YOU</span><div class="cards"><p class="ph">Blackjack pays 3:2. Split any pair.</p></div></div>';
   let ctl;
-  if(s.phase==='play'){const h=s.hands[s.hi],canD=h.c.length===2&&S.cash>=h.bet,canS=bjCanSplit(h);
+  if(s.phase==='ins'){const a=Math.floor(s.hands[0].bet/2);ctl=`<div class="g2"><button class="btn blue" data-a="bj" data-v="ins" ${a>=1&&S.cash>=a?'':'disabled'}>Insurance · ${fmt(a)}</button><button class="btn" data-a="bj" data-v="noins">No insurance</button></div>`}
+  else if(s.phase==='play'){const h=s.hands[s.hi],canD=h.c.length===2&&S.cash>=h.bet,canS=bjCanSplit(h);
     const hint=sk('count')?`<p class="hint">Card Counter says: ${bjHint(h,s.d[0])}</p>`:'';
     ctl=hint+`<div class="g2"><button class="btn" data-a="bj" data-v="hit">Hit</button><button class="btn" data-a="bj" data-v="stand">Stand</button><button class="btn blue" data-a="bj" data-v="double" ${canD?'':'disabled'}>Double</button><button class="btn blue" data-a="bj" data-v="split" ${canS?'':'disabled'}>Split</button></div>`}
   else ctl=betBar(false)+`<button class="btn green wide" data-a="bj" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`;
@@ -3516,7 +3545,7 @@ function gRL(){
   const keys=Object.keys(b);
   const pick=UI.rlPick;
   const bar=pick?`<span class="lbl">${RL_MODES.find(m=>m[0]===s.mode)[1]} bets that include ${pick.n}</span><div class="g2">${pick.o.map(a=>`<button class="btn blue sm" data-a="rlpick" data-v="${ik(a)}">${betLabel(ik(a))} · ${36/a.length-1}:1</button>`).join('')}</div><button class="btn dim sm" data-a="rlcancel">Cancel</button>`
-    :`<div class="rlact"><button class="btn dim sm" data-a="rlclear" ${busy||!keys.length?'disabled':''}>Clear</button><button class="btn sm" data-a="rlrep" ${busy||!s.lastBets||!Object.keys(s.lastBets).length?'disabled':''}>Repeat</button><button class="btn green" data-a="rlspin" ${!busy&&tot>0&&S.energy>=ecost('roulette')&&S.energy>0&&tot<=S.cash?'':'disabled'}>${busy?'Spinning...':tot?'Spin '+fmt(tot):'Place chips'}</button></div>`;
+    :`<div class="rlact rl4"><button class="btn dim sm" data-a="rlundo" ${busy||!(s.stack||[]).length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="rlclear" ${busy||!keys.length?'disabled':''}>Clear</button><button class="btn sm" data-a="rlrep" ${busy||!s.lastBets||!Object.keys(s.lastBets).length?'disabled':''}>Repeat</button><button class="btn green" data-a="rlspin" ${!busy&&tot>0&&S.energy>=ecost('roulette')&&S.energy>0&&tot<=S.cash?'':'disabled'}>${busy?'Spinning...':tot?'Spin '+fmt(tot):'Place chips'}</button></div>`;
   return`<canvas class="pix" data-s="rwheel" data-fill data-max="2" width="160" height="160" aria-label="Roulette wheel"></canvas>
   <div class="hist">${s.hist.map(n=>`<i class="${rcls(n)}">${n}</i>`).join('')}</div>
   <p class="msg">${s.msg||'Tap the board to place chips.'}</p>
@@ -3552,11 +3581,11 @@ function gFL(){
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="fl" data-v="go" ${!s.busy&&canPlay()?'':'disabled'}>Flip</button>`;
 }
 function gSN(){
-  const s=S.g.sn;
+  const s=chipFix(S.g.sn);
   return`<canvas class="pix" data-s="snail" width="${SNW}" height="${SNH}" data-max="4" aria-label="Snail race track"></canvas>
   <div class="hist">${s.hist.map(w=>`<i class="m">#${w+1}</i>`).join('')}</div>
-  <div class="opts">${SNAILS.map((sn,i)=>`<button class="opt ${s.pick===i?'on':''}" data-a="snpick" data-v="${i}" ${s.busy?'disabled':''}>#${i+1}<small>${sn.n}<br>pays ${sn.o}x</small></button>`).join('')}</div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="snrace" ${!s.busy&&canPlay()?'':'disabled'}>Start the race</button>`;
+  <div class="opts">${SNAILS.map((sn,i)=>`<button class="opt ${s.bets[i]?'on':''}" data-a="snpick" data-v="${i}" ${s.busy?'disabled':''}>#${i+1}<small>${sn.n}<br>pays ${sn.o}x</small>${chipTag(s,i)}</button>`).join('')}</div>
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${chipBar('sn','data-a="snrace"','Race')}`;
 }
 const miniFace=(c,ck,ord)=>`<span class="mc ${c.s===1||c.s===2?'red':''}" ${ck?`data-ck="${ck}" data-ord="${ord||0}"`:''}>${RN(c.r)}<br>${SU[c.s]}</span>`;
 function gPK(){
@@ -3604,18 +3633,19 @@ function gSL(){
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="sl" ${!s.busy&&canPlay()?'':'disabled'}>Pull the lever</button>`;
 }
 function gWH(){
-  const s=S.g.wh;
+  const s=chipFix(S.g.wh);
   return`<canvas class="pix" data-s="wheel" width="160" height="48" data-max="4" aria-label="Money wheel"></canvas>
   <div class="hist">${s.hist.map(g=>`<i class="m" style="color:${WCOL[g]===C.k?C.s:WCOL[g]}">${WNAME[g][0]}</i>`).join('')}</div>
-  <div class="opts">${['B','G','R','Y'].map(k=>`<button class="opt ${s.pick===k?'on':''}" data-a="whpick" data-v="${k}" ${s.busy?'disabled':''}><span style="color:${WCOL[k]}">${WNAME[k]}</span><small>pays ${WPAY[k]}x · ${WSEG.filter(x=>x===k).length}/30</small></button>`).join('')}</div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="wh" ${!s.busy&&canPlay()?'':'disabled'}>Spin the wheel</button>`;
+  <div class="opts">${['B','G','R','Y'].map(k=>`<button class="opt ${s.bets[k]?'on':''}" data-a="whpick" data-v="${k}" ${s.busy?'disabled':''}><span style="color:${WCOL[k]}">${WNAME[k]}</span><small>pays ${WPAY[k]}x · ${WSEG.filter(x=>x===k).length}/30</small>${chipTag(s,k)}</button>`).join('')}</div>
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${chipBar('wh','data-a="wh"','Spin')}`;
 }
 function gBC(){
-  const s=S.g.bc;
+  const s=chipFix(S.g.bc);
   return`<div class="felt"><div class="hand"><span class="hlab">PLAYER${s.p.length?' · '+btot(s.p):''}</span><div class="cards">${s.p.map((c,i)=>face(c,`bc${s.n}p${i}`,i*2)).join('')||'<p class="ph">Closest to 9 wins</p>'}</div></div>
   <div class="hand"><span class="hlab">BANKER${s.bk.length?' · '+btot(s.bk):''}</span><div class="cards">${s.bk.map((c,i)=>face(c,`bc${s.n}b${i}`,i*2+1)).join('')||'<p class="ph">Tens and faces count as 0</p>'}</div></div></div>
-  <div class="opts" style="grid-template-columns:repeat(3,1fr)">${[['player','Player','2x'],['banker','Banker','1.95x'],['tie','Tie','9x']].map(([k,l,m])=>`<button class="opt ${s.pick===k?'on':''}" data-a="bcpick" data-v="${k}">${l}<small>pays ${m}</small></button>`).join('')}</div>
-  <!--act--><p class="msg" data-after>${s.msg||'&nbsp;'}</p>${betBar(false)}<button class="btn green wide" data-a="bc" ${canPlay()?'':'disabled'}>Deal</button>`;
+  <div class="opts" style="grid-template-columns:repeat(3,1fr)">${['player','tie','banker'].map(k=>`<button class="opt ${s.bets[k]?'on':''}" data-a="bcpick" data-v="${k}">${BC_BETS[k][0]}<small>pays ${BC_BETS[k][1]}</small>${chipTag(s,k)}</button>`).join('')}</div>
+  <div class="opts" style="grid-template-columns:repeat(2,1fr)">${['ppair','bpair'].map(k=>`<button class="opt ${s.bets[k]?'on':''}" data-a="bcpick" data-v="${k}">${BC_BETS[k][0]}<small>first 2 cards pair · ${BC_BETS[k][1]}</small>${chipTag(s,k)}</button>`).join('')}</div>
+  <!--act--><p class="msg" data-after>${s.msg||'&nbsp;'}</p>${chipBar('bc','data-a="bc"','Deal')}`;
 }
 function gCR(){
   const s=S.g.cr,fly=s.phase==='fly';
@@ -3738,7 +3768,7 @@ function showBigConfirm(a,v,i,amt){
   document.body.appendChild(d);const y=d.querySelector('[data-m=yes]');if(y)y.focus();
 }
 const PLAYA={cproll:1,sbplace:1,hl:'start',sc:'buy',dc:'roll',wr:'deal',sbo:'roll',db:'go',bj:'deal',pldrop:1,mn:'start',fl:'go',snrace:1,sl:1,wh:1,bc:1,cr:1,tw:'start',kn:'go',vp:'deal',pg:'start',rlspin:1,pk:'sit'};
-function needsConfirm(a,v){if(UI.bigOK||!M.set.confirmBig||!S||S.over||!(a in PLAYA))return 0;const w=PLAYA[a];if(w!==1&&w!==v)return 0;const amt=a==='rlspin'?rlTotal():clampBet();return amt>=20&&S.cash>0&&amt>=S.cash*.5?amt:0}
+function needsConfirm(a,v){if(UI.bigOK||!M.set.confirmBig||!S||S.over||!(a in PLAYA))return 0;const w=PLAYA[a];if(w!==1&&w!==v)return 0;const amt=a==='rlspin'?rlTotal():CHIPACT[a]?chipTot(chipFix(S.g[CHIPACT[a]])):clampBet();return amt>=20&&S.cash>0&&amt>=S.cash*.5?amt:0}
 function render(){
   if(['street','home','casino','mart','bar'].includes(UI.scene)){UI.room=UI.scene;UI.scene='world'}
   if(['world','game'].includes(UI.scene)&&(!S||S.over))UI.scene='title';
@@ -3834,7 +3864,8 @@ function act(a,v,el){
     case 'rlcancel':UI.rlPick=null;break;
     case 'rlmode':S.g.rl.mode=v;UI.rlPick=null;break;
     case 'rldel':delete S.g.rl.bets[v];break;
-    case 'rlclear':S.g.rl.bets={};UI.rlPick=null;break;
+    case 'rlclear':S.g.rl.bets={};S.g.rl.stack=[];UI.rlPick=null;break;
+    case 'rlundo':{const s=S.g.rl;if(s.busy)return;const x=(s.stack||[]).pop();if(x){s.bets[x[0]]=(s.bets[x[0]]||0)-x[1];if(s.bets[x[0]]<=0)delete s.bets[x[0]];SFX.tick()}UI.rlPick=null;break}
     case 'rldouble':{const s=S.g.rl,t=rlTotal();if(t*2>S.cash||(mod('low')&&t*2>lowCap())){toast('Not enough room to double.');return}for(const k in s.bets)s.bets[k]*=2;break}
     case 'rlspin':rlSpin();return;
     case 'pkmode':UI.pkMode=v;break;
@@ -3844,6 +3875,7 @@ function act(a,v,el){
     case 'cpbet':cpBet(v);return;
     case 'cproll':cpRoll();return;
     case 'cptake':cpTakeDown();return;
+    case 'cpundo':cpUndo();return;
     case 'sbtab':UI.sbTab=v;break;
     case 'sbpick':{const [i,p]=v.split(':');sbPick(+i,p);break}
     case 'sbplace':sbPlace();break;
@@ -3868,7 +3900,7 @@ function act(a,v,el){
     case 'tierinfo':toast(`Every win at ${GAMES[UI.game].n} counts toward its tier, across all your runs: ${TIERS.map((t,i)=>t[0]+' '+tierNeed(UI.game,i)).join(', ')}. Up to ${MAST_DAY} wins per game count each day (${(S.today.mw&&S.today.mw[UI.game])||0} so far today).`);return;
     case 'pkstake':P().stake=+v;{const bb=STAKES[+v][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}break;
     case 'pkread':{const p=P().seats[+v];if(p&&!p.out){const st=PK_STY[p.sk||'pro'];toast(`<b>${p.n}</b> · ${st.n}: ${st.d}`)}return}
-    case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>lowCap())){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};for(const k in lb)s.bets[k]=lb[k]*f;SFX.coin();break}
+    case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>lowCap())){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};s.stack=[];for(const k in lb){s.bets[k]=lb[k]*f;s.stack.push([k,lb[k]*f])}SFX.coin();break}
     case 'betclr':UI.bet=0;break;
     case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
@@ -3884,13 +3916,15 @@ function act(a,v,el){
     case 'pldrop':plDrop();return;
     case 'mn':mnAct(v,el.dataset.i);return;
     case 'fl':flAct(v);return;
-    case 'snpick':S.g.sn.pick=+v;break;
+    case 'snpick':chipAdd('sn',+v);return;
     case 'snrace':snRace();return;
     case 'sl':slSpin();return;
     case 'wh':whSpin();return;
-    case 'whpick':S.g.wh.pick=v;break;
+    case 'whpick':chipAdd('wh',v);return;
     case 'bc':bcPlay();return;
-    case 'bcpick':S.g.bc.pick=v;break;
+    case 'bcpick':chipAdd('bc',v);return;
+    case 'chundo':chipUndo(v);return;
+    case 'chclear':chipClear(v);return;
     case 'cr':crStart();return;
     case 'crcash':crCash();return;
     case 'crauto':S.g.cr.auto=+v;break;
