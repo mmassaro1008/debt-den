@@ -726,7 +726,7 @@ const ACH={
   debt100:['Model Citizen','Pay off 100 debts across all runs.'],
   week:['Three Down','Pay off 3 debts in one run.'],
   month:['Turning Up the Heat','Clear Heat 10 or higher.'],
-  year:['Iron Will','Clear a Heat without a loan or a late strike.'],
+  year:['Iron Will','Clear a Heat without taking a loan.'],
   tourist:['Tourist','Play 12 different games in one run.'],
   items100:['Regular Customer','Buy 100 things at the Mart.'],
   drops:['Lots of Balls','Drop 1,000 Plinko balls across all runs.'],
@@ -796,7 +796,7 @@ const LEGACY={
   rep:{n:'Reputation',d:'+5% Rep from every run per rank.',max:20,base:8},
   vip:{n:'VIP Card',d:'Table minimums 10% lower per rank.',max:3,base:400,heat:5},
   lucky:{n:'Born Lucky',d:'Raises the ceiling on permanent win bonuses by 0.2% per rank.',max:5,base:1500,heat:10},
-  second:{n:'Second Chance',d:'Once per run, a debt you can\u2019t cover rolls over anyway, with no minimum and no late strike.',max:1,base:8000,heat:15},
+  second:{n:'Old Friends',d:'Lucky Lou\u2019s cash and Debt Relief rewards are 50% bigger.',max:1,base:8000,heat:15},
   keep:{n:'Heirloom',d:'Keep your priciest pawn shop item from the run you just finished and start the next run with it.',max:1,base:10000,heat:20}
 };
 const LEG_TOTAL=Object.values(LEGACY).reduce((a,b)=>a+b.max,0);
@@ -951,7 +951,7 @@ function rollMoves(){const tr=S&&mod('trader'),o={},mk=tr?.018+.035*gauss():.007
 const DEBT_FLOOR=.6;const debtMult=()=>Math.max(DEBT_FLOOR,(1-.02*L('credit'))*(sk('talk')?.8:1)*(1-.01*tsum('debtCut')));
 const DEBT_START=[.6,.85,1.3],DEBT_G=1.3;
 function mkDebt(bal){
-  const n=S.debtN++,h=S.heat||0;let a=120*(1+.15*h)*(n<3?DEBT_START[n]:DEBT_START[2]*Math.pow(DEBT_G+.012*h,n-2))*1;
+  const n=S.debtN++,h=S.heat||0;let a=120*(1+.15*h)*(n<3?DEBT_START[n]:DEBT_START[2]*Math.pow(DEBT_G+.009*h,n-2))*1;
   if(bal!=null){const lad=a;a=Math.max(.6*lad,Math.min(2*lad,.5*lad+.4*Math.max(0,bal)))}a*=debtMult();
   const gap=mod('tight')?1:2;const due=Math.max(S.day+gap,(S.lastDue||1)+gap);S.lastDue=due;
   return{id:n,who:CRED[n%CRED.length],amt:r5(a),orig:r5(a),paidAmt:0,due};
@@ -1056,8 +1056,8 @@ const lowCap=()=>Math.max(10,r5(nextDue()*.25));
 const nextDue=()=>{const d=S.debts.filter(d=>!d.loan).sort((a,b)=>a.due-b.due)[0];return d?d.amt:100};
 const QSP={derby:[['derby_win','Win an Ace Derby bet',1]],bj:[['bj_nat','Hit a blackjack',1],['bj_split','Win a split hand at blackjack',1]],roulette:[['rl_inside','Win a split, street, corner or six-line bet at roulette',1]],crash:[['crash3','Cash out of Crash at 3x or higher',1]],mines:[['mines5','Cash out of Mines with 5 or more gems',1]],tower:[['tower4','Cash out of Dragon Tower after 4 or more floors',1]],penguin:[['peng5','Cash out of Penguin Cross after 5 or more lanes',1]],plinko:[['plinko3','Land a 3x or better in Plinko',1]],holdem:[['pk_show','Win a poker hand at showdown',1]],keno:[['keno3','Hit 3 or more Keno numbers',1]],vpoker:[['vp2p','Make two pair or better in Video Poker',1]],slots:[['slots_win','Win on the slots 3 times',3]],snail:[['snail_win','Win a Snail Derby bet',1]],wheel:[['wheel_big','Win a Green, Red or Gold bet on the Money Wheel',1]],baccarat:[['bc_banker','Win a Banker bet at baccarat',1]],flip:[['flip3','Win 3 coin flips in a row',1]]};
 function makeReward(){
-  const cash=r5(Math.max(30,nextDue()*.15));
-  const R=[{t:'cash',v:cash,text:`${fmt(cash)} in cash`},{t:'hot',v:.08,text:'Hot Streak: +8% on every win tomorrow'},{t:'net',v:.04,text:'Safety Net: 4% of every loss refunded tomorrow'},{t:'energy',v:6*ES,text:'+30 energy tomorrow morning'},{t:'relief',v:.1,text:'Debt Relief: your next debt shrinks by 10%'},{t:'tip',v:1,text:'An insider tip on tomorrow’s market'},{t:'charmw',v:2,text:'A Lucky Charm today plus 2x profit on your next win'}];
+  const of=1+.5*L('second'),cash=r5(Math.max(30,nextDue()*.15)*of);
+  const R=[{t:'cash',v:cash,text:`${fmt(cash)} in cash`},{t:'hot',v:.08,text:'Hot Streak: +8% on every win tomorrow'},{t:'net',v:.04,text:'Safety Net: 4% of every loss refunded tomorrow'},{t:'energy',v:6*ES,text:'+30 energy tomorrow morning'},{t:'relief',v:.1*of,text:`Debt Relief: your next debt shrinks by ${Math.round(10*of)}%`},{t:'tip',v:1,text:'An insider tip on tomorrow’s market'},{t:'charmw',v:2,text:'A Lucky Charm today plus 2x profit on your next win'}];
   if(!tipReady()){const f=R.filter(r=>r.t!=='tip');return f[Math.floor(rnd()*f.length)]}
   return R[Math.floor(rnd()*R.length)];
 }
@@ -1188,7 +1188,7 @@ const loanLimit=()=>r5(250*(1+S.paid)*(1+.15*(S.heat||0)));
 function loanAct(a){if(S.debts.some(d=>d.loan)||a<5)return;S.cash+=a;S.usedLoan=true;S.loanN=(S.loanN||0)+1;S.debts.push({id:-S.loanN,who:'Quik Loans',amt:r5(a*(tsum('loanRate')?1.15:1.3)),due:S.day+3,loan:true});toast(`Vinnie counts out ${fmt(a)}. You owe ${fmt(r5(a*1.3))} by day ${S.day+3}.`);SFX.coin();checkCash()}
 function loanPanel(){const act=S.debts.find(d=>d.loan),lim=loanLimit();
   return`<div class="box"><span class="lbl">Quik Loans · Vinnie</span><p>"Need cash fast? 30% fee, due in 3 days. Pay me here or online, I’m not picky. Don’t make me come looking."</p>
-  ${act?`<p class="lose">You owe Vinnie ${fmt(act.amt)} by day ${act.due}. Miss it and the collectors come.</p><div class="g2"><button class="btn green sm" data-a="pay" data-v="${act.id}" ${S.cash>=act.amt?'':'disabled'}>Pay back ${fmt(act.amt)}</button><button class="btn sm" data-a="paypart" data-v="${act.id}" ${S.cash>=1&&S.cash<act.amt?'':'disabled'}>Pay ${fmt(Math.min(Math.floor(S.cash),act.amt))}</button></div>`:`<div class="g3">${[.25,.5,1].map(f=>{const a=r5(lim*f);return`<button class="btn sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}</div><p class="muted">One loan at a time. Your limit grows as you pay off debts.</p>`}</div>`}
+  ${act?`<p class="lose">You owe Vinnie ${fmt(act.amt)} by day ${act.due}. Miss it and the collectors come.</p><div class="g2"><button class="btn green sm" data-a="pay" data-v="${act.id}" ${S.cash>=act.amt?'':'disabled'}>Pay back ${fmt(act.amt)}</button></div>`:`<div class="g3">${[.25,.5,1].map(f=>{const a=r5(lim*f);return`<button class="btn sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}</div><p class="muted">One loan at a time. Your limit grows as you pay off debts.</p>`}</div>`}
 const JOBS=[['flyers','Hand out flyers',1],['dishes','Wash dishes at the bar',2],['dog','Walk Mrs. Fenwick\u2019s dog',3]];const JOB_MAX=4;
 const jobRate=()=>r5(Math.max(5,6*(1+.3*(S.paid||0))*(1+.1*(S.heat||0))*(1+.1*L('xp'))));
 function jobAct(k){const j=JOBS.find(x=>x[0]===k);if(!j)return;const e=j[2],w=S.today.work||0;if(S.energy<e*ES||w+e>JOB_MAX)return;S.energy-=e*ES;S.today.work=w+e;const pay=jobRate()*e;S.cash+=pay;SFX.coin();toast(`${j[1]}: +${fmt(pay)}.`);checkCash()}
@@ -1735,7 +1735,7 @@ function brokeBase(strict=true){
   if(S.cash>=need)return false;
   if(portfolio()>=1)return false;
   if(shopOpen('pawn')&&Object.keys(S.trinkets||{}).length)return false;
-  if(shopOpen('news')&&((S.energy>=ES&&(S.today.work||0)<4)||!S.debts.some(d=>d.due<=S.day&&minRem(d)>0)))return false;
+  if(shopOpen('news')&&((S.energy>=ES&&(S.today.work||0)<4)||!S.debts.some(d=>d.due<=S.day&&!canRoll(d))))return false;
   if(S.quest&&S.quest.done&&!S.quest.claimed)return false;
   if(S.sb&&S.sb.bets&&S.sb.bets.some(b=>b.st==='open'))return false;
   if(S.g&&S.g.cp&&Object.keys(S.g.cp.bets).length)return false;
@@ -2417,7 +2417,7 @@ function vIntro(){
   const st=STORIES[S.story||0];const due=S.debts.slice().sort((a,b)=>a.due-b.due);
   return`<section class="stack intro" style="padding-top:18px;gap:12px"><span class="lbl">Run ${M.runs+1}${S.heat?' · Heat '+S.heat:''}</span><h2 class="px ititle">${st[0]}</h2>
     <canvas class="pix" data-s="intro" data-fill data-max="4" width="160" height="90" aria-label="A past-due notice slides under your door"></canvas>
-    <p class="istory">${st[1]}</p><div class="box dark">${due.map(d=>`<div class="kv"><span>${d.who}</span><b class="lose">${fmt(d.amt)} · day ${d.due}</b></div>`).join('')}</div><p class="muted">Pay off ${DEBTS_PER_HEAT} debts to clear the Heat. Can’t cover one in time? Pay <b style="color:var(--y)">half</b> by its due day and the rest rolls over 2 days with a 25% fee, up to 3 times a run.</p>
+    <p class="istory">${st[1]}</p><div class="box dark">${due.map(d=>`<div class="kv"><span>${d.who}</span><b class="lose">${fmt(d.amt)} · day ${d.due}</b></div>`).join('')}</div><p class="muted">Pay off ${DEBTS_PER_HEAT} debts to clear the Heat. Debts are paid in full by their due day, no exceptions. Sleep with one unpaid and the <b style="color:var(--y)">collectors come</b>.</p>
     <button class="btn green wide" data-a="introskip">Start day 1</button></section>`;
 }
 
@@ -3256,9 +3256,8 @@ function drawPenguin(x){
 
 /* ================= home: debts, stocks, skills, sleep ================= */
 const minRem=d=>Math.max(0,Math.ceil((d.orig||d.amt)*.5)-(d.paidAmt||0));
-const canRoll=d=>(minRem(d)===0&&(S.strikes||0)<3)||(L('second')>0&&!S.secondUsed&&!d.loan);
-function payPart(id){const d=S.debts.find(x=>x.id===id);if(!d)return;const a=Math.min(Math.floor(S.cash),d.amt);if(a<1)return;if(a>=d.amt)return payDebt(id);
-  S.cash-=a;d.amt-=a;d.paidAmt=(d.paidAmt||0)+a;SFX.coin();toast(`Paid ${fmt(a)} to ${d.who}. ${fmt(d.amt)} left.${minRem(d)===0?' Minimum covered.':''}`)}
+const canRoll=d=>false;
+function payPart(){}
 const NAPS=3;
 function napAct(){
   if(!mod('trader')||(S.today.naps||0)>=NAPS)return;S.today.naps=(S.today.naps||0)+1;
@@ -3272,7 +3271,7 @@ function netWorth(){let v=S.cash+portfolio();if(S.g&&S.g.cp)v+=cpTot();if(S.sb&&
 const DEBTS_PER_HEAT=10;
 function checkClear(){if(!S||S.over||S.paid<DEBTS_PER_HEAT||S.debts.length)return;if(RM){runWon();return}setTimeout(()=>{if(S&&!S.over)runWon()},1200)}
 function runWon(){
-  const h=S.heat||0;ach('debt10');if(h>=10)ach('month');if(!S.usedLoan&&!(S.strikes>0))ach('year');
+  const h=S.heat||0;ach('debt10');if(h>=10)ach('month');if(!S.usedLoan)ach('year');
   if(!S.daily){if(h===M.heatMax&&M.heatMax<30)M.heatMax++;queueHeatEnd(h)}
   S.cleared=true;M.clears=(M.clears||0)+1;gameOver('cleared');
 }
@@ -3303,7 +3302,6 @@ function sleep(){
   {const T=S.today||{},ld=Object.assign({w:0,b:0,l:0,s:0,n:0},T.led||{}),stk=Math.round(T.stk||0),profit=dayProfit(T),need=spNeed(),prev=S.lastProfit==null?null:S.lastProfit;
     const earned=profit>=need&&(prev==null||profit>prev);if(earned)S.sp++;
     S.recap={day:S.day,log:(T.log||[]).slice(),led:ld,stk,profit,need,prev,earned,cash0:T.cash0==null?null:T.cash0};S.lastProfit=profit}
-  S.debts.forEach(d=>{if(d.due<=S.day&&canRoll(d)){const sc=!(minRem(d)===0&&(S.strikes||0)<3);d.amt=r5(d.amt*1.25);d.orig=d.amt;d.paidAmt=0;d.due=S.day+3;d.late=(d.late||0)+1;if(sc){S.secondUsed=true;toast('Second Chance: '+d.who+' lets it slide, this once.')}else S.strikes=(S.strikes||0)+1;toast(`${d.who} rolled over: ${fmt(d.amt)} due day ${d.due}.`)}});
   let interest=0;const icap=Math.max(50,nextDue()*.15);if(L('interest')){interest=Math.min(icap,Math.round(S.cash*.005*L('interest')));S.cash+=interest}
   if(trinket('piggy')){const pi=Math.min(icap*.5,Math.round(S.cash*.02));S.cash+=pi;interest+=pi}
   S.day++;S.energy=maxEnergy()+buffV('energy')+tsum('energy');S.today={games:[],buy:{},bar:0,cash0:S.cash};S.charm=false;S.tipK=null;if(sk('insider')||tsum('stockTip'))giveTip(true);{const op=GAME_IDS.filter(g=>S.paid>=gReq(g));S.luckyG=tsum('luckyDay')&&op.length?op[Math.floor(rnd()*op.length)]:null;if(S.luckyG){const lgn=GAMES[S.luckyG].n;setTimeout(()=>toast(`Fortune Compass points to <b>${lgn}</b> today: +30% on wins.`),1400)}}
@@ -3461,7 +3459,7 @@ function vSetup(){
   const mult=(1+.25*st.heat)*modMult(st.mods)*(1+.05*L('rep'));const h=st.heat;
   return topbar('New run','title')+`<div class="box"><span class="lbl">Heat</span>
   <div class="stepper"><button class="chip" style="width:56px" data-a="heat" data-v="-1" ${h<=0?'disabled':''} aria-label="Lower heat">-</button><b>${h}</b><button class="chip" style="width:56px" data-a="heat" data-v="1" ${h>=M.heatMax?'disabled':''} aria-label="Higher heat">+</button></div>
-  <p class="muted">First debt ${fmt(r5(120*DEBT_START[0]*(1+.15*h)*(1-.02*L('credit'))))}, growing slowly at first, then ${Math.round((DEBT_G-1+.012*h)*100)}% bigger each time.${h?` The house keeps ${+(h*.2).toFixed(1)}% of the profit on every win.`:''} Pay off all 10 debts at your highest Heat to unlock the next one. Max Heat 30.</p></div>
+  <p class="muted">First debt ${fmt(r5(120*DEBT_START[0]*(1+.15*h)*(1-.02*L('credit'))))}, growing slowly at first, then ${Math.round((DEBT_G-1+.009*h)*100)}% bigger each time.${h?` The house keeps ${+(h*.2).toFixed(1)}% of the profit on every win.`:''} Pay off all 10 debts at your highest Heat to unlock the next one. Max Heat 30.</p></div>
   <span class="lbl">Contracts (optional)</span>
   <div class="stack" style="gap:6px">${Object.entries(MODS).map(([k,m])=>{const lock=!modOpen(k),on=st.mods.includes(k);return`<button class="node ${on?'own':''}" data-a="modt" data-v="${k}" ${lock?'disabled':''}><h3>${m.n} <span style="color:var(--y)">+${Math.round(m.m*100)}% Rep</span></h3><p>${m.d}${M.modBest[k]?` Best: ${Math.min(M.modBest[k],DEBTS_PER_HEAT)}/${DEBTS_PER_HEAT} debts.`:''}</p><small>${lock?'UNLOCKS AT '+m.rep.toLocaleString()+' LIFETIME REP':on?'SIGNED':'TAP TO SIGN'}</small></button>`}).join('')}</div>
   <div class="box dark"><div class="kv"><span>Rep multiplier</span><b class="px" style="color:var(--y);font-size:12px">${mult.toFixed(2)}x</b></div><p class="muted">Rep at the end of a run = (debts paid x 4, +20 for clearing the Heat) x multiplier.</p></div>
@@ -3517,10 +3515,10 @@ function pcPanel(){
   const tabs=[['debts','Debts'],['town','Town'],['stocks','Stocks'],['skills',`Skills${S.sp?' ('+S.sp+')':''}`],['trophies','Trophies']];
   let body='';
   if(UI.tab==='debts'){
-    const list=S.debts.slice().sort((a,b)=>a.due-b.due).map(d=>{const left=d.due-S.day,mr=minRem(d),full=S.cash>=d.amt,part=Math.min(Math.floor(S.cash),d.amt);
-      return`<div class="row ${left<=0?'hot':''}"><h3>${d.who}${d.late?` <span class="lose">LATE x${d.late}</span>`:''}</h3><p>${fmt(d.amt)} left · ${left<=0?'<span class="lose">due today</span>':left===1?'due tomorrow':`due day ${d.due}`}<br>${mr>0?`Pay ${fmt(mr)} more to avoid the collectors`:'<span class="win">Minimum paid. The rest can roll over.</span>'}${S.ext>0?`<br><button class="linkb" data-a="ext" data-v="${d.id}">Extend 2 days (${S.ext} left)</button>`:''}</p><div class="paycol">${full?`<button class="btn green sm" data-a="pay" data-v="${d.id}">Pay ${fmt(d.amt)}</button>`:`<button class="btn sm" data-a="paypart" data-v="${d.id}" ${part>=1?'':'disabled'}>Pay ${fmt(part)}</button>`}</div></div>`}).join('')+``;
+    const list=S.debts.slice().sort((a,b)=>a.due-b.due).map(d=>{const left=d.due-S.day,full=S.cash>=d.amt;
+      return`<div class="row ${left<=0?'hot':''}"><h3>${d.who}${d.late?` <span class="lose">LATE x${d.late}</span>`:''}</h3><p>${fmt(d.amt)} left · ${left<=0?'<span class="lose">due today</span>':left===1?'due tomorrow':`due day ${d.due}`}<br><span class="lose">Pay in full by day ${d.due} or the collectors come.</span>${S.ext>0?`<br><button class="linkb" data-a="ext" data-v="${d.id}">Extend 2 days (${S.ext} left)</button>`:''}</p><div class="paycol">${full?`<button class="btn green sm" data-a="pay" data-v="${d.id}">Pay ${fmt(d.amt)}</button>`:`<button class="btn sm" disabled>Need ${fmt(d.amt-Math.floor(S.cash))} more</button>`}</div></div>`}).join('')+``;
     const nextG=GAME_IDS.filter(g=>gReq(g)>S.paid).sort((a,b)=>gReq(a)-gReq(b))[0];
-    body=`<div class="box rollbox"><span class="lbl">Short on cash? Roll it over</span><p>Pay <b>half</b> of a debt by its due day and the rest <b>rolls over</b> when you sleep: due 2 days later with a 25% late fee. You get <b>3 late strikes</b> per run (${S.strikes||0}/3 used). Pay less than half and the collectors come.</p></div><p class="muted">Clear all ${DEBTS_PER_HEAT} debts to clear the Heat. Each paid debt opens new things around town and brings the next debt. Debts paid: <b style="color:var(--y)">${S.paid}/${DEBTS_PER_HEAT}</b>.</p>${list}
+    body=`<div class="box rollbox"><span class="lbl">No extensions, no late fees</span><p>Every debt is paid <b>in full</b> by its due day. Go to sleep with a debt due and unpaid and the <b>collectors come</b>: the run is over. Plan your bets around the next due date.</p></div><p class="muted">Clear all ${DEBTS_PER_HEAT} debts to clear the Heat. Each paid debt opens new things around town and brings the next debt. Debts paid: <b style="color:var(--y)">${S.paid}/${DEBTS_PER_HEAT}</b>.</p>${list}
     <div class="kv"><span class="muted">Debts paid this run</span><b>${S.paid}</b></div><p class="muted">This run’s casino lineup is shuffled. Open now: ${GAME_IDS.filter(g=>gReq(g)<=S.paid).map(g=>GAMES[g].n).join(', ')}.</p>
     ${nextG?`<p class="muted">Next unlock: <span style="color:var(--y)">${GAMES[nextG].n}</span> at ${gReq(nextG)} debts paid.${!S.martOpen&&S.paid<3?' The Mart’s lease opens up at 3.':''}</p>`:''}
     ${brokeBase(false)?`<div class="box collpc"><span class="lbl">Out of money</span><p>${loanAvail()?'You can’t cover any table. Borrow from Vinnie, or end the run on your terms.':'You can’t cover any table and nobody will lend to you.'}</p>
@@ -3551,8 +3549,8 @@ function pcPanel(){
 }
 function bedPanel(){
   const dueD=S.debts.filter(d=>d.due<=S.day),bad=dueD.filter(d=>!canRoll(d)),roll=dueD.filter(d=>canRoll(d)),dueNow=bad.length>0;
-  if(!dueNow&&roll.length&&UI.confirm!=='sleep')return`<div class="box"><p><span style="color:var(--y)">${roll.map(d=>d.who).join(', ')} ${roll.length>1?'are':'is'} due today.</span> You paid the minimum, so the rest rolls over 2 days with a 25% late fee. That uses a late strike (${(S.strikes||0)+roll.length} of 3).</p><button class="btn wide" data-a="sleep">Sleep and roll it over · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
-  if(UI.confirm==='sleep')return`<div class="confirm"><p>${bad.map(d=>d.who).join(', ')} ${bad.length>1?'are':'is'} due today and ${(S.strikes||0)>=3?'you\u2019re out of late strikes':'you haven\u2019t paid at least half'}. If you sleep now, the collectors come and the run is over.</p><div class="g2"><button class="btn red" data-a="sleepyes">Sleep anyway</button><button class="btn dim" data-a="cancel">Stay up</button></div></div>`;
+  if(!dueNow&&roll.length&&UI.confirm!=='sleep')return`<div class="box"><p><span style="color:var(--y)">${roll.map(d=>d.who).join(', ')} ${roll.length>1?'are':'is'} due today.</span> If you sleep, it rolls over 2 days with a 25% late fee. That uses a late strike (${(S.strikes||0)+roll.length} of 3).</p><button class="btn wide" data-a="sleep">Sleep and roll it over · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
+  if(UI.confirm==='sleep')return`<div class="confirm"><p>${bad.map(d=>d.who).join(', ')} ${bad.length>1?'are':'is'} due today and you can\u2019t cover it. If you sleep now, the collectors come and the run is over.</p><div class="g2"><button class="btn red" data-a="sleepyes">Sleep anyway</button><button class="btn dim" data-a="cancel">Stay up</button></div></div>`;
   return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills and stock prices move overnight.'}</p>${napBtn()}<button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
 }
 const leaseCost=()=>r5(150*(1+.15*(S.heat||0)));
@@ -3766,7 +3764,7 @@ function vOver(){
 function vTrophies(){return topbar('Trophies','title')+`<p class="muted">${trophyCount()} of ${trophyTotal()} unlocked.</p>`+trophyView()}
 function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">THE DEAL.</b> You start with $100 and two debts. Each one has a due day. Pay it at your home computer before you sleep on that day, or the collectors end your run.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">DEBTS GROW.</b> Paying a debt brings in a new one, due a couple of days later, along with the next chapter of your story. Each new debt is sized from the debt ladder and your balance when you pay (cash, stocks, chips on the table and open bets): the more you\u2019re holding, the more they want, between 60% and 200% of the ladder amount. Every Heat tier has its own 30-chapter storyline, with a cutscene showing how each debt happened. Your place in each storyline carries over between runs. Clearing a Heat (all 10 debts) for the first time plays its ending, finishing a storyline plays its finale, and clearing Heat 30 plays something special. Can\u2019t pay it all? Pay at least half by the due day and the rest rolls over 2 days with a 25% late fee. You get 3 late strikes per run.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">DEBTS GROW.</b> Paying a debt brings in a new one, due a couple of days later, along with the next chapter of your story. Each new debt is sized from the debt ladder and your balance when you pay (cash, stocks, chips on the table and open bets): the more you\u2019re holding, the more they want, between 60% and 200% of the ladder amount. Every Heat tier has its own 30-chapter storyline, with a cutscene showing how each debt happened. Your place in each storyline carries over between runs. Clearing a Heat (all 10 debts) for the first time plays its ending, finishing a storyline plays its finale, and clearing Heat 30 plays something special. Debts are paid in full, never in pieces, and never late. Sleep with a debt due and unpaid and the collectors come.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BUS.</b> Bus stops outside your home and the casino skip the long walk. The bus doesn\u2019t stop at the park, so check in with Lucky Lou first. From Heat 3, the newspaper box lists side jobs that pay for energy.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">ENERGY.</b> You get ${maxEnergy()} energy a day (50 to start). Longer games cost more per round: ${['holdem','slots','flip','baccarat','roulette','crash','snail','bj','mines','tower','hilo'].map(g=>GAMES[g].n+' '+ecost(g)).join(', ')}. Craps costs ${ECOST.craps} per come-out, Plinko ${ECOST.plinko} per session, a sports slip ${ECOST.sports} and a Sit & Go ${SNG_E}. Every game shows its cost at the top. Sleep to refill, or buy snacks at the Mart.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">SKILLS.</b> Skill points are earned overnight: make a profit of at least 10% of your next debt, and more than the day before, and you get one. Spend them on more energy, bigger wins, cheaper shopping or smarter play. They’re rare, but they hit hard. After you sleep, the ledger charts your day: what you won, what bonuses added, what you lost and what bonuses saved.</p>
@@ -3903,7 +3901,6 @@ function act(a,v,el){
     case 'wipe':{const t=$('#resetin');if(!t||t.value.trim().toUpperCase()!=='RESET'){toast('Type RESET in the box to confirm.');return}try{localStorage.removeItem(KEY)}catch(e){}toast('Everything erased. Restarting...');setTimeout(()=>location.reload(),600);return}
     case 'tab':UI.tab=v;UI.confirm=null;break;
     case 'pay':payDebt(+v);save();if(startDebtScene())return;break;
-    case 'paypart':payPart(+v);save();if(startDebtScene())return;break;
     case 'cutok':endDebtScene();return;
     case 'bankrupt':UI.confirm='bankrupt';break;
     case 'bkyes':gameOver('bankrupt');return;
