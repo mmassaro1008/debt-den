@@ -829,7 +829,6 @@ const TT=[
   ['paid','Good for It','Pay off {t} debts in total.',()=>M.debts,[25,250,2500,25000]],
   ['heat','Hot Seat','Unlock Heat {t}.',()=>M.heatMax,[5,10,15,20,30]],
   ['lvl','Experienced','Reach player level {t}.',()=>M.lvl,[10,25,50,100,250]],
-  ['streak','Daily Grind','Play the Daily Hustle {t} days in a row.',()=>M.daily.bestStreak,[3,7,30,100,365]],
   ['rep','Legend','Earn {t} Rep in total.',()=>M.repTotal,[100,1000,10000,100000,1000000]],
   ['legacy','Self-Made','Buy {t} Legacy ranks.',()=>Object.values(M.legacy).reduce((a,b)=>a+b,0),[10,40,80,LEG_TOTAL]],
   ['quests','Lou\u2019s Right Hand','Complete {t} daily quests.',()=>M.quests||0,[5,25,100,365]],
@@ -3271,7 +3270,7 @@ function vTitle(){
   <div class="stack">
     ${live?`<button class="btn green wide" data-a="continue">Continue · Day ${S.day}${S.heat?' · Heat '+S.heat:''}</button>`:''}
     <button class="btn ${live?'dim':''} wide" data-a="new">New run</button>
-    <button class="btn blue wide" data-a="daily">Daily Hustle${db?` · best day ${db}`:''}<br><span style="font-family:var(--vt);font-size:17px;text-transform:none">Today: ${dc.mods.map(k=>MODS[k].n).join(' + ')}, Heat 2, 1.5x Rep</span></button>
+
     <div class="g3"><button class="btn" data-a="nav" data-v="legacy">Legacy</button><button class="btn" data-a="nav" data-v="trophies">Trophies</button><button class="btn" data-a="nav" data-v="stats">Stats</button></div>
     <div class="g2"><button class="btn dim" data-a="nav" data-v="how">How to play</button><button class="btn dim" data-a="settings">Settings</button></div>
   </div>
@@ -3323,7 +3322,7 @@ function vWorld(){
   <canvas class="pix tap world" data-s="world" data-fill data-anim width="160" height="90" aria-label="${ROOM_NAMES[UI.room]}"></canvas>
   <div class="pad"><button class="padb" data-move="-1" aria-label="Walk left">&lt;</button><button class="btn act" id="actbtn" data-a="interact"><span id="prompt">Walk up to something</span></button><button class="padb" data-move="1" aria-label="Walk right">&gt;</button></div>
   ${tired&&UI.room!=='home'&&!UI.panel?`<p class="note">You’re out of energy. Head home to sleep${S.martOpen?', or grab a Volt Energy at the Mart':''}.</p>`:''}
-  ${UI.room==='street'&&!UI.panel&&(S.mods.length||S.heat)?`<p class="muted">Heat ${S.heat}${S.mods.length?' · '+S.mods.map(k=>MODS[k].n).join(', '):''}${S.daily?' · Daily Hustle':''}</p>`:''}
+  ${UI.room==='street'&&!UI.panel&&(S.mods.length||S.heat)?`<p class="muted">Heat ${S.heat}${S.mods.length?' · '+S.mods.map(k=>MODS[k].n).join(', '):''}</p>`:''}
   <div id="panel" class="stack">${panelHTML()}</div>`;
 }
 function lineupCard(){const now=GAME_IDS.filter(g=>gReq(g)<=S.paid),pins=passOn(),next=GAME_IDS.filter(g=>gReq(g)>S.paid).sort((a,b)=>gReq(a)-gReq(b)).slice(0,4);
@@ -3604,7 +3603,6 @@ function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">REP &amp; LEGACY.</b> Every run pays Rep when it ends. Leveling up and trophy ladders pay Rep too. Spend it on permanent Legacy upgrades and wardrobe items.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">HEAT.</b> Reach day 15 at your highest Heat to unlock the next level, up to 30. Higher Heat means bigger debts and more Rep.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">CONTRACTS.</b> Optional rules that make a run harder for more Rep. New ones unlock as you level up.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">DAILY HUSTLE.</b> One set of contracts per day, the same for everyone. Play it on back-to-back days to build a streak.</p>
   <p class="muted">Play money only. Progress saves on this device.</p><span class="lbl">Game guides</span><p class="muted">Rules and payouts for every game. You can also open these from the top of any game screen.</p>${GAME_IDS.map(g=>`<details class="gdet"><summary>${GAMES[g].n}</summary>${guideHTML(g)}</details>`).join('')}</div>`}
 
 function vSettings(){
