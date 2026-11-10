@@ -245,6 +245,19 @@ canvas.world{touch-action:none;-webkit-user-select:none;user-select:none}
 .mcs{display:flex;gap:2px;flex:none}
 .mc{width:20px;height:28px;background:var(--w);color:var(--k);border:2px solid var(--k);font-family:var(--px);font-size:7px;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .mc.red{color:var(--r)}
+.dbt{display:grid;grid-template-columns:18px repeat(8,1fr) 24px;gap:2px;align-items:center}
+.dbc{height:32px;display:grid;place-items:center;background:rgba(0,0,0,.16)}
+.dbc.gate{background:rgba(0,0,0,.35)}
+.dbc.fin{background:repeating-conic-gradient(rgba(255,255,255,.35) 0 25%,rgba(0,0,0,.35) 0 50%) 0 0/8px 8px}
+.dbl{font-family:var(--vt);font-size:20px;text-align:center;color:var(--w)}
+.dbl.me{color:var(--y)}
+.dbp{font-family:var(--px);font-size:7px;color:var(--y)}
+.dbh.hit{background:var(--o);animation:dbhit .4s steps(2) 2}
+.dbh.won{box-shadow:0 0 0 2px var(--y)}
+@keyframes dbhit{50%{transform:translateX(-3px)}}
+.dbdeck{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:var(--vt);font-size:18px;color:var(--w)}
+.dbdeck span:nth-child(2){flex:1}
+.dbdeck small{font-family:var(--px);font-size:7px;color:var(--s)}
 .mb{display:block;width:20px;height:28px;border:2px solid var(--w);background:repeating-conic-gradient(var(--cb1,var(--r)) 0 25%,var(--cb2,var(--p)) 0 50%) 0 0/6px 6px}
 .hand.cur{outline:3px dashed var(--y);outline-offset:4px}
 .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--k);border:3px solid var(--y);padding:8px}
@@ -642,13 +655,15 @@ const GAMES={
   scratch:{n:'Scratchers',s:'Match three, win up to 50x.',sign:'SCRATCH',req:14},
   dice:{n:'Dice',s:'Pick your odds, roll 1 to 100.',sign:'DICE',req:16},
   war:{n:'Casino War',s:'High card wins. Ties mean war.',sign:'WAR',req:18},
-  sicbo:{n:'Sic Bo',s:'Three dice. Triples pay 31x.',sign:'SIC BO',req:20}
+  sicbo:{n:'Sic Bo',s:'Three dice. Triples pay 31x.',sign:'SIC BO',req:20},
+  derby:{n:'Ace Derby',s:'Four aces race. Hidden track cards knock them back.',sign:'DERBY',req:22}
 };
 const GAME_IDS=Object.keys(GAMES);
 const DAY1_SLOTS=GAME_IDS.filter(g=>GAMES[g].req===0).length;
 const passCost=g=>20+5*GAMES[g].req;
 const passOn=()=>GAME_IDS.filter(g=>M.pass&&M.pass.on&&M.pass.on[g]&&M.pass.own[g]);
-function rollReqs(){const ladder=GAME_IDS.map(g=>GAMES[g].req).sort((a,b)=>a-b);const pins=passOn().slice(0,DAY1_SLOTS);const ids=GAME_IDS.filter(g=>!pins.includes(g));for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}const o={};pins.concat(ids).forEach((g,i)=>o[g]=ladder[i]);return o}
+function rollReqs(){const ladder=GAME_IDS.map(g=>GAMES[g].req).sort((a,b)=>a-b);const pins=passOn().slice(0,DAY1_SLOTS);const ids=GAME_IDS.filter(g=>!pins.includes(g));for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}const o={};pins.concat(ids).forEach((g,i)=>o[g]=ladder[i]);if(!CLASSICS.some(g=>o[g]===0)){const c=CLASSICS[Math.floor(Math.random()*CLASSICS.length)];let sw=ids.filter(g=>o[g]===0);if(!sw.length)sw=pins.filter(g=>o[g]===0);const t=sw[Math.floor(Math.random()*sw.length)];[o[c],o[t]]=[o[t],o[c]]}return o}
+const CLASSICS=['bj','roulette','craps','baccarat'];
 const gReq=g=>S&&S.req&&S.req[g]!=null?S.req[g]:GAMES[g].req;
 const CRED=['Landlord','Uncle Vic','Cousin Ray','Pawn King','Mrs. Fenwick','Big Tony','1st Pixel Bank','Loan-O-Matic','The Twins','Mr. Gold','Dentist','Gus’s Brother'];
 const MART={
@@ -744,6 +759,7 @@ const ACH={
   dice10:['Long Shot','Win a dice roll at 10% odds or worse.'],
   war:['Declare War','Win or tie a war at Casino War.'],
   triple:['Triple Threat','Hit any triple at Sic Bo.'],
+  derby:['Photo Finish','Win an Ace Derby race after your horse got knocked back.'],
   wish:['Wish Granted','Get a lucky wish from the fountain.'],
   tourwin:['Final Table','Win a poker tournament.'],
   tourcash:['In the Money','Finish in the top 3 of a poker tournament.']
@@ -894,11 +910,12 @@ function newG(){return{
   sc:{phase:'bet',bet:0,cells:[],rev:[],win:null,msg:'',k:0},
   dc:{target:50,mode:'under',busy:false,msg:'',last:null,hist:[]},
   wr:{phase:'bet',bet:0,me:[],dl:[],msg:'',k:0},
-  sbo:{pick:'big',dice:[2,4,6],busy:false,msg:'',hist:[],k:0}
+  sbo:{pick:'big',dice:[2,4,6],busy:false,msg:'',hist:[],k:0},
+  db:{pick:1,type:'win',busy:false,pos:[0,0,0,0],track:[],rev:[],fin:[],last:null,left:42,msg:'',tick:'',hist:[],k:0,flash:-1}
 }}
 const sk=k=>S&&S.skills[k]?1:0;
 const ES=5;
-const ECOST={holdem:1,bj:2,roulette:2,craps:4,sports:3,plinko:4,mines:2,flip:1,snail:2,slots:1,wheel:1,baccarat:1,crash:2,tower:2,keno:1,vpoker:2,penguin:2,hilo:2,scratch:2,dice:1,war:1,sicbo:1};
+const ECOST={holdem:1,bj:2,roulette:2,craps:4,sports:3,plinko:4,mines:2,flip:1,snail:2,slots:1,wheel:1,baccarat:1,crash:2,tower:2,keno:1,vpoker:2,penguin:2,hilo:2,scratch:2,dice:1,war:1,sicbo:1,derby:1};
 const SNG_E=25;
 const ecost=g=>ECOST[g]||1;
 const ecostLabel=g=>g==='holdem'?'1 per hand':g==='plinko'?ECOST.plinko+' per session':g==='craps'?ECOST.craps+' per come-out':g==='sports'?ECOST.sports+' per slip':ecost(g)+' per round';
@@ -923,7 +940,7 @@ function newRun(cfg){
   if(cfg.daily){const d=M.daily;if(d.last!==cfg.daily){const y=new Date();y.setDate(y.getDate()-1);d.streak=d.last===dstr(y)?d.streak+1:1;d.last=cfg.daily;d.bestStreak=Math.max(d.bestStreak,d.streak);checkTiers()}}
   UI.bet=10;UI.tab='debts';UI.confirm=null;UI.scene='world';UI.room='home';UI.wx={street:30,home:70,casino:32,mart:32,bar:32};UI.panel=null;S.story=Math.floor(Math.random()*STORIES.length);UI.scene='intro';UI.introP=0;save();render();introStart();
 }
-if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn'].forEach(k=>S.g[k].busy=false);if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
+if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn','db'].forEach(k=>S.g[k].busy=false);if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
 
 /* ================= toasts & achievements ================= */
 function note(h){if(S&&UI.scene==='game'){UI.inbox=(UI.inbox||[]).concat([h]);return}toast(h)}
@@ -957,7 +974,9 @@ function rollCash(delay){
   requestAnimationFrame(step);
 }
 function queueFX(net,stake,pool){PENDING_FX={net,stake,pool}}
-function flushFX(delay){if(!PENDING_FX)return;const f=PENDING_FX;PENDING_FX=null;setTimeout(()=>playFX(f),delay)}
+let FX_TIMER=null;
+function flushFX(delay){if(!PENDING_FX)return;const f=PENDING_FX;PENDING_FX=null;clearTimeout(FX_TIMER);FX_TIMER=setTimeout(()=>{FX_TIMER=null;playFX(f)},delay)}
+function cancelFX(){if(FX_TIMER){clearTimeout(FX_TIMER);FX_TIMER=null}}
 function playFX({net,stake,pool}){
   if(!net)return;
   if(net>0){const ratio=stake>0?net/stake:0,rel=pool>0?net/pool:0,tier=(ratio>=20&&rel>=.25)||rel>=1.5?3:ratio>=4||rel>=.4?2:1;winFX(net,tier)}
@@ -1009,7 +1028,7 @@ const buffV=t=>S&&S.buffs?S.buffs.filter(b=>b.t===t&&b.day===S.day).reduce((a,b)
 const trinket=k=>S&&S.trinkets&&S.trinkets[k]?1:0;
 const lowCap=()=>Math.max(10,r5(nextDue()*.25));
 const nextDue=()=>{const d=S.debts.filter(d=>!d.loan).sort((a,b)=>a.due-b.due)[0];return d?d.amt:100};
-const QSP={bj:[['bj_nat','Hit a blackjack',1],['bj_split','Win a split hand at blackjack',1]],roulette:[['rl_inside','Win a split, street, corner or six-line bet at roulette',1]],crash:[['crash3','Cash out of Crash at 3x or higher',1]],mines:[['mines5','Cash out of Mines with 5 or more gems',1]],tower:[['tower4','Cash out of Dragon Tower after 4 or more floors',1]],penguin:[['peng5','Cash out of Penguin Cross after 5 or more lanes',1]],plinko:[['plinko3','Land a 3x or better in Plinko',1]],holdem:[['pk_show','Win a poker hand at showdown',1]],keno:[['keno3','Hit 3 or more Keno numbers',1]],vpoker:[['vp2p','Make two pair or better in Video Poker',1]],slots:[['slots_win','Win on the slots 3 times',3]],snail:[['snail_win','Win a Snail Derby bet',1]],wheel:[['wheel_big','Win a Green, Red or Gold bet on the Money Wheel',1]],baccarat:[['bc_banker','Win a Banker bet at baccarat',1]],flip:[['flip3','Win 3 coin flips in a row',1]]};
+const QSP={derby:[['derby_win','Win an Ace Derby bet',1]],bj:[['bj_nat','Hit a blackjack',1],['bj_split','Win a split hand at blackjack',1]],roulette:[['rl_inside','Win a split, street, corner or six-line bet at roulette',1]],crash:[['crash3','Cash out of Crash at 3x or higher',1]],mines:[['mines5','Cash out of Mines with 5 or more gems',1]],tower:[['tower4','Cash out of Dragon Tower after 4 or more floors',1]],penguin:[['peng5','Cash out of Penguin Cross after 5 or more lanes',1]],plinko:[['plinko3','Land a 3x or better in Plinko',1]],holdem:[['pk_show','Win a poker hand at showdown',1]],keno:[['keno3','Hit 3 or more Keno numbers',1]],vpoker:[['vp2p','Make two pair or better in Video Poker',1]],slots:[['slots_win','Win on the slots 3 times',3]],snail:[['snail_win','Win a Snail Derby bet',1]],wheel:[['wheel_big','Win a Green, Red or Gold bet on the Money Wheel',1]],baccarat:[['bc_banker','Win a Banker bet at baccarat',1]],flip:[['flip3','Win 3 coin flips in a row',1]]};
 function makeReward(){
   const cash=r5(Math.max(40,nextDue()*.3));
   const R=[{t:'cash',v:cash,text:`${fmt(cash)} in cash`},{t:'hot',v:.2,text:'Hot Streak: +20% on every win tomorrow'},{t:'net',v:.25,text:'Safety Net: 25% of every loss refunded tomorrow'},{t:'energy',v:6*ES,text:'+30 energy tomorrow morning'},{t:'sp',v:1,text:'+1 skill point'},{t:'relief',v:.2,text:'Debt Relief: your next debt shrinks by 20%'},{t:'tip',v:1,text:'An insider tip on tomorrow’s market'},{t:'charmw',v:2,text:'A Lucky Charm today plus 2x profit on your next win'}];
@@ -1184,8 +1203,8 @@ function drawStreetExtra(x){
 /* ================= betting core ================= */
 function clampBet(){if(!S)return 0;const c=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));let v=Math.round(UI.bet)||0;const mn=curMin();if(v>0&&v<mn)v=mn;return v<=0?0:Math.min(v,c)}
 function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>=1&&clampBet()>=Math.max(1,curMin())}
-function busy(){if(!S)return false;const g=S.g;return g.bj.phase==='play'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||!!SBW}
-function placeBet(game,b){
+function busy(){if(!S)return false;const g=S.g;return g.bj.phase==='play'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||(g.db&&g.db.busy)||!!SBW}
+function placeBet(game,b){cancelFX();
   S.cash-=b;if(game==='plinko'){if(!S.g.pl.session){S.energy-=ecost('plinko');S.g.pl.session=true}}else S.energy-=ecost(game);const st=gs(game);st.r++;st.bet+=b;addXP(2);checkTiers();
   if(!S.today.games.includes(game)){S.today.games.push(game);if(S.today.games.length>=7)ach('tourist')}
   S.lastBet=S.lastBet||{};S.lastBet[game]=b;questEvent('play',{game});
@@ -1348,6 +1367,7 @@ function drawStation(x,g,cx){
     case 'scratch':px(x,C.y,cx-12,30,24,36);px(x,C.o,cx-12,30,24,3);for(let i=0;i<3;i++)for(let j=0;j<3;j++)px(x,(i+j+frame)%5?C.s:C.y,cx-8+i*6,37+j*7,5,5);px(x,C.k,cx-12,62,24,4);break;
     case 'dice':table({shirt:C.k,bow:true,hair:C.o});px(x,C.w,cx-10,54,6,6);px(x,C.k,cx-8,56,2,2);px(x,C.w,cx+2,55,6,6);px(x,C.k,cx+3,56,1,1);px(x,C.k,cx+6,59,1,1);break;
     case 'war':table({shirt:C.r,bow:true,hair:C.k});px(x,C.w,cx-10,54,6,8);ptxt(x,'A',cx-9,55,C.k);px(x,C.w,cx+3,54,6,8);ptxt(x,'A',cx+4,55,C.r);px(x,C.s,cx-1,52,2,10);break;
+    case 'derby':px(x,'#1f6b46',cx-18,46,36,20);px(x,C.w,cx+12,46,2,20);for(let i=0;i<4;i++){px(x,'#2a8a5a',cx-18,50+i*4,36,1);const hp=cx-16+((frame*(i+2)+i*7)%26);px(x,i===1||i===2?C.r:C.k,hp,47+i*4,4,3);px(x,C.w,hp+3,47+i*4,1,1)}px(x,C.w,cx-17,40,4,5);px(x,C.w,cx-11,40,4,5);px(x,C.w,cx-5,40,4,5);px(x,C.r,cx-10,41,2,2);break;
     case 'sicbo':table({shirt:C.y,bow:true,hair:C.k});px(x,C.r,cx-8,53,16,3);px(x,C.y,cx-6,51,12,2);[[cx-9,57],[cx-3,58],[cx+3,57]].forEach(([a,b])=>{px(x,C.w,a,b,5,5);px(x,C.r,a+2,b+2,1,1)});break;
   }
   const t=G.sign,tw=pw(t);px(x,C.k,cx-tw/2-2,8,tw+4,9);ptxt(x,t,Math.round(cx-tw/2),10,!open?C.d:unl?C.y:C.s);{const gt=tierOf(gWins(g),g);if(gt>=0){const tc=TIERS[gt][2],gx=Math.round(cx-2);px(x,C.k,gx-2,1,9,7);px(x,tc,gx,2,5,1);px(x,tc,gx-1,3,7,2);px(x,tc,gx,5,5,1);px(x,tc,gx+1,6,3,1);if(gt===5&&frame%2)px(x,C.w,gx+1,3,1,1)}}
@@ -1653,8 +1673,8 @@ function mnAct(v,i){
 }
 
 /* ================= table minimums ================= */
-const TMIN={bj:5,roulette:5,plinko:5,mines:2,flip:1,snail:2,sports:5,slots:2,wheel:5,baccarat:10,crash:5,tower:5,keno:5,vpoker:5,penguin:5,hilo:10,scratch:10,dice:10,war:15,sicbo:15};
-const LVLMIN={0:2,1:4,2:6,3:8,4:10,5:12,6:15,8:20,10:25,12:30,14:40,16:50,18:60,20:75};
+const TMIN={bj:5,roulette:5,plinko:5,mines:2,flip:1,snail:2,sports:5,slots:2,wheel:5,baccarat:10,crash:5,tower:5,keno:5,vpoker:5,penguin:5,hilo:10,scratch:10,dice:10,war:15,sicbo:15,derby:15};
+const LVLMIN={0:2,1:4,2:6,3:8,4:10,5:12,6:15,8:20,10:25,12:30,14:40,16:50,18:60,20:75,22:90};
 function tableMin(g){if(!S||g==='holdem'||!GAMES[g])return 0;const r=gReq(g);const base=LVLMIN[r]!=null?LVLMIN[r]:Math.round(2+r*3.5);return Math.max(1,Math.round(base*(1+.1*(S.paid||0))*(1+.1*(S.heat||0))*(1-.01*tsum('minCut'))))}
 const curMin=()=>UI.scene==='game'&&UI.game&&UI.game!=='holdem'?tableMin(UI.game):0;
 /* ================= collectors ================= */
@@ -2180,6 +2200,47 @@ function gSBO(){
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="sbo" data-v="roll" ${!s.busy&&canPlay()?'':'disabled'}>Roll the dice</button>`;
 }
 
+/* ================= ace derby ================= */
+const DB_TR=6,DB_FIN=7,DB_PAY={win:3.8,place:1.9},DB_NM=['Spades','Hearts','Diamonds','Clubs'];
+function dbRace(){const deck=[];for(let su=0;su<4;su++)for(let r=2;r<=13;r++)deck.push({r,s:su});for(let i=deck.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}
+  const track=deck.splice(0,DB_TR),pos=[0,0,0,0],rev=Array(DB_TR).fill(false),fin=[],ev=[];
+  while(fin.length<2&&deck.length){const c=deck.shift(),e={c,bk:[],left:deck.length};
+    if(!fin.includes(c.s)){pos[c.s]++;if(pos[c.s]>=DB_FIN){fin.push(c.s);e.done=c.s}
+      else for(let k=0;k<DB_TR;k++){if(rev[k])continue;const run=pos.filter((p,i)=>!fin.includes(i));if(Math.min(...run)>k){rev[k]=true;const t=track[k].s,mv=!fin.includes(t)&&pos[t]>0;if(mv)pos[t]--;e.bk.push({k,s:t,mv})}}}
+    e.pos=pos.slice();e.rev=rev.slice();e.fin=fin.slice();ev.push(e)}
+  if(fin.length<2){[0,1,2,3].filter(i=>!fin.includes(i)).sort((a,b)=>pos[b]-pos[a]).forEach(i=>{if(fin.length<2)fin.push(i)});ev[ev.length-1].fin=fin.slice()}
+  return{track,ev,fin}}
+function dbBoard(s){const lane=i=>{const p=s.pos[i],me=i===s.pick,done=s.fin.indexOf(i);
+    return`<span class="dbl ${me?'me':''}">${SU[i]}</span>`+Array.from({length:DB_FIN+1},(_,j)=>`<span class="dbc ${j===0?'gate':''} ${j===DB_FIN?'fin':''}">${j===p?`<span class="mc dbh ${i===1||i===2?'red':''} ${s.flash===i?'hit':''} ${done>=0?'won':''}">A<br>${SU[i]}</span>`:''}</span>`).join('')+`<span class="dbp">${done===0?'1st':done===1?'2nd':''}</span>`};
+  const trk=`<span class="dbl"></span><span class="dbc gate"></span>`+Array.from({length:DB_TR},(_,k)=>`<span class="dbc">${s.track[k]&&s.rev[k]?miniFace(s.track[k]):'<span class="mb"></span>'}</span>`).join('')+`<span class="dbc fin"></span><span class="dbp"></span>`;
+  return`<div class="dbt">${trk}${[0,1,2,3].map(lane).join('')}</div><div class="dbdeck">${s.last?miniFace(s.last):'<span class="mb"></span>'}<span>${s.tick||'Pick an ace and start the race.'}</span><small>${s.left} left</small></div>`}
+function dbAct(v){
+  const s=S.g.db;if(s.busy)return;
+  if(/^s[0-3]$/.test(v)){s.pick=+v[1];save();render();return}
+  if(v==='win'||v==='place'){s.type=v;save();render();return}
+  if(v!=='go'||!canPlay())return;const b=clampBet();placeBet('derby',b);s.busy=true;s.k=(s.k||0)+1;
+  const R=dbRace(),pick=s.pick,type=s.type;let knocked=0;
+  Object.assign(s,{pos:[0,0,0,0],track:R.track,rev:Array(DB_TR).fill(false),fin:[],last:null,left:48-DB_TR,flash:-1,tick:'And they’re off!',msg:''});
+  const apply=e=>{s.pos=e.pos;s.rev=e.rev;s.fin=e.fin;s.last=e.c;s.left=e.left;s.flash=-1;
+    const hit=e.bk.find(x=>x.mv);if(e.bk.length){const x=hit||e.bk[0];s.tick=`Track card ${x.k+1} flips: ${SU[x.s]} ${x.mv?'knocked back!':'no effect.'}`;if(hit){s.flash=hit.s;if(hit.s===pick)knocked++}}
+    else if(e.done!=null)s.tick=`${SU[e.done]} ${DB_NM[e.done]} cross${s.fin.length===1?'es first!':' in second.'}`;
+    else s.tick=s.fin.includes(e.c.s)?`${SU[e.c.s]} already finished.`:`${SU[e.c.s]} moves up.`;return!!hit};
+  const fin=()=>{s.busy=false;s.flash=-1;const w=type==='win'?R.fin[0]===pick:R.fin.slice(0,2).includes(pick);
+    const r=settle('derby',b,w?b*DB_PAY[type]:0);s.hist.unshift(SU[R.fin[0]]);s.hist=s.hist.slice(0,10);
+    s.msg=`${SU[R.fin[0]]} wins, ${SU[R.fin[1]]} places. `+resText(r);if(w){questEvent('sp','derby_win');if(knocked)ach('derby')}save();render()};
+  if(RM){R.ev.forEach(apply);fin();return}
+  render();let i=0;const step=()=>{if(i>=R.ev.length){setTimeout(fin,350*SP());return}const e=R.ev[i++],hit=apply(e);const el=$('#dbtrack');if(el)el.innerHTML=dbBoard(s);
+    if(hit)SFX.thunk();else SFX.tick();setTimeout(step,(hit?650:e.done!=null?500:190)*SP())};
+  setTimeout(step,400*SP());
+}
+function gDB(){
+  const s=S.g.db;
+  return`<div class="felt"><div id="dbtrack" data-ck="db${s.k||0}">${dbBoard(s)}</div><div class="hist">${s.hist.map(h=>`<i class="m">${h}</i>`).join('')}</div></div>
+  <div class="opts">${[0,1,2,3].map(i=>`<button class="opt ${s.pick===i?'on':''}" data-a="db" data-v="s${i}" ${s.busy?'disabled':''}><span style="font-size:18px;${i===1||i===2?'color:var(--r)':''}">${SU[i]}</span><small>${DB_NM[i]}</small></button>`).join('')}</div>
+  <div class="g2"><button class="opt ${s.type==='win'?'on':''}" data-a="db" data-v="win" ${s.busy?'disabled':''}>WIN<small>1st · ${DB_PAY.win}x</small></button><button class="opt ${s.type==='place'?'on':''}" data-a="db" data-v="place" ${s.busy?'disabled':''}>PLACE<small>1st or 2nd · ${DB_PAY.place}x</small></button></div>
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="db" data-v="go" ${!s.busy&&canPlay()?'':'disabled'}>Start the race</button>`;
+}
+
 /* ================= game guides ================= */
 const gpct=x=>(Math.round(x*1000)/10)+'%';
 const GUIDE={
@@ -2251,7 +2312,11 @@ const GUIDE={
     pays:[['Win','2x (1:1)'],['Win the war','Your raise pays 1:1, your original bet comes back'],['Tie again in the war','Both bets pay 1:1'],['Lose the war','Lose both bets'],['Surrender','Half your bet back']]}),
   sicbo:()=>({goal:'Bet on the total of three dice.',
     rules:['Pick a bet, set your stake and roll three dice.','Small and Big both lose on any triple, even when the total is in range.'],
-    pays:Object.entries(SBO).map(([k,[n,d,m]])=>[`${n}: ${d} (${gpct({small:.486,big:.486,pair:.444,triple:.028}[k])})`,`${m}x`])})
+    pays:Object.entries(SBO).map(([k,[n,d,m]])=>[`${n}: ${d} (${gpct({small:.486,big:.486,pair:.444,triple:.028}[k])})`,`${m}x`])}),
+  derby:()=>({goal:'Back one of the four aces in a card-flip horse race.',
+    rules:['The four aces are the horses. They start at the gate, and the finish is 7 steps away.',`${DB_TR} more cards are dealt face down along the track. Nobody knows their suits.`,'The dealer flips the rest of the deck one card at a time. Each card moves the ace of its suit one step forward.','When every horse still racing has reached a track card, that card flips over. The ace of its suit gets knocked back one step.','Win bets need your ace to cross first. Place bets need it to finish first or second. The race runs until two horses finish.'],
+    pays:[['Win: your ace finishes 1st (25%)',DB_PAY.win+'x'],['Place: your ace finishes 1st or 2nd (50%)',DB_PAY.place+'x']],
+    extra:'Every suit has the same chance because the track cards stay hidden until a horse is knocked back. Based on the Horse Race card game, in its variant with hidden track cards.'})
 };
 function guideHTML(g){const G=GUIDE[g]&&GUIDE[g]();if(!G)return'';const mn=g==='holdem'?'':`<p class="muted">Table minimum right now: ${S&&!S.over?fmt(tableMin(g)):'depends on the debt level this game unlocks at'}. Payouts shown are your total return, bet included.</p>`;
   return`<div class="guide"><p><b style="color:var(--y)">Goal:</b> ${G.goal}</p><span class="lbl">Rules</span><ul>${G.rules.map(r=>`<li>${r}</li>`).join('')}</ul><span class="lbl">Payouts</span><table class="odd">${G.pays.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>${G.extra?`<p class="muted">${G.extra}</p>`:''}${mn}</div>`}
@@ -2769,16 +2834,21 @@ function drawSnails(x,pos,winner){
 function snRace(){
   const s=S.g.sn;if(s.busy||!canPlay())return;const b=clampBet();placeBet('snail',b);s.busy=true;s.msg='And they’re off!';
   let u=rnd()*SNAILS.reduce((a,b)=>a+b.p,0),w=0;for(;w<3;w++){if(u<SNAILS[w].p)break;u-=SNAILS[w].p}
-  const T=SNAILS.map((_,i)=>i===w?1:1.05+rnd()*.35);
+  const T=SNAILS.map((_,i)=>i===w?1:1.05+rnd()*.35),F=T.map(t=>Math.min(1,1/t));
+  const others=[0,1,2,3].filter(i=>i!==w),lead=rnd()<.45?others[Math.floor(rnd()*3)]:-1,slow=rnd()<.3;
+  const KN=F.map((f,i)=>{let a=[.25,.5,.75].map(q=>q+(rnd()-.5)*.3);if(i===lead){a[0]+=.13;a[1]+=.07;a[2]+=.02}if(i===w&&slow){a[0]-=.07;a[1]-=.03}
+    a=a.map(v=>Math.max(.03,Math.min(.97,v)));for(let j=1;j<3;j++)a[j]=Math.max(a[j],a[j-1]+.02);return[0,...a.map(v=>Math.min(v,.97)*f),f]});
+  const at=(i,e)=>{const k=KN[i],sg=Math.min(3,Math.floor(e*4)),u=Math.min(1,e*4-sg),s2=u*u*(3-2*u);return k[sg]+(k[sg+1]-k[sg])*s2};
+  s.lastKN=KN;
   render();
-  const fin=()=>{s.pos=T.map(t=>Math.min(1,1/t));s.win=w;const pick=s.pick;const r=settle('snail',b,pick===w?b*SNAILS[pick].o:0);
+  const fin=()=>{s.pos=F.slice();s.win=w;const pick=s.pick;const r=settle('snail',b,pick===w?b*SNAILS[pick].o:0);
     if(pick===w){ach('snail');questEvent('sp','snail_win');if(SNAILS[w].o>=50)ach('longshot')}
     s.hist.unshift(w);s.hist=s.hist.slice(0,10);s.busy=false;s.msg=`${SNAILS[w].n} wins! `+resText(r);save();render();
     const c=$('canvas[data-s="snail"]');if(c)drawSnails(c.getContext('2d'),s.pos,w)};
   const c=$('canvas[data-s="snail"]');if(RM||!c)return fin();
   const x=c.getContext('2d');let t0=null;const D=3400*SP();
   const step=ts=>{if(t0===null)t0=ts;const e=(ts-t0)/D;if(e>=1){fin();return}
-    const pos=T.map((t,i)=>Math.min(1,Math.max(0,e/t+.025*Math.sin(e*18+i*2)*(1-e))));
+    const pos=KN.map((_,i)=>Math.min(1,Math.max(0,at(i,e)+.012*Math.sin(e*18+i*2)*(1-e))));
     drawSnails(x,pos);requestAnimationFrame(step)};
   requestAnimationFrame(step);
 }
@@ -3303,7 +3373,7 @@ function vLegacy(){
   let body;
   if(t==='up')body=`<p class="muted">Permanent upgrades for every future run. Earn Rep by finishing runs, leveling up and climbing trophy ladders.</p>`+Object.entries(LEGACY).map(([k,u])=>{const r=L(k),max=r>=u.max,c=legCost(k);
     return`<div class="row ${max?'got':''}"><h3>${u.n} <span style="color:var(--y)">${r}/${u.max}</span></h3><p>${u.d}</p><button class="btn ${max?'':'green'} sm" data-a="leg" data-v="${k}" ${max||M.rep<c?'disabled':''}>${max?'Maxed':c.toLocaleString()+' Rep'}</button><div class="prog"><i style="width:${r/u.max*100}%"></i></div></div>`}).join('');
-  else if(t==='pass'){const on=passOn().length;body=`<p class="muted">Each run deals ${DAY1_SLOTS} random games on day 1. A day-one pass guarantees that game is one of them, using up one of the ${DAY1_SLOTS} slots. The rest stay random. Active passes: <b style="color:var(--y)">${on}/${DAY1_SLOTS}</b>.</p>`+GAME_IDS.map(g=>{const own=M.pass.own[g],act=own&&M.pass.on[g],c=passCost(g);
+  else if(t==='pass'){const on=passOn().length;body=`<p class="muted">Each run deals ${DAY1_SLOTS} random games on day 1. A day-one pass guarantees that game is one of them, using up one of the ${DAY1_SLOTS} slots. The rest stay random, but at least one of Blackjack, Roulette, Craps or Baccarat is always open on day 1. Active passes: <b style="color:var(--y)">${on}/${DAY1_SLOTS}</b>.</p>`+GAME_IDS.map(g=>{const own=M.pass.own[g],act=own&&M.pass.on[g],c=passCost(g);
     return`<div class="row ${act?'got':''}"><h3>${GAMES[g].n}${act?' <span class="win">ON</span>':''}</h3><p>${GAMES[g].s}</p>${own?`<button class="btn ${act?'dim':'green'} sm" data-a="passtog" data-v="${g}" ${!act&&on>=DAY1_SLOTS?'disabled':''}>${act?'Turn off':'Turn on'}</button>`:`<button class="btn green sm" data-a="passbuy" data-v="${g}" ${M.rep<c?'disabled':''}>${c} Rep</button>`}</div>`}).join('')}
   else body=`<canvas class="pix" data-s="me" width="48" height="36" data-max="5" aria-label="Your character"></canvas>`+`<p class="muted">Cosmetics change your character, your home, the casino sign, card backs, table felt and the weather on Main Street. Some unlock with Rep, others with trophies, levels or game mastery tiers.</p>`+Object.entries(WARD).map(([slot,g])=>`<span class="lbl">${g.label}</span><div class="g3">${Object.entries(g.items).map(([id,[nm,c,rq]])=>{const lock=rq&&!reqOK(rq);const own=!lock&&(c===0||M.ward.own[slot+':'+id]),on=M.ward[slot]===id;
     return`<button class="opt ${on?'on':''} ${lock?'locked':''}" data-a="ward" data-v="${slot}:${id}" ${!lock&&!own&&M.rep<c?'disabled':''}>${nm}<small>${on?'Using':lock?'\u{1F512} '+reqText(rq):own?'Use':c+' Rep'}</small></button>`}).join('')}</div>`).join('');
@@ -3407,7 +3477,7 @@ function trophyList(){
   return`<p class="muted">${Object.keys(M.ach).length} of ${ACH_IDS.length} trophies. They carry over between runs.</p><div class="stack" style="gap:6px">${ACH_IDS.map(id=>{const g=M.ach[id];return`<div class="row ${g?'got':'lock'}"><h3>${g?'★ ':''}${ACH[id][0]}</h3><p>${ACH[id][1]}</p></div>`}).join('')}</div>`;
 }
 function vGame(){
-  const g=UI.game,gw=gWins(g),gt=tierOf(gw,g),nx=TIERS[gt+1]?[TIERS[gt+1][0],tierNeed(g,gt+1)]:null,body={holdem:gPK,bj:gBJ,roulette:gRL,plinko:gPL,mines:gMN,flip:gFL,snail:gSN,slots:gSL,wheel:gWH,baccarat:gBC,crash:gCR,tower:gTW,keno:gKN,vpoker:gVP,penguin:gPG,craps:gCP,sports:gSB,hilo:gHL,scratch:gSC,dice:gDC,war:gWR,sicbo:gSBO}[g]();
+  const g=UI.game,gw=gWins(g),gt=tierOf(gw,g),nx=TIERS[gt+1]?[TIERS[gt+1][0],tierNeed(g,gt+1)]:null,body={holdem:gPK,bj:gBJ,roulette:gRL,plinko:gPL,mines:gMN,flip:gFL,snail:gSN,slots:gSL,wheel:gWH,baccarat:gBC,crash:gCR,tower:gTW,keno:gKN,vpoker:gVP,penguin:gPG,craps:gCP,sports:gSB,hilo:gHL,scratch:gSC,dice:gDC,war:gWR,sicbo:gSBO,derby:gDB}[g]();
   const badge=`<button class="tierb ${gt>=0?'t'+gt:''}" data-a="tierinfo">${gt>=0?TIERS[gt][0].toUpperCase():'NO TIER'} · ${gw}${nx?'/'+nx[1]:''} wins</button>`;
   let bd=body;const ai=bd.indexOf('<!--act-->');if(ai>=0)bd=bd.slice(0,ai)+'<div class="actbar">'+bd.slice(ai).replace(/<p class="msg"( data-after)?>(&nbsp;)?<\/p>/g,'')+'</div>';
   return hud()+topbar(GAMES[g].n,'casino',`<small>${S.energy} energy · ${ecostLabel(g)}</small>`)+`<div class="gtop"><button class="guideb" data-a="guide" aria-expanded="${UI.guide===g}">${UI.guide===g?'Hide rules':'Rules & payouts'}</button>${badge}</div>`+(UI.guide===g?`<div class="box dark">${guideHTML(g)}</div>`:'')+`<div class="gwrap stack ${gt>=0?'tier-'+TIERS[gt][0].toLowerCase():''}">${bd}</div>`;
@@ -3657,7 +3727,7 @@ function showBigConfirm(a,v,i,amt){
     if(m.dataset.m==='yes'||m.dataset.m==='never'){UI.bigOK=true;act(a,v,{dataset:{i}});UI.bigOK=false}});
   document.body.appendChild(d);const y=d.querySelector('[data-m=yes]');if(y)y.focus();
 }
-const PLAYA={cproll:1,sbplace:1,hl:'start',sc:'buy',dc:'roll',wr:'deal',sbo:'roll',bj:'deal',pldrop:1,mn:'start',fl:'go',snrace:1,sl:1,wh:1,bc:1,cr:1,tw:'start',kn:'go',vp:'deal',pg:'start',rlspin:1,pk:'sit'};
+const PLAYA={cproll:1,sbplace:1,hl:'start',sc:'buy',dc:'roll',wr:'deal',sbo:'roll',db:'go',bj:'deal',pldrop:1,mn:'start',fl:'go',snrace:1,sl:1,wh:1,bc:1,cr:1,tw:'start',kn:'go',vp:'deal',pg:'start',rlspin:1,pk:'sit'};
 function needsConfirm(a,v){if(UI.bigOK||!M.set.confirmBig||!S||S.over||!(a in PLAYA))return 0;const w=PLAYA[a];if(w!==1&&w!==v)return 0;const amt=a==='rlspin'?rlTotal():clampBet();return amt>=20&&S.cash>0&&amt>=S.cash*.5?amt:0}
 function render(){
   if(['street','home','casino','mart','bar'].includes(UI.scene)){UI.room=UI.scene;UI.scene='world'}
@@ -3776,6 +3846,7 @@ function act(a,v,el){
     case 'dc':dcAct(v);return;
     case 'wr':wrAct(v);return;
     case 'sbo':sboAct(v);return;
+    case 'db':dbAct(v);return;
     case 'guide':UI.guide=UI.guide===UI.game?null:UI.game;break;
     case 'intronext':UI.introP=1;break;
     case 'introback':UI.introP=0;render();introStart();return;
