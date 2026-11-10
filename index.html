@@ -752,11 +752,11 @@ const ACH_IDS=Object.keys(ACH);
 const MODS={
   sober:{n:'Sober',d:'The bar is closed.',m:.15,lvl:2},
   cards:{n:'Cardsharp',d:'Only Poker and Blackjack are open.',m:.3,lvl:3},
-  tired:{n:'Night Shift',d:'Energy is capped at 6 a day.',m:.3,lvl:4},
+  tired:{n:'Night Shift',d:'Energy is capped at 35 a day.',m:.3,lvl:4},
   fasting:{n:'Fasting',d:'The Mart is closed.',m:.2,lvl:5},
   snail:{n:'Snail Whisperer',d:'Only Snail Derby is open.',m:.5,lvl:7},
-  low:{n:'Low Roller',d:'Bets are capped at $250.',m:.5,lvl:9},
-  trader:{n:'Day Trader',d:'The casino is closed. Stocks only.',m:.7,lvl:12},
+  low:{n:'Low Roller',d:'Bets are capped at 25% of your next debt.',m:.5,lvl:9},
+  trader:{n:'Day Trader',d:'The casino is closed. Stocks only, in a wild market, with 3 naps a day where prices move.',m:.7,lvl:12},
   tight:{n:'Tight Deadlines',d:'Debts come due every day instead of every other day.',m:.8,lvl:15}
 };
 const LEGACY={
@@ -902,11 +902,11 @@ const ECOST={holdem:1,bj:2,roulette:2,craps:4,sports:3,plinko:4,mines:2,flip:1,s
 const SNG_E=25;
 const ecost=g=>ECOST[g]||1;
 const ecostLabel=g=>g==='holdem'?'1 per hand':g==='plinko'?ECOST.plinko+' per session':g==='craps'?ECOST.craps+' per come-out':g==='sports'?ECOST.sports+' per slip':ecost(g)+' per round';
-function maxEnergy(){return mod('tired')?6*ES:10*ES+3*ES*(sk('stam1')+sk('stam2')+sk('stam3'))+ES*L('energy')}
+function maxEnergy(){return mod('tired')?7*ES:10*ES+3*ES*(sk('stam1')+sk('stam2')+sk('stam3'))+ES*L('energy')}
 function disc(){return 1-.15*(sk('hag1')+sk('hag2'))}
 function mkStocks(){const o={};for(const k in TICK)o[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};return o}
 function gauss(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
-function rollMoves(){const o={},mk=.007+.018*gauss();for(const k in TICK){const t=TICK[k];let r=Math.exp(mk*(t.b||1)+t.m+t.v*gauss());if(Math.abs(r-1)<.03)r=1+(r>=1?1:-1)*(.03+rnd()*.02);o[k]=r}return o}
+function rollMoves(){const tr=S&&mod('trader'),o={},mk=tr?.018+.035*gauss():.007+.018*gauss();for(const k in TICK){const t=TICK[k];let r=Math.exp(mk*(t.b||1)+t.m+(tr?2.2:1)*t.v*gauss());const mn=tr?.05:.03;if(Math.abs(r-1)<mn)r=1+(r>=1?1:-1)*(mn+rnd()*.02);o[k]=r}return o}
 function mkDebt(bal){
   const n=S.debtN++,h=S.heat||0;let a=120*(1+.15*h)*(n<3?[.85,1.15,1.6][n]:1.6*Math.pow(1.38+.01*h,n-2))*(1-.02*L('credit'));
   if(bal!=null){const lad=a;a=Math.max(.6*lad,Math.min(3*lad,.5*lad+.75*Math.max(0,bal)))}if(sk('talk'))a*=.9;a*=1-.01*tsum('debtCut');
@@ -1007,6 +1007,7 @@ function burst(kind,n,o){
 /* ================= town: quests, shops, NPCs ================= */
 const buffV=t=>S&&S.buffs?S.buffs.filter(b=>b.t===t&&b.day===S.day).reduce((a,b)=>a+b.v,0):0;
 const trinket=k=>S&&S.trinkets&&S.trinkets[k]?1:0;
+const lowCap=()=>Math.max(10,r5(nextDue()*.25));
 const nextDue=()=>{const d=S.debts.filter(d=>!d.loan).sort((a,b)=>a.due-b.due)[0];return d?d.amt:100};
 const QSP={bj:[['bj_nat','Hit a blackjack',1],['bj_split','Win a split hand at blackjack',1]],roulette:[['rl_inside','Win a split, street, corner or six-line bet at roulette',1]],crash:[['crash3','Cash out of Crash at 3x or higher',1]],mines:[['mines5','Cash out of Mines with 5 or more gems',1]],tower:[['tower4','Cash out of Dragon Tower after 4 or more floors',1]],penguin:[['peng5','Cash out of Penguin Cross after 5 or more lanes',1]],plinko:[['plinko3','Land a 3x or better in Plinko',1]],holdem:[['pk_show','Win a poker hand at showdown',1]],keno:[['keno3','Hit 3 or more Keno numbers',1]],vpoker:[['vp2p','Make two pair or better in Video Poker',1]],slots:[['slots_win','Win on the slots 3 times',3]],snail:[['snail_win','Win a Snail Derby bet',1]],wheel:[['wheel_big','Win a Green, Red or Gold bet on the Money Wheel',1]],baccarat:[['bc_banker','Win a Banker bet at baccarat',1]],flip:[['flip3','Win 3 coin flips in a row',1]]};
 function makeReward(){
@@ -1181,7 +1182,7 @@ function drawStreetExtra(x){
 }
 
 /* ================= betting core ================= */
-function clampBet(){if(!S)return 0;const c=Math.floor(Math.min(S.cash,mod('low')?250:Infinity));let v=Math.round(UI.bet)||0;const mn=curMin();if(v>0&&v<mn)v=mn;return v<=0?0:Math.min(v,c)}
+function clampBet(){if(!S)return 0;const c=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));let v=Math.round(UI.bet)||0;const mn=curMin();if(v>0&&v<mn)v=mn;return v<=0?0:Math.min(v,c)}
 function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>=1&&clampBet()>=Math.max(1,curMin())}
 function busy(){if(!S)return false;const g=S.g;return g.bj.phase==='play'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||!!SBW}
 function placeBet(game,b){
@@ -1550,7 +1551,7 @@ const rlTotal=()=>Object.values(S.g.rl.bets).reduce((a,b)=>a+b,0);
 function rlPlace(k){
   const s=S.g.rl;if(s.busy)return;const chip=clampBet();if(chip<1)return;
   if(rlTotal()+chip>S.cash){toast('Not enough cash for another chip that size.');return}
-  if(mod('low')&&rlTotal()+chip>250){toast('Low Roller contract: $250 max per spin.');return}
+  if(mod('low')&&rlTotal()+chip>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per spin.`);return}
   s.bets[k]=(s.bets[k]||0)+chip;UI.rlPick=null;SFX.coin();save();render();
 }
 function rlTap(n){
@@ -3122,6 +3123,15 @@ const minRem=d=>Math.max(0,Math.ceil((d.orig||d.amt)*.5)-(d.paidAmt||0));
 const canRoll=d=>minRem(d)===0&&(S.strikes||0)<3;
 function payPart(id){const d=S.debts.find(x=>x.id===id);if(!d)return;const a=Math.min(Math.floor(S.cash),d.amt);if(a<1)return;if(a>=d.amt)return payDebt(id);
   S.cash-=a;d.amt-=a;d.paidAmt=(d.paidAmt||0)+a;SFX.coin();toast(`Paid ${fmt(a)} to ${d.who}. ${fmt(d.amt)} left.${minRem(d)===0?' Minimum covered.':''}`)}
+const NAPS=3;
+function napAct(){
+  if(!mod('trader')||(S.today.naps||0)>=NAPS)return;S.today.naps=(S.today.naps||0)+1;
+  const mv=[];for(const k in S.stocks){const st=S.stocks[k],r=S.next[k]||1;st.p=Math.max(.01,st.p*r);st.h.push(st.p);if(st.h.length>24)st.h.shift();mv.push([k,r])}
+  for(const k in S.stocks){const st=S.stocks[k];if(st.short&&2*st.sColl-st.short*st.p<=0){st.short=0;st.sColl=0;toast(`Margin call: your ${k} short was wiped out.`)}}
+  S.next=rollMoves();S.tipK=null;mv.sort((a,b)=>Math.abs(b[1]-1)-Math.abs(a[1]-1));SFX.coin();
+  toast(`You nap for a few hours. The market moved: ${mv.slice(0,3).map(([k,r])=>`<b>${k}</b> ${r>=1?'<span class="win">+':'<span class="lose">'}${Math.round((r-1)*100)}%</span>`).join(', ')}.`);save();
+}
+const napBtn=()=>mod('trader')?`<button class="btn blue wide" data-a="nap" ${(S.today.naps||0)>=NAPS?'disabled':''}>Take a nap · market moves<small>${NAPS-(S.today.naps||0)} of ${NAPS} left today</small></button>`:'';
 function netWorth(){let v=S.cash+portfolio();if(S.g&&S.g.cp)v+=cpTot();if(S.sb&&S.sb.bets)S.sb.bets.forEach(b=>{if(b.st==='open')v+=b.stake});return v}
 function payDebt(id){
   const i=S.debts.findIndex(d=>d.id===id);if(i<0)return;const d=S.debts[i];if(S.cash<d.amt)return;
@@ -3254,7 +3264,7 @@ const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fil
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
 function betX(lock){const lb=S&&S.lastBet&&S.lastBet[UI.game];return`<div class="betx"><button class="chip" data-a="betclr" ${lock?'disabled':''}>Clear</button><button class="chip" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' $'+chipTxt(lb):''}</button><button class="chip" data-a="betdbl" ${lock||!lb?'disabled':''}>Double${lb?' $'+chipTxt(lb*2):''}</button></div>`}
 function betBar(lock,label,noX){
-  const b=clampBet(),cap=Math.floor(Math.min(S.cash,mod('low')?250:Infinity)),mn=curMin(),lb=S&&S.lastBet&&S.lastBet[UI.game],d=lock?'disabled':'';
+  const b=clampBet(),cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity)),mn=curMin(),lb=S&&S.lastBet&&S.lastBet[UI.game],d=lock?'disabled':'';
   const ch=(v,l)=>`<button class="chip" data-a="bet" data-v="${v}" ${d}>${l}</button>`;
   return`<div class="betbar"><div class="brow">${ch('-10','−')}<span class="betin">$<input id="betin" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value="${b}" ${d} aria-label="${label||'Bet'} in dollars"></span>${ch('+10','+')}${ch('half','½')}${ch('x2','2×')}${ch('max','MAX')}</div>
   <div class="bmeta"><span>${mn?'min '+fmt(mn)+' · ':''}max ${fmt(cap)}</span>${noX?'':`<span><button class="linkb" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' '+fmt(lb):''}</button> · <button class="linkb" data-a="betclr" ${d}>Clear</button></span>`}</div>${mn&&S.cash<mn?`<p class="lose bwarn">Need ${fmt(mn)} to play here.</p>`:''}</div>`;
@@ -3350,7 +3360,7 @@ function pcPanel(){
   }else if(UI.tab==='stocks'){
     let val=0;for(const k in S.stocks){const st=S.stocks[k];val+=st.own*st.p+shortVal(st)}
     const idx=Object.keys(TICK).reduce((a,k)=>a+S.stocks[k].p/TICK[k].p,0)/Object.keys(TICK).length;
-    body=`<div class="kv"><span class="muted">Den Index (all stocks since day 1)</span><b class="${idx>=1?'win':'lose'}">${idx>=1?'+':''}${Math.round((idx-1)*1000)/10}%</b></div><p class="muted">The market trends up over time, but not every company does. Some days everything drops.</p><div class="kv"><span class="muted">Portfolio value</span><b class="px" style="color:var(--y);font-size:12px">${fmt(val)}</b></div><p class="muted">Prices move once a night. Shorting puts up cash as collateral: you profit if the price falls, and lose it all if the price doubles.</p>`+Object.entries(TICK).map(([k,t])=>{const st=S.stocks[k],h=st.h,prev=h.length>1?h[h.length-2]:h[0],ch=st.p/prev-1;
+    body=`<div class="kv"><span class="muted">Den Index (all stocks since day 1)</span><b class="${idx>=1?'win':'lose'}">${idx>=1?'+':''}${Math.round((idx-1)*1000)/10}%</b></div><p class="muted">${mod('trader')?'Day Trader: the market is wild and moves every time you nap.':'The market trends up over time, but not every company does. Some days everything drops.'}</p>${napBtn()}<div class="kv"><span class="muted">Portfolio value</span><b class="px" style="color:var(--y);font-size:12px">${fmt(val)}</b></div><p class="muted">Prices move once a night. Shorting puts up cash as collateral: you profit if the price falls, and lose it all if the price doubles.</p>`+Object.entries(TICK).map(([k,t])=>{const st=S.stocks[k],h=st.h,prev=h.length>1?h[h.length-2]:h[0],ch=st.p/prev-1;
       const tip=S.tipK===k?`<p class="tipline">Inside tip: tomorrow ${S.next[k]>=1?'up':'down'} ${Math.abs(Math.round((S.next[k]-1)*100))}%</p>`:'';
       return`<div class="stk"><div><h3>${k} <span class="muted" style="font-family:var(--vt);font-size:18px">${t.n}</span></h3><canvas class="spark" data-s="spark-${k}" width="64" height="20"></canvas></div>
       <div class="pr"><b>${fmtP(st.p)}</b><span class="${ch>=0?'win':'lose'}">${ch>=0?'+':''}${(ch*100).toFixed(1)}%</span><br><span class="muted">${st.own?`Own ${st.own.toLocaleString()} · ${fmt(st.own*st.p)}`:'Own 0'}</span>${st.short?`<br><span class="lose">Short ${st.short.toLocaleString()} · worth ${fmt(shortVal(st))}</span>`:''}</div>${tip}
@@ -3373,7 +3383,7 @@ function bedPanel(){
   const dueD=S.debts.filter(d=>d.due<=S.day),bad=dueD.filter(d=>!canRoll(d)),roll=dueD.filter(d=>canRoll(d)),dueNow=bad.length>0;
   if(!dueNow&&roll.length&&UI.confirm!=='sleep')return`<div class="box"><p><span style="color:var(--y)">${roll.map(d=>d.who).join(', ')} ${roll.length>1?'are':'is'} due today.</span> You paid the minimum, so the rest rolls over 2 days with a 25% late fee. That uses a late strike (${(S.strikes||0)+roll.length} of 3).</p><button class="btn wide" data-a="sleep">Sleep and roll it over · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
   if(UI.confirm==='sleep')return`<div class="confirm"><p>${bad.map(d=>d.who).join(', ')} ${bad.length>1?'are':'is'} due today and ${(S.strikes||0)>=3?'you\u2019re out of late strikes':'you haven\u2019t paid at least half'}. If you sleep now, the collectors come and the run is over.</p><div class="g2"><button class="btn red" data-a="sleepyes">Sleep anyway</button><button class="btn dim" data-a="cancel">Stay up</button></div></div>`;
-  return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills and stock prices move overnight.'}</p><button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
+  return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills and stock prices move overnight.'}</p>${napBtn()}<button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
 }
 const leaseCost=()=>r5(150*(1+.15*(S.heat||0)));
 function leasePanel(){const need=3,c=leaseCost();
@@ -3745,7 +3755,7 @@ function act(a,v,el){
     case 'rlmode':S.g.rl.mode=v;UI.rlPick=null;break;
     case 'rldel':delete S.g.rl.bets[v];break;
     case 'rlclear':S.g.rl.bets={};UI.rlPick=null;break;
-    case 'rldouble':{const s=S.g.rl,t=rlTotal();if(t*2>S.cash||(mod('low')&&t*2>250)){toast('Not enough room to double.');return}for(const k in s.bets)s.bets[k]*=2;break}
+    case 'rldouble':{const s=S.g.rl,t=rlTotal();if(t*2>S.cash||(mod('low')&&t*2>lowCap())){toast('Not enough room to double.');return}for(const k in s.bets)s.bets[k]*=2;break}
     case 'rlspin':rlSpin();return;
     case 'pkmode':UI.pkMode=v;break;
     case 'plrisk':if(!S.g.pl.busy)S.g.pl.risk=v;break;
@@ -3772,12 +3782,13 @@ function act(a,v,el){
     case 'introskip':UI.scene='world';UI.room='home';INTRO=null;save();render();toast('Home sweet home. Your computer has your debts and tonight’s casino lineup.');return;
     case 'cppress':cpPress(v);return;
     case 'qview':UI.qview=!UI.qview;break;
+    case 'nap':napAct();break;
     case 'tierinfo':toast(`Every win at ${GAMES[UI.game].n} counts toward its tier, across all your runs: ${TIERS.map((t,i)=>t[0]+' '+tierNeed(UI.game,i)).join(', ')}. Up to ${MAST_DAY} wins per game count each day (${(S.today.mw&&S.today.mw[UI.game])||0} so far today).`);return;
     case 'pkstake':P().stake=+v;{const bb=STAKES[+v][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}break;
     case 'pkread':{const p=P().seats[+v];if(p&&!p.out){const st=PK_STY[p.sk||'pro'];toast(`<b>${p.n}</b> · ${st.n}: ${st.d}`)}return}
-    case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>250)){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};for(const k in lb)s.bets[k]=lb[k]*f;SFX.coin();break}
+    case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>lowCap())){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};for(const k in lb)s.bets[k]=lb[k]*f;SFX.coin();break}
     case 'betclr':UI.bet=0;break;
-    case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?250:Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
+    case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
     case 'fountain':fountainAct();break;
     case 'tip':tipAct(+v);break;
