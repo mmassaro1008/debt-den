@@ -171,6 +171,8 @@ h2{font-family:var(--px);font-size:14px;color:var(--y);line-height:1.5;text-wrap
 .opt{font-family:var(--px);font-size:9px;line-height:1.5;padding:8px 2px;background:var(--e);border:3px solid var(--d);display:flex;flex-direction:column;align-items:center;gap:2px}
 .opt small{font-family:var(--vt);font-size:16px;color:var(--s)}
 .opt.on{background:var(--n);border-color:var(--y);color:var(--y)}
+.opt.prev{border-color:var(--a);color:var(--a)}
+.wbar .wrow{display:flex;gap:10px;align-items:center}.wbar .wpic{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:96px}.wbar .winfo{min-width:0;display:flex;flex-direction:column;gap:2px}.wbar .winfo b{font-size:11px;color:var(--y)}.wbar .winfo small{font-family:var(--vt);font-size:17px;color:var(--s);line-height:1.1}.wfelt{width:96px;height:72px;border:3px solid var(--k);box-shadow:inset 0 0 0 3px var(--t);display:grid;place-items:center}.wfelt .cardb{width:30px;height:42px}
 .opt:disabled{opacity:.5;cursor:not-allowed}
 .o-red{color:var(--o)}
 .o-zero{color:var(--l)}
@@ -747,7 +749,6 @@ const ACH={
   allgames:['Grand Opening','Unlock every casino game in one run.'],
   quest1:['Odd Jobs','Complete one of Lucky Lou\u2019s daily quests.'],
   loan:['Good Credit','Repay a loan from Vinnie.'],
-  busker:['Patron of the Arts','Hear 3 of Benny’s lucky songs in one run.'],
   fortune:['Crossed Palms','Get a reading from Madame Zora.'],
   collector:['Collector','Own 4 pawn shop trinkets at once.'],
   hardway:['The Hard Way','Win a hard way bet at craps.'],
@@ -767,7 +768,7 @@ const ACH={
   war:['Declare War','Win or tie a war at Casino War.'],
   triple:['Triple Threat','Hit any triple at Sic Bo.'],
   derby:['Photo Finish','Win an Ace Derby race after your horse got knocked back.'],
-  wish:['Wish Granted','Hear Benny’s ballad about winners.'],
+  wish:['Wish Granted','Earn Lucky Lou’s Lucky Charm reward with its 2x wish.'],
   tourwin:['Final Table','Win a poker tournament.'],
   tourcash:['In the Money','Finish in the top 3 of a poker tournament.']
 };
@@ -1068,7 +1069,7 @@ function makeQuest(){
     open.concat(gameOpen('sports')?['sports']:[]).forEach(g=>(QSP[g]||[]).forEach(([k,t,n])=>pool.push({k:'sp',sp:k,goal:n,text:t})));
     if(open.length>=4)pool.push({k:'variety',goal:4,text:'Play 4 different casino games'});
     const amt=r5(Math.max(50,nextDue()*.5));pool.push({k:'profit',goal:amt,money:1,text:`Win ${fmt(amt)} in total today`})}
-  pool.push({k:'pay',goal:1,text:'Pay off a debt today'},{k:'tip',goal:1,text:'Tip Benny the busker'});
+  pool.push({k:'pay',goal:1,text:'Pay off a debt today'});
   if(placeOpen('bar')&&shopOpen('bar'))pool.push({k:'drink',goal:1,text:'Order a drink at the bar'});
   if(counterOpen())pool.push({k:'buy',goal:2,text:'Buy 2 things at the Pawn King’s counter'});
   if(open.length){const w=r5(Math.max(60,nextDue()*.8));
@@ -1087,7 +1088,7 @@ function questEvent(type,p){
   if(q.k==='win'&&type==='win'&&p.game===q.g)inc=1;
   else if(q.k==='sp'&&type==='sp'&&p===q.sp)inc=1;
   else if(q.k==='profit'&&type==='win')inc=p.net;
-  else if(q.k===type&&['pay','drink','buy','tip','zora','pawn','stockbuy','stockwin','sbbet','nap'].includes(type))inc=1;
+  else if(q.k===type&&['pay','drink','buy','zora','pawn','stockbuy','stockwin','sbbet','nap'].includes(type))inc=1;
   else if(type==='play'&&q.k==='bets')inc=1;
   else if(type==='play'&&q.k==='wager')inc=p.b||0;
   else if(type==='settle'){
@@ -1103,7 +1104,7 @@ function questEvent(type,p){
 function grantReward(r,overnight){
   switch(r.t){case 'cash':S.cash+=r.v;break;case 'hot':case 'net':S.buffs.push({t:r.t,v:r.v,day:overnight?S.day:S.day+1});break;case 'energy':if(overnight)S.energy+=r.v;else S.buffs.push({t:r.t,v:r.v,day:S.day+1});break;case 'sp':S.sp+=1;break;
     case 'relief':{const d=S.debts.filter(d=>!d.loan).sort((a,b)=>a.due-b.due)[0];if(d)d.amt=r5(d.amt*(1-r.v));break}
-    case 'tip':if(!giveTip(overnight))S.cash+=r5(Math.max(30,nextDue()*.15));break;case 'charmw':S.charm=true;S.wish=2;break}
+    case 'tip':if(!giveTip(overnight))S.cash+=r5(Math.max(30,nextDue()*.15));break;case 'charmw':S.charm=true;S.wish=2;ach('wish');break}
 }
 function claimQuest(){
   const q=S.quest;if(!q||!q.done||q.claimed)return;q.claimed=true;const r=q.reward;M.quests=(M.quests||0)+1;
@@ -1126,18 +1127,6 @@ const TIP_GAP=3;const tipReady=()=>!S.tipK&&S.day-(S.lastTipDay==null?-99:S.last
 function giveTip(force){if(force?S.tipK:!tipReady())return false;S.tipK=Object.keys(TICK)[Math.floor(rnd()*Object.keys(TICK).length)];S.tipTrue=rnd()<TIP_ACC;S.lastTipDay=S.day;return true}
 const TIP_ACC=.75,tipCap=()=>Math.max(50,netWorth()*.25);const tipUp=k=>(S.next[k]>=1)===(S.tipTrue!==false);
 const songAt=()=>S.songAt||100;
-const tipSizes=()=>{const f=Math.pow(1.6,S.songs||0);return[5,25,100].map(v=>r5(v*f))};
-function tipAct(a){
-  const ti=tipSizes().indexOf(a);if(S.cash<a||ti<0)return;S.cash-=a;S.karma+=a;questEvent('tip');SFX.coin();
-  S.bmsg=`Benny tips his hat. "Much obliged!"`;
-  if(rnd()<[.12,.45,1][ti]){S.songs=(S.songs||0)+1;const r=Math.floor(rnd()*3);
-    if(r===0){S.energy+=3*ES;S.bmsg='Benny plays your song. You feel pumped. +15 energy.'}
-    else if(r===1){S.charm=true;S.bmsg='Benny plays a lucky tune. Lucky Charm active until you sleep.'}
-    else{S.wish=1.5;ach('wish');S.bmsg='Benny plays a ballad about winners. Your next win pays 1.5x profit.'}
-    SFX.big()}
-  if((S.songs||0)>=3)ach('busker');
-}
-function buskerPanel(){return`<div class="box"><span class="lbl">Benny the busker</span><p>"${['This one’s called Rent Is Due.','Requests? I know four chords.','Every coin in the case brings good vibes, friend.'][S.day%3]}"</p><p class="muted">Bigger tips are more likely to get you a lucky song: about 1 in 8, 1 in 2, or a sure thing. Every song makes Benny’s prices go up.</p>${S.bmsg?`<p class="win">${S.bmsg}</p>`:''}<div class="g3">${tipSizes().map(a=>`<button class="btn sm" data-a="tip" data-v="${a}" ${S.cash<a?'disabled':''}>Tip ${fmt(a)}</button>`).join('')}</div></div>`}
 const TRINKETS={
   watch:{n:'Gold Watch',d:'+5% on every win.',p:300,t:2,fx:{t:'winPct',v:5}},
   foot:{n:'Rabbit’s Foot',d:'Your first loss each day is refunded in full.',p:250,t:2,fx:{t:'firstLoss'}},
@@ -1212,9 +1201,6 @@ function drawStreetExtra(x){
   px(x,'#8a4a32',700,66,14,8);px(x,'#5a2f20',700,66,14,1);person(x,703,52,{shirt:C.p,hair:C.w,hat:'#6d3a28'});px(x,C.w,704,57,6,2);
   if(S&&S.quest&&!S.quest.claimed){const b=frame%2;ptxt(x,S.quest.done?'?':'!',705,35+b,S.quest.done?C.l:C.y,2,C.k)}
   [[462,71],[470,72],[414,72]].forEach(([a,b],i)=>{const bob=(frame+i)%3===0?1:0;px(x,C.d,a,b-bob,4,3);px(x,C.s,a+3,b-1-bob,2,2);px(x,C.o,a+5,b-bob,1,1)});
-  person(x,466,58,{shirt:C.r,hair:C.k,hat:C.k});px(x,'#8a4a32',463,66,9,4);px(x,'#8a4a32',471,63,6,1);px(x,C.y,465+(frame%2),67,1,2);
-  px(x,C.k,478,71,12,3);px(x,C.y,480,71,2,1);px(x,C.y,484,72,2,1);
-  if(frame%2){px(x,C.w,474,48-(frame%3),1,4);px(x,C.w,475,48-(frame%3),2,1);px(x,C.w,478,44,1,3)}
   const Px=490;px(x,'#8a4a32',Px,30,52,44);for(let yy=32;yy<74;yy+=4)px(x,'#6d3a28',Px,yy,52,1);px(x,C.k,Px,30,52,12);ptxt(x,'PAWN',Px+26-pw('PAWN',2)/2,31,C.y,2);
   px(x,C.d,Px+40,43,10,1);disc2(x,Px+42,47,2,C.y);disc2(x,Px+48,47,2,C.y);disc2(x,Px+45,51,2,C.y);
   px(x,C.k,Px+3,46,24,18);px(x,C.a,Px+4,47,22,16);px(x,'#8a4a32',Px+6,52,4,9);px(x,'#8a4a32',Px+7,48,2,4);disc2(x,Px+16,56,3,C.y);px(x,C.r,Px+21,53,3,8);
@@ -1466,7 +1452,7 @@ const ROOMS_W={street:594,home:200,mart:180,bar:180,pawn:190,zora:160};
 function roomW(r){return r==='casino'?CASINO_X0+GAME_IDS.length*CASINO_DX:ROOMS_W[r]}
 function stationLabel(g){const G=GAMES[g];if(!gameOpen(g))return G.n+': closed by contract';if(S.paid<gReq(g))return`${G.n}: opens at ${gReq(g)} debt${gReq(g)===1?'':'s'} paid`;return'Play '+G.n}
 function roomSpots(r){
-  if(r==='street')return[{id:'home',x:30,lab:'Enter home'},{id:'bus',x:52,lab:'Bus stop: ride to the casino'},{id:'bar',x:SX(202),lab:!placeOpen('bar')?'Bar: closed by contract':!shopOpen('bar')?shopLock('bar'):'Enter the bar'},{id:'busker',x:SX(346),lab:'Listen to Benny the busker'},{id:'pawn',x:SX(406),lab:shopOpen('pawn')?'Enter the Pawn King':shopLock('pawn')},{id:'zora',x:SX(458),lab:shopOpen('zora')?'Enter Madame Zora’s tent':shopLock('zora')},{id:'bus2',x:SX(560),lab:'Bus stop: ride home'},{id:'lou',x:SX(586),lab:S.quest&&S.quest.done&&!S.quest.claimed?'Collect your reward from Lucky Lou':'Talk to Lucky Lou'},{id:'casino',x:SX(662),lab:placeOpen('casino')?'Enter the casino':'Casino: closed by contract'}];
+  if(r==='street')return[{id:'home',x:30,lab:'Enter home'},{id:'bus',x:52,lab:'Bus stop: ride to the casino'},{id:'bar',x:SX(202),lab:!placeOpen('bar')?'Bar: closed by contract':!shopOpen('bar')?shopLock('bar'):'Enter the bar'},{id:'pawn',x:SX(406),lab:shopOpen('pawn')?'Enter the Pawn King':shopLock('pawn')},{id:'zora',x:SX(458),lab:shopOpen('zora')?'Enter Madame Zora’s tent':shopLock('zora')},{id:'bus2',x:SX(560),lab:'Bus stop: ride home'},{id:'lou',x:SX(586),lab:S.quest&&S.quest.done&&!S.quest.claimed?'Collect your reward from Lucky Lou':'Talk to Lucky Lou'},{id:'casino',x:SX(662),lab:placeOpen('casino')?'Enter the casino':'Casino: closed by contract'}];
   if(r==='home')return[{id:'door',x:22,lab:'Go outside'},{id:'bed',x:72,lab:'Go to bed'},{id:'pc',x:153,lab:'Use the computer'}];
   if(r==='casino')return[{id:'door',x:20,lab:'Go outside'},...floorOrder().map((g,i)=>({id:'g:'+g,x:CASINO_X0+i*CASINO_DX,lab:stationLabel(g)}))];
   if(r==='bar')return[{id:'door',x:19,lab:'Go outside'},{id:'barkeep',x:92,lab:'Order at the bar'}];
@@ -1516,7 +1502,7 @@ function interact(id){
     if(id==='pawn')return enterRoom('pawn');
     if(id==='zora')return enterRoom('zora');
     if(id==='lou')S.louDay=S.day;
-    if(['lou','busker','bus','bus2'].includes(id)){UI.panel=id;UI.confirm=null;render();return scrollPanel()}
+    if(['lou','bus','bus2'].includes(id)){UI.panel=id;UI.confirm=null;render();return scrollPanel()}
   }
   if(id==='door')return enterRoom('street',r);
   if(id.startsWith('g:')){const g=id.slice(2);if(!gameOpen(g))return toast('Closed by your contract.');if(S.paid<gReq(g))return toast(`${GAMES[g].n} opens after you pay off ${gReq(g)} debt${gReq(g)>1?'s':''}. You’ve paid ${S.paid}.`);UI.game=g;UI.scene='game';if(g==='holdem'){const bb=STAKES[S.g.pk.stake||0][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}render();window.scrollTo(0,0);return}
@@ -1535,13 +1521,22 @@ function drawIcon(x,k){
   else if(k==='flip'){disc2(x,8,8,7,C.o);disc2(x,8,8,6,C.y);ptxt(x,'$',7,6,C.o)}
   else if(k==='snail'){disc2(x,7,7,5,C.o);disc2(x,7,7,3,C.y);px(x,C.o,7,7,2,2);px(x,C.l,1,12,14,3);px(x,C.l,13,7,2,5);px(x,C.k,14,6,1,1)}
 }
+const WCHAR=['hat','shirt','pants','hair','skin'];
+function drawWPrev(x){const p=UI.wprev;if(!p)return;const o=M.ward[p.slot];M.ward[p.slot]=p.id;try{
+  if(WCHAR.includes(p.slot))drawMe(x);
+  else{x.save();px(x,C.k,0,0,96,54);
+    if(p.slot==='home'){x.translate(14,-24);drawStreetRaw(x,760)}
+    else if(p.slot==='neon'){x.translate(-614,-22);drawStreetRaw(x,760)}
+    else{x.translate(-150,-26);drawStreetRaw(x,760);drawWeather(x,760)}
+    x.restore()}
+}finally{M.ward[p.slot]=o}}
 function fitPix(){document.querySelectorAll('canvas.pix').forEach(c=>{const w=c.parentElement.clientWidth-6;const sc=c.dataset.fill!==undefined?Math.min(+(c.dataset.max||4),w/c.width):Math.max(1,Math.min(+(c.dataset.max||6),Math.floor(w/c.width)));c.style.width=c.width*sc+'px';c.style.height=c.height*sc+'px'})}
 function drawScenes(){document.querySelectorAll('canvas[data-s]').forEach(c=>{const x=c.getContext('2d');x.imageSmoothingEnabled=false;const k=c.dataset.s;
-  if(k==='world')drawWorld(x);else if(k==='title')drawTitle(x);else if(k==='gus')drawGus(x);else if(k==='me')drawMe(x);
+  if(k==='world')drawWorld(x);else if(k==='title')drawTitle(x);else if(k==='gus')drawGus(x);else if(k==='me')drawMe(x);else if(k==='wprev')drawWPrev(x);
   else if(k.startsWith('ico-'))drawIcon(x,k.slice(4));else if(k.startsWith('spark-'))drawSpark(x,k.slice(6));
   else if(k==='plinko'&&!S.g.pl.busy)drawPlinko(x);else if(k==='snail'&&!S.g.sn.busy)drawSnails(x,S.g.sn.pos);
   else if(k==='wheel'&&!S.g.wh.busy)drawWheel(x,S.g.wh.off||0);else if(k==='rwheel'&&!S.g.rl.busy)rlRest(x);else if(k==='crash')drawCrash(x);else if(k==='penguin')drawPenguin(x);else if(k==='craps')drawCrapsRest(x);else if(k==='sbw'){const g=SBW?sbGame(SBW.gid):(UI.sbLast&&sbGame(UI.sbLast));if(g&&g.res)drawSB(x,g,SBW?Math.min(1,(performance.now()-SBW.t0)/SBW.D):1)}else if(k==='collect'&&!COLL)drawCollect(x,10);else if(k==='intro'&&!INTRO)drawIntro(x,9);else if(k==='debtcut'&&!DCUT)drawDebtCut(x,9)})}
-setInterval(()=>{frame++;if(document.hidden)return;document.querySelectorAll('canvas[data-anim]').forEach(c=>{const k=c.dataset.s;if(k==='world'&&UI.moving)return;const x=c.getContext('2d');x.imageSmoothingEnabled=false;const fn={world:drawWorld,title:drawTitle,gus:drawGus,penguin:drawPenguin}[k];if(fn)fn(x)})},RM?2000:380);
+setInterval(()=>{frame++;if(document.hidden)return;document.querySelectorAll('canvas[data-anim]').forEach(c=>{const k=c.dataset.s;if(k==='world'&&UI.moving)return;const x=c.getContext('2d');x.imageSmoothingEnabled=false;const fn={world:drawWorld,title:drawTitle,gus:drawGus,penguin:drawPenguin,wprev:drawWPrev}[k];if(fn)fn(x)})},RM?2000:380);
 
 /* ================= cards ================= */
 function draw(){return{r:1+Math.floor(rnd()*13),s:Math.floor(rnd()*4)}}
@@ -3502,9 +3497,21 @@ function vLegacy(){
     const hl=M.heatMax<(u.heat||0);return`<div class="row ${max?'got':''} ${hl?'locked':''}"><h3>${u.n} <span style="color:var(--y)">${r}/${u.max}</span>${u.heat?` <span class="tt t4">★★★★</span>`:''}</h3><p>${u.d}</p><button class="btn ${max||hl?'':'green'} sm" data-a="leg" data-v="${k}" ${max||hl||M.rep<c?'disabled':''}>${max?'Maxed':hl?'\u{1F512} Heat '+u.heat:c.toLocaleString()+' Rep'}</button><div class="prog"><i style="width:${r/u.max*100}%"></i></div></div>`}).join('');
   else if(t==='pass'){const on=passOn().length;body=`<p class="muted">Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus ${PASS_SLOTS} random games. Win a game enough times (across all runs) and you earn its day-one pass, which locks it into one of those ${PASS_SLOTS} slots. Everything else unlocks as you pay off debts. Active passes: <b style="color:var(--y)">${on}/${PASS_SLOTS}</b>.</p>`+GAME_IDS.filter(g=>!CLASSICS.includes(g)).map(g=>{const own=M.pass.own[g],act=own&&M.pass.on[g],c=passCost(g);
     return`<div class="row ${act?'got':''}"><h3>${GAMES[g].n}${act?' <span class="win">ON</span>':''}</h3><p>${GAMES[g].s}</p>${own?`<button class="btn ${act?'dim':'green'} sm" data-a="passtog" data-v="${g}" ${!act&&on>=PASS_SLOTS?'disabled':''}>${act?'Turn off':'Turn on'}</button>`:`<span class="muted">${Math.min(gs(g).w,c)}/${c} wins</span>`}</div>`}).join('')}
-  else body=`<canvas class="pix" data-s="me" width="48" height="36" data-max="5" aria-label="Your character"></canvas>`+`<p class="muted">Cosmetics change your character, your home, the casino sign, card backs, table felt and the weather on Main Street. Some cost Rep, others unlock with trophies, lifetime Rep or game mastery tiers.</p>`+Object.entries(WARD).map(([slot,g])=>`<span class="lbl">${g.label}</span><div class="g3">${Object.entries(g.items).map(([id,[nm,c,rq]])=>{const lock=rq&&!reqOK(rq);const own=!lock&&(c===0||M.ward.own[slot+':'+id]),on=M.ward[slot]===id;
-    return`<button class="opt ${on?'on':''} ${lock?'locked':''}" data-a="ward" data-v="${slot}:${id}" ${!lock&&!own&&M.rep<c?'disabled':''}>${nm}<small>${on?'Using':lock?'\u{1F512} '+reqText(rq):own?'Use':c+' Rep'}</small></button>`}).join('')}</div>`).join('');
+  else body=`<canvas class="pix" data-s="me" width="48" height="36" data-max="5" aria-label="Your character"></canvas>`+`<p class="muted">Cosmetics change your character, your home, the casino sign, card backs, table felt and the weather on Main Street. Some cost Rep, others unlock with trophies, lifetime Rep or game mastery tiers. Tap anything you don’t own to preview it before you buy.</p>`+Object.entries(WARD).map(([slot,g])=>`<span class="lbl">${g.label}</span><div class="g3">${Object.entries(g.items).map(([id,[nm,c,rq]])=>{const lock=rq&&!reqOK(rq);const own=!lock&&(c===0||M.ward.own[slot+':'+id]),on=M.ward[slot]===id;
+    const pv=UI.wprev&&UI.wprev.slot===slot&&UI.wprev.id===id;
+    return`<button class="opt ${on?'on':''} ${lock?'locked':''} ${pv?'prev':''}" data-a="ward" data-v="${slot}:${id}">${nm}<small>${pv?'Previewing':on?'Using':lock?'\u{1F512} '+reqText(rq):own?'Use':c+' Rep'}</small></button>`}).join('')}</div>`).join('')+wardBar();
   return topbar('Legacy','title')+lvlBar()+tabs+`<div class="stack">${body}</div>`;
+}
+function wardBar(){
+  const p=UI.wprev;if(!p||!WARD[p.slot]||!WARD[p.slot].items[p.id])return'';
+  const [nm,c,rq]=WARD[p.slot].items[p.id],lock=rq&&!reqOK(rq),short=c-M.rep;
+  let pic;
+  if(p.slot==='card'){const cb=CARDBACK[p.id];pic=`<div class="cardb" style="${cb?`--cb1:${cb[0]};--cb2:${cb[1]}`:'background:repeating-conic-gradient(#b13e53 0 12.5%,#ffcd75 0 25%,#a7f070 0 37.5%,#73eff7 0 50%) 0 0/16px 16px'}"></div>`}
+  else if(p.slot==='felt')pic=`<div class="wfelt" style="background:${FELTS[p.id]||FELTS.green}"><div class="cardb"></div></div>`;
+  else if(WCHAR.includes(p.slot))pic=`<canvas class="pix" data-s="wprev" data-anim width="48" height="36" data-fill data-max="3" aria-label="Preview of ${nm}"></canvas>`;
+  else pic=`<canvas class="pix" data-s="wprev" data-anim width="96" height="54" data-fill data-max="2" aria-label="Preview of ${nm}"></canvas>`;
+  return`<div class="actbar wbar"><div class="wrow"><div class="wpic">${pic}</div><div class="winfo"><span class="lbl">Preview · ${WARD[p.slot].label}</span><b class="px">${nm}</b><small>${lock?'\u{1F512} '+reqText(rq):short>0?`You have ${M.rep.toLocaleString()} Rep. Need ${short.toLocaleString()} more.`:`You have ${M.rep.toLocaleString()} Rep.`}</small></div></div>
+    <div class="g2">${lock?`<button class="btn" disabled>Locked</button>`:`<button class="btn green" data-a="wardbuy" ${short>0?'disabled':''}>Purchase for ${c.toLocaleString()} Rep</button>`}<button class="btn dim" data-a="wardx">Cancel</button></div></div>`;
 }
 function vStats(){
   const s=M.stats;
@@ -3537,7 +3544,7 @@ function lineupCard(){const now=GAME_IDS.filter(g=>gReq(g)<=S.paid),pins=passOn(
   <p class="muted">Coming up: ${next.map(g=>`${GAMES[g].n} (${gReq(g)} debt${gReq(g)>1?'s':''})`).join(', ')}.</p><button class="btn green wide" data-a="lineupok">Let’s go</button></div>`}
 function panelHTML(){
   const p=UI.panel;if(!p)return'';const done=`<button class="btn dim sm" data-a="closep">Done</button>`;
-  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),lou:louPanel,busker:buskerPanel,pawn:pawnPanel,zora:zoraPanel,loans:loanPanel}[p];if(T)return T()+done;return'';
+  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),lou:louPanel,pawn:pawnPanel,zora:zoraPanel,loans:loanPanel}[p];if(T)return T()+done;return'';
 }
 const shortVal=st=>Math.max(0,2*st.sColl-st.short*st.p);
 function pcPanel(){
@@ -3563,7 +3570,7 @@ function pcPanel(){
       <div class="acts"><button class="btn blue" data-a="stk" data-v="${k}:b1" ${S.cash>=st.p?'':'disabled'}>Buy 1</button><button class="btn blue" data-a="stk" data-v="${k}:b10" ${S.cash>=st.p*10?'':'disabled'}>Buy 10</button><button class="btn blue" data-a="stk" data-v="${k}:bmax" ${S.cash>=st.p?'':'disabled'}>Buy max</button><button class="btn" data-a="stk" data-v="${k}:sall" ${st.own?'':'disabled'}>Sell all</button>
       <button class="btn red" data-a="stk" data-v="${k}:h1" ${S.cash>=st.p?'':'disabled'}>Short 1</button><button class="btn red" data-a="stk" data-v="${k}:h10" ${S.cash>=st.p*10?'':'disabled'}>Short 10</button><button class="btn red" data-a="stk" data-v="${k}:hmax" ${S.cash>=st.p?'':'disabled'}>Short max</button><button class="btn green" data-a="stk" data-v="${k}:cv" ${st.short?'':'disabled'}>Cover</button></div></div>`}).join('');
   }else if(UI.tab==='town'){
-    const shops=['busker','lou'].map(k=>`<div class="kv"><span>${k==='lou'?'Lucky Lou (daily quests)':'Benny the busker'}</span><b class="win">Open</b></div>`).join('')+Object.keys(SHOP_REQ).map(k=>`<div class="kv"><span>${SHOP_N[k]}</span>${shopOpen(k)?'<b class="win">Open</b>':`<b class="muted">${SHOP_REQ[k]} debt${SHOP_REQ[k]>1?'s':''}</b>`}</div>`).join('')+`<div class="kv"><span>Pawn King’s counter</span>${counterOpen()?'<b class="win">Open</b>':`<b class="muted">${mod('fasting')?'contract':COUNTER_AT+' debts'}</b>`}</div>`;
+    const shops=['lou'].map(k=>`<div class="kv"><span>Lucky Lou (daily quests)</span><b class="win">Open</b></div>`).join('')+Object.keys(SHOP_REQ).map(k=>`<div class="kv"><span>${SHOP_N[k]}</span>${shopOpen(k)?'<b class="win">Open</b>':`<b class="muted">${SHOP_REQ[k]} debt${SHOP_REQ[k]>1?'s':''}</b>`}</div>`).join('')+`<div class="kv"><span>Pawn King’s counter</span>${counterOpen()?'<b class="win">Open</b>':`<b class="muted">${mod('fasting')?'contract':COUNTER_AT+' debts'}</b>`}</div>`;
     body=`<span class="lbl">Main Street</span>${shops}`;
   }else body=gameOpen('sports')?gSB():'<p class="muted">The Sportsbook is closed under this contract.</p>';
   return`<div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${l}</button>`).join('')}</div><div class="stack">${body}</div>`;
@@ -3789,8 +3796,8 @@ function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">ENERGY.</b> You get ${maxEnergy()} energy a day (50 to start). Longer games cost more per round: ${['holdem','slots','flip','baccarat','roulette','crash','snail','bj','mines','tower','hilo'].map(g=>GAMES[g].n+' '+ecost(g)).join(', ')}. Craps costs ${ECOST.craps} per come-out, Plinko ${ECOST.plinko} per session and a Sit & Go ${SNG_E}. Sports bets and stock trades are free. Every game shows its cost at the top. Sleep to refill, or buy a Volt Energy at the Pawn King’s counter.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">THE PAWN KING.</b> His display case sells items that last the whole run: more energy, bigger wins, cheaper shopping and smarter play. Some build on each other, so you need the first one before the next. He buys anything back at half price. After you sleep, the ledger charts your day: what you won, what bonuses added, what you lost and what bonuses saved.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">GETTING AROUND.</b> Walk with the arrow buttons (or arrow keys), or tap where you want to go. Press the big button to use whatever you’re standing next to: doors, your computer, your bed, the Pawn King, the bartender and every casino game.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou and Benny the busker are there from day 1. The rest of Main Street opens as you pay debts, the same way every run: the Pawn King & Loans at 1 debt paid, the Bar and the Pawn King’s display case at 2, the Pawn King’s counter (energy drinks and daily specials) at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: Benny plays lucky songs for tips, the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou is there from day 1. The rest of Main Street opens as you pay debts, the same way every run: the Pawn King & Loans at 1 debt paid, the Bar and the Pawn King’s display case at 2, the Pawn King’s counter (energy drinks and daily specials) at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BETS.</b> Every bet panel has Clear, Repeat (your last bet in that game) and Double. At roulette, Repeat last and Double last rebuild your previous spin’s whole layout.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">UNLOCKS.</b> Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus 4 random games. Paying off debts opens the rest, two at a time, until every game is open by your 8th debt.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 3% per Heat. When cash runs low, only the cheap tables will take you. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
@@ -3858,7 +3865,7 @@ function render(){
   if(UI.scene==='world'&&S&&UI.room!=='street'&&UI.room!=='home'&&!placeOpen(UI.room)){UI.room='street'}
   if(UI.scene==='world'&&S&&UI.room==='mart')UI.room='street';
   if(S&&!S.over&&(!S.quest||S.quest.day!==S.day))S.quest=makeQuest();
-  {const bk=UI.scene+'|'+UI.room+'|'+UI.game;if(UI._bk&&UI._bk!==bk){UI.bview=false;UI.qview=false;UI.bsel=null}UI._bk=bk}
+  {const bk=UI.scene+'|'+UI.room+'|'+UI.game;if(UI._bk&&UI._bk!==bk){UI.wprev=null;UI.bview=false;UI.qview=false;UI.bsel=null}UI._bk=bk}
   if(S&&S.g&&S.g.pl&&!(UI.scene==='game'&&UI.game==='plinko'))S.g.pl.session=false;
   if(UI.scene!=='game'&&UI.scene!=='recap'&&UI.inbox&&UI.inbox.length){const ib=UI.inbox;UI.inbox=[];setTimeout(()=>{if(ib.length<=3)ib.forEach(h=>toast(h));else{toast(ib[0]);toast(`+${ib.length-1} more while you played`)}},250)}
   if(!M.mastFix){for(const k in M.gw){const t=tierOf(M.gw[k],k);if(t>=0)M.mastery[k]=Math.max(M.mastery[k]==null?-1:M.mastery[k],t)}M.mastFix=1}
@@ -3897,13 +3904,16 @@ function act(a,v,el){
     case 'modt':{const m=UI.setup.mods;UI.setup.mods=m.includes(v)?m.filter(x=>x!==v):m.concat([v]);break}
     case 'start':newRun({heat:UI.setup.heat,mods:UI.setup.mods.slice()});return;
     case 'leg':buyLegacy(v);break;
-    case 'ltab':UI.ltab=v;break;
+    case 'ltab':UI.ltab=v;UI.wprev=null;break;
     case 'passbuy':return;
     case 'passbuyOLD':{const c=passCost(v);if(M.pass.own[v]||M.rep<c)return;M.rep-=c;M.pass.own[v]=1;if(passOn().length<PASS_SLOTS)M.pass.on[v]=1;SFX.coin();toast(`Day-one pass: <b>${GAMES[v].n}</b> will open on day 1 of every run.`);checkTiers();break}
     case 'passtog':{if(!M.pass.own[v])return;if(M.pass.on[v])delete M.pass.on[v];else if(passOn().length<PASS_SLOTS)M.pass.on[v]=1;break}
     case 'lineupok':S.lineupSeen=1;break;
     case 'ttab':UI.ttab=v;break;
-    case 'ward':{const[sl,id]=v.split(':');wardAct(sl,id);break}
+    case 'ward':{const[sl,id]=v.split(':'),it=WARD[sl].items[id],lock=it[2]&&!reqOK(it[2]),own=!lock&&(it[1]===0||M.ward.own[sl+':'+id]);
+      if(own){UI.wprev=null;wardAct(sl,id)}else UI.wprev=(UI.wprev&&UI.wprev.slot===sl&&UI.wprev.id===id)?null:{slot:sl,id};break}
+    case 'wardbuy':{const p=UI.wprev;if(!p)break;const it=WARD[p.slot].items[p.id];if((it[2]&&!reqOK(it[2]))||M.rep<it[1])break;UI.wprev=null;wardAct(p.slot,p.id);toast(`Bought ${it[0]}. You’re wearing it now.`);break}
+    case 'wardx':UI.wprev=null;break;
     case 'ext':extDebt(+v);break;
     case 'cancel':UI.confirm=null;break;
     case 'mute':M.mute=!M.mute;applyVolumes();if(!M.mute)wakeAudio();break;
@@ -3988,7 +3998,6 @@ function act(a,v,el){
     case 'betclr':UI.bet=0;break;
     case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
-    case 'tip':tipAct(+v);break;
     case 'tbuy':{const p=tprice(v);const rq=TRINKETS[v]&&TRINKETS[v].req;if((S.paid||0)<PAWN_CASE||S.trinkets[v]||S.cash<p||(rq&&!S.trinkets[rq]))return;{ach('skill');setTimeout(()=>{if(S&&Object.keys(S.trinkets).length>=8)ach('tree')},0)}S.cash-=p;S.trinkets[v]=p;questEvent('pawn');SFX.coin();toast(`Bought the ${TRINKETS[v].n}.`);if(Object.keys(S.trinkets).length>=4)ach('collector');break}
     case 'tsell':{const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the item that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
     case 'pawnitem':{if(S.pawned[v])return;S.pawned[v]=1;S.cash+=HOUSE[v][1];SFX.coin();toast(`The Pawn King gives you ${fmt(HOUSE[v][1])} for ${HOUSE[v][0].toLowerCase()}.`);break}
