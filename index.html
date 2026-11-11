@@ -255,6 +255,19 @@ canvas.world{touch-action:none;-webkit-user-select:none;user-select:none}
 .dbl.me{color:var(--y)}
 .dbp{font-family:var(--px);font-size:7px;color:var(--y)}
 .dbh.hit{background:var(--o);animation:dbhit .4s steps(2) 2}
+#dbtrack{position:relative}
+.dbshow{position:absolute;left:50%;top:38%;z-index:3;transform:translate(-50%,-50%);pointer-events:none}
+.dbshow .cardf{box-shadow:0 0 0 3px var(--y),6px 6px 0 rgba(0,0,0,.5)}
+@keyframes dbin{0%{transform:translate(-50%,-50%) scale(.3) rotate(-14deg);opacity:0}70%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(1.15);opacity:1}}
+@keyframes dbstow{0%{left:50%;top:38%;transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{left:16px;top:calc(100% - 16px);transform:translate(-50%,-50%) scale(.42);opacity:.2}}
+.dbshow.in{animation:dbin var(--dbd,.3s) ease-out both}
+.dbshow.stow{animation:dbstow var(--dbd,.4s) ease-in both}
+@keyframes dbadv{0%{transform:translateX(-115%)}75%{transform:translateX(8%)}100%{transform:none}}
+@keyframes dbback{0%{transform:translateX(115%)}75%{transform:translateX(-8%)}100%{transform:none}}
+.dbh.adv{animation:dbadv var(--dbd,.45s) ease-out both;box-shadow:0 0 0 2px var(--l)}
+.dbh.bk{animation:dbback var(--dbd,.45s) ease-out both;background:var(--o)}
+@keyframes dbflipk{0%{transform:scaleX(0) scale(1.5)}60%{transform:scaleX(1) scale(1.5)}100%{transform:none}}
+.dbflip{display:inline-block;animation:dbflipk var(--dbd,.5s) ease-out both}
 .dbh.won{box-shadow:0 0 0 2px var(--y)}
 @keyframes dbhit{50%{transform:translateX(-3px)}}
 .dbdeck{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:var(--vt);font-size:18px;color:var(--w)}
@@ -985,7 +998,7 @@ function newRun(cfg){
   if(cfg.daily){const d=M.daily;if(d.last!==cfg.daily){const y=new Date();y.setDate(y.getDate()-1);d.streak=d.last===dstr(y)?d.streak+1:1;d.last=cfg.daily;d.bestStreak=Math.max(d.bestStreak,d.streak);checkTiers()}}
   UI.bet=10;UI.tab='debts';UI.confirm=null;UI.scene='world';UI.room='home';UI.wx={street:30,home:70,casino:32,mart:32,bar:32};UI.panel=null;S.story=Math.floor(Math.random()*STORIES.length);UI.scene='intro';UI.introP=0;save();render();introStart();
 }
-if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn','db','dc','sbo','cp'].forEach(k=>{if(S.g[k])S.g[k].busy=false});['bc','sbo','wh','sn','db'].forEach(k=>chipFix(S.g[k]));S.g.rl.stack=S.g.rl.stack||[];S.g.cp.stack=[];if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
+if(S){S.mods=S.mods||[];S.heat=S.heat||0;S.ext=S.ext||0;S.g=Object.assign(newG(),S.g||{});['rl','pl','fl','sn'].forEach(k=>S.g[k].busy=false);if(!S.g.bj.hands)S.g.bj=newG().bj;if(!S.g.rl.bets)S.g.rl=newG().rl;if(!S.g.pk.seats)S.g.pk=newG().pk;S.g.pk.aiPending=false;['sl','wh','kn','db','dc','sbo','cp'].forEach(k=>{if(S.g[k])S.g[k].busy=false});if(S.g.db){S.g.db.show=null;S.g.db.mv=null;S.g.db.flipK=-1;S.g.db.skip=false}['bc','sbo','wh','sn','db'].forEach(k=>chipFix(S.g[k]));S.g.rl.stack=S.g.rl.stack||[];S.g.cp.stack=[];if(S.g.cr.phase==='fly'){S.g.cr.phase='done';S.g.cr.msg='The rocket left without you.'}if(S.martOpen===undefined)S.martOpen=true;S.buffs=S.buffs||[];S.trinkets=S.trinkets||{};S.karma=S.karma||0;S.pawned=S.pawned||{};S.lastBet=S.lastBet||{};for(const k in TICK)if(!S.stocks[k])S.stocks[k]={p:TICK[k].p,h:[TICK[k].p],own:0,cost:0,short:0,sColl:0};for(const k in S.stocks){S.stocks[k].short=S.stocks[k].short||0;S.stocks[k].sColl=S.stocks[k].sColl||0}if(S.over)UI.scene='title'}
 
 /* ================= toasts & achievements ================= */
 function note(h){if(S&&UI.scene==='game'){UI.inbox=(UI.inbox||[]).concat([h]);return}toast(h)}
@@ -2332,11 +2345,11 @@ function dbRace(){const deck=[];for(let su=0;su<4;su++)for(let r=2;r<=13;r++)dec
   if(fin.length<2){[0,1,2,3].filter(i=>!fin.includes(i)).sort((a,b)=>pos[b]-pos[a]).forEach(i=>{if(fin.length<2)fin.push(i)});ev[ev.length-1].fin=fin.slice()}
   return{track,ev,fin}}
 function dbBoard(s){const lane=i=>{const p=s.pos[i],me=s.bets&&(s.bets['w'+i]||s.bets['p'+i]),done=s.fin.indexOf(i);
-    return`<span class="dbl ${me?'me':''}">${SU[i]}</span>`+Array.from({length:DB_FIN+1},(_,j)=>`<span class="dbc ${j===0?'gate':''} ${j===DB_FIN?'fin':''}">${j===p?`<span class="mc dbh ${i===1||i===2?'red':''} ${s.flash===i?'hit':''} ${done>=0?'won':''}">A<br>${SU[i]}</span>`:''}</span>`).join('')+`<span class="dbp">${done===0?'1st':done===1?'2nd':''}</span>`};
-  const trk=`<span class="dbl"></span><span class="dbc gate"></span>`+Array.from({length:DB_TR},(_,k)=>`<span class="dbc">${s.track[k]&&s.rev[k]?miniFace(s.track[k]):'<span class="mb"></span>'}</span>`).join('')+`<span class="dbc fin"></span><span class="dbp"></span>`;
-  return`<div class="dbt">${trk}${[0,1,2,3].map(lane).join('')}</div><div class="dbdeck">${s.last?miniFace(s.last):'<span class="mb"></span>'}<span>${s.tick||'Stack chips on Win or Place, then race.'}</span><small>${s.left} left</small></div>`}
+    return`<span class="dbl ${me?'me':''}">${SU[i]}</span>`+Array.from({length:DB_FIN+1},(_,j)=>`<span class="dbc ${j===0?'gate':''} ${j===DB_FIN?'fin':''}">${j===p?`<span class="mc dbh ${i===1||i===2?'red':''} ${s.flash===i?'hit':''} ${s.mv&&s.mv[0]===i?s.mv[1]:''} ${done>=0?'won':''}">A<br>${SU[i]}</span>`:''}</span>`).join('')+`<span class="dbp">${done===0?'1st':done===1?'2nd':''}</span>`};
+  const trk=`<span class="dbl"></span><span class="dbc gate"></span>`+Array.from({length:DB_TR},(_,k)=>`<span class="dbc">${s.track[k]&&s.rev[k]?`<span class="${s.flipK===k?'dbflip':''}">${miniFace(s.track[k])}</span>`:'<span class="mb"></span>'}</span>`).join('')+`<span class="dbc fin"></span><span class="dbp"></span>`;
+  return`<div class="dbt">${trk}${[0,1,2,3].map(lane).join('')}</div>${s.show?`<div class="dbshow ${s.showC||'in'}">${face(s.show)}</div>`:''}<div class="dbdeck">${s.last?miniFace(s.last):'<span class="mb"></span>'}<span>${s.tick||'Stack chips on Win or Place, then race.'}</span><small>${s.left} left</small></div>`}
 function dbAct(v){
-  const s=chipFix(S.g.db);if(s.busy)return;
+  const s=chipFix(S.g.db);if(s.busy){if(v==='skip')s.skip=true;return}
   if(/^[wp][0-3]$/.test(v)){chipAdd('db',v);return}
   if(v!=='go')return;const b=chipStart('db');if(!b)return;const bets=Object.assign({},s.bets);s.busy=true;s.k=(s.k||0)+1;
   const R=dbRace(),knocked=[0,0,0,0];
@@ -2345,14 +2358,30 @@ function dbAct(v){
     const hit=e.bk.find(x=>x.mv);if(e.bk.length){const x=hit||e.bk[0];s.tick=`Track card ${x.k+1} flips: ${SU[x.s]} ${x.mv?'knocked back!':'no effect.'}`;if(hit){s.flash=hit.s;knocked[hit.s]++}}
     else if(e.done!=null)s.tick=`${SU[e.done]} ${DB_NM[e.done]} cross${s.fin.length===1?'es first!':' in second.'}`;
     else s.tick=s.fin.includes(e.c.s)?`${SU[e.c.s]} already finished.`:`${SU[e.c.s]} moves up.`;return!!hit};
-  const fin=pendFin(()=>{s.busy=false;s.flash=-1;let g=0;const won=[];let backWin=false;
+  const fin=pendFin(()=>{s.busy=false;s.flash=-1;{const L=R.ev[R.ev.length-1];s.pos=L.pos;s.rev=L.rev;s.fin=L.fin;s.last=L.c;s.left=L.left;s.show=null;s.mv=null;s.flipK=-1;s.tick=`${SU[R.fin[0]]} ${DB_NM[R.fin[0]]} wins the derby.`}let g=0;const won=[];let backWin=false;
     for(const k in bets){const i=+k[1],ok=k[0]==='w'?R.fin[0]===i:R.fin.slice(0,2).includes(i);if(ok){g+=bets[k]*DB_PAY[k[0]==='w'?'win':'place'];won.push(SU[i]+(k[0]==='w'?' win':' place'));if(knocked[i])backWin=true}}
     const r=settle('derby',b,g);s.hist.unshift(SU[R.fin[0]]);s.hist=s.hist.slice(0,10);
     s.msg=`${SU[R.fin[0]]} wins, ${SU[R.fin[1]]} places. `+chipWins(won)+resText(r);if(won.length){questEvent('sp','derby_win');if(backWin)ach('derby')}save();render()});
   if(RM){R.ev.forEach(apply);fin();return}
-  render();let i=0;const step=()=>{if(i>=R.ev.length){setTimeout(fin,350*SP());return}const e=R.ev[i++],hit=apply(e);const el=$('#dbtrack');if(el)el.innerHTML=dbBoard(s);
-    if(hit)SFX.thunk();else SFX.tick();const close=Math.max(...s.pos)>=DB_TR-1;setTimeout(step,(hit?1200:e.done!=null?950:e.bk.length?800:close?620:400)*SP())};
-  SFX.bugle();setTimeout(step,1500*SP());
+  render();
+  const T=ms=>ms*SP(),draw2=dur=>{const el=$('#dbtrack');if(el){el.style.setProperty('--dbd',(dur*SP()/1000)+'s');el.innerHTML=dbBoard(s)}};
+  const wait=ms=>new Promise(r=>setTimeout(r,s.skip?0:T(ms)));
+  const clear=()=>{s.show=null;s.showC='';s.mv=null;s.flipK=-1;s.flash=-1};
+  const run=async()=>{
+    await wait(1500);
+    for(const e of R.ev){if(s.skip||fin.done)break;const c=e.c,was=s.fin.includes(c.s);
+      clear();s.show=c;s.showC='in';s.tick=`Dealt: ${RN(c.r)}${SU[c.s]}`;draw2(300);SFX.card();await wait(850);if(s.skip||fin.done)break;
+      s.showC='stow';draw2(400);await wait(420);if(s.skip||fin.done)break;
+      clear();s.last=c;s.left=e.left;
+      if(was){s.tick=`${SU[c.s]} already finished.`;draw2(300);await wait(450)}
+      else{s.pos=s.pos.slice();s.pos[c.s]++;s.mv=[c.s,'adv'];s.tick=`${SU[c.s]} ${DB_NM[c.s]} moves up.`;draw2(450);SFX.tick();await wait(700)}
+      for(const x of e.bk){if(s.skip||fin.done)break;clear();s.rev=s.rev.slice();s.rev[x.k]=true;s.flipK=x.k;s.tick=`Track card ${x.k+1} flips: ${RN(R.track[x.k].r)}${SU[x.s]}...`;draw2(500);SFX.card();await wait(900);
+        if(s.skip||fin.done)break;clear();if(x.mv){s.pos=s.pos.slice();s.pos[x.s]--;s.mv=[x.s,'bk'];s.flash=x.s;knocked[x.s]++;s.tick=`${SU[x.s]} ${DB_NM[x.s]} is knocked back!`;draw2(450);SFX.thunk();await wait(900)}else{s.tick=`${SU[x.s]} isn’t out of the gate. No effect.`;draw2(300);await wait(600)}}
+      if(s.skip||fin.done)break;clear();s.pos=e.pos;s.rev=e.rev;s.fin=e.fin;
+      if(e.done!=null){s.tick=`${SU[e.done]} ${DB_NM[e.done]} cross${s.fin.length===1?'es first!':' in second.'}`;draw2(300);SFX.coin();await wait(1100)}}
+    clear();const last=R.ev[R.ev.length-1];s.pos=last.pos;s.rev=last.rev;s.fin=last.fin;s.last=last.c;s.left=last.left;s.skip=false;
+    if(!fin.done){draw2(300);setTimeout(fin,350*SP())}};
+  s.skip=false;SFX.bugle();run();
 }
 function gDB(){
   const s=chipFix(S.g.db);
@@ -2360,7 +2389,7 @@ function gDB(){
   return`<div class="felt"><div id="dbtrack" data-ck="db${s.k||0}">${dbBoard(s)}</div><div class="hist">${s.hist.map(h=>`<i class="m">${h}</i>`).join('')}</div></div>
   <span class="lbl">Win · 1st place · ${DB_PAY.win}x</span><div class="opts">${[0,1,2,3].map(i=>cell('w',i)).join('')}</div>
   <span class="lbl">Place · 1st or 2nd · ${DB_PAY.place}x</span><div class="opts">${[0,1,2,3].map(i=>cell('p',i)).join('')}</div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${chipBar('db','data-a="db" data-v="go"','Race')}`;
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${s.busy?`<button class="btn dim wide" data-a="db" data-v="skip">Skip to the finish</button>`:''}${chipBar('db','data-a="db" data-v="go"','Race')}`;
 }
 
 /* ================= game guides ================= */
