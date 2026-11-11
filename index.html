@@ -72,7 +72,7 @@ h2{font-family:var(--px);font-size:14px;color:var(--y);line-height:1.5;text-wrap
 
 /* hud */
 .hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--k);border-bottom:3px solid var(--w);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:6px}
-.hrow{display:grid;grid-template-columns:auto auto auto 1fr auto auto;gap:10px;align-items:end}
+.hrow{display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:end}
 .hs{display:flex;flex-direction:column;min-width:0}
 .hs span{font-family:var(--px);font-size:7px;color:var(--s)}
 .hs b{font-size:24px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
@@ -1025,7 +1025,7 @@ function animateNew(){
   app.querySelectorAll('[data-tot]').forEach(el=>{let seq;try{seq=JSON.parse(el.dataset.tot)}catch(e){return}let shown=null,any=false;
     seq.forEach(([ck,v])=>{if(endAt.has(ck)){any=true;setTimeout(()=>{if(el.isConnected)el.textContent=v},Math.max(0,endAt.get(ck)-140*SP()))}else if(!any)shown=v});
     if(any)el.textContent=shown==null?'0':shown});
-  app.querySelectorAll('[data-after]').forEach(el=>{el.style.animationDelay=t+'ms';el.classList.add('after')});
+  app.querySelectorAll('[data-after]').forEach(el=>{el.style.animationDelay=(t+(el.dataset.after==='late'?750*SP():0))+'ms';el.classList.add('after')});
   ANIM_UNTIL=performance.now()+t;return t;
 }
 function rollCash(delay){
@@ -3528,12 +3528,11 @@ function boostBar(){const b=boosts();if(!b.length)return'';const n=b.length-1;re
 function hud(){
   const nd=S.debts.slice().sort((a,b)=>a.due-b.due)[0],left=nd.due-S.day;
   return`<header class="hud"><div class="hrow">
-    <button class="ib" data-a="nav" data-v="title" aria-label="Menu">II</button>
     <div class="hs"><span>DAY${S.heat?' H'+S.heat:''}</span><b>${S.day}</b></div>
     <div class="hs"><span>ENERGY</span><b>${S.energy}/${maxEnergy()}</b></div>
     <div class="hs"><span>CASH</span><b class="cash">${fmt(S.cash)}</b></div>
-    <button class="ib" data-a="mute" aria-label="Toggle sound">${M.mute?'OFF':'SND'}</button><button class="ib" data-a="settings" aria-label="Settings">SET</button></div>
-    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${!ribbonOn()?'':brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<div class="collrow"><button class="btn red collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}${ribbonOn()&&hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<div class="collrow"><button class="btn red collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}</header>`;
+    <button class="ib" data-a="settings" aria-label="Settings">SET</button></div>
+    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${!ribbonOn()?'':brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<div class="collrow" data-after="late"><button class="btn red collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}${ribbonOn()&&hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<div class="collrow" data-after="late"><button class="btn red collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}</header>`;
 }
 const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fill data-anim width="160" height="90" aria-label="${k} scene"></canvas>`;
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
@@ -3642,7 +3641,7 @@ function pcPanel(){
     ${brokeBase(false)?`<div class="box collpc"><span class="lbl">Out of money</span><p>${loanAvail()?'You can’t cover any table. Borrow from Vinnie, or end the run on your terms.':'You can’t cover any table and nobody will lend to you.'}</p>
       ${UI.confirm==='collpc'?`<div class="confirm"><p>Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collpcyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:
       `<div class="g2">${loanAvail()?`<button class="btn green sm" data-a="loan" data-v="${r5(loanLimit()*.5)}">Borrow ${fmt(r5(loanLimit()*.5))}</button>`:'<span></span>'}<button class="btn red sm" data-a="collpc">Face the collectors</button></div>`}
-      ${S.hideBroke||M.set.brokeRibbon===false?`<button class="linkb" data-a="showbroke">Show the reminder ribbon again</button>`:''}</div>`:''}`;
+      ${S.hideBroke||M.set.brokeRibbon===false?`<button class="linkb" data-a="showbroke">Show the Broke banner again</button>`:`<button class="linkb" data-a="hidebroke">Ignore this and hide the Broke banner</button>`}</div>`:''}`;
   }else if(UI.tab==='stocks'){
     let val=0;for(const k in S.stocks){const st=S.stocks[k];val+=st.own*st.p+shortVal(st)}
     const idx=Object.keys(TICK).reduce((a,k)=>a+S.stocks[k].p/TICK[k].p,0)/Object.keys(TICK).length;
@@ -3930,7 +3929,8 @@ function vSettings(){
     <button class="btn sm" data-a="imp">Load save</button>
     <label class="lbl" for="resetin" style="margin-top:6px">Erase everything</label><p class="muted">Deletes your run, trophies, Rep and upgrades on this device. Type RESET to confirm.</p>
     <div class="g2"><input id="resetin" class="code" placeholder="Type RESET" autocomplete="off"><button class="btn red sm" data-a="wipe">Erase</button></div></div>
-  <p class="muted" style="text-align:center">Debt Den · music and sounds are generated live in your browser · play money only</p>`;
+  <p class="muted" style="text-align:center">Debt Den · music and sounds are generated live in your browser · play money only</p>
+  ${S&&!S.over&&UI.prevScene!=='title'?`<button class="btn green wide" style="padding:18px 10px;font-size:13px;margin-top:6px" data-a="saveexit">Save &amp; exit to main menu</button><p class="muted" style="text-align:center">Your run is saved. Pick it up again from the main menu.</p>`:''}`;
 }
 function showBigConfirm(a,v,i,amt){
   const d=document.createElement('div');d.className='modal';
@@ -3963,7 +3963,7 @@ function render(){
   if(UI.scene==='game'&&S&&(!gameOpen(UI.game)||S.paid<gReq(UI.game))){UI.scene='world';UI.room='casino'}
   const v={tonight:vTonight,recap:vRecap,debtcut:vDebtCut,intro:vIntro,collect:vCollect,settings:vSettings,title:vTitle,world:vWorld,game:vGame,over:vOver,trophies:vTrophies,how:vHow,setup:vSetup,legacy:vLegacy,stats:vStats}[UI.scene]||vTitle;
   app.innerHTML=v();fitPix();drawScenes();
-  {const t=animateNew();rollCash(t);flushFX(t)}
+  {const t=animateNew();rollCash(t);flushFX(t?t+750*SP():0)}
   if(UI.scene==='world')updatePrompt();
   if(S&&!S.over&&S.g.pk.seated&&S.g.pk.phase==='play'&&S.g.pk.toAct>0)pkSchedule();
   setTrack(trackFor());
@@ -4004,6 +4004,7 @@ function act(a,v,el){
     case 'cancel':UI.confirm=null;break;
     case 'mute':M.mute=!M.mute;applyVolumes();if(!M.mute)wakeAudio();break;
     case 'settings':if(UI.scene!=='settings')UI.prevScene=UI.scene;UI.scene='settings';UI.exp=false;break;
+    case 'saveexit':if(busy()){toast('Finish the round on the table first, then save and exit.');return}if(S&&S.g.pk&&S.g.pk.seated)pkLeave(true);save();UI.scene='title';UI.panel=null;UI.confirm=null;toast('Run saved.');break;
     case 'setback':UI.scene=UI.prevScene&&UI.prevScene!=='settings'?UI.prevScene:'title';break;
     case 'boost':UI.bsel=UI.bsel===v?null:v;break;
     case 'bview':UI.bview=!UI.bview;break;
@@ -4022,7 +4023,7 @@ function act(a,v,el){
     case 'facecoll':if(hopeless())UI.confirm='coll';break;
     case 'collyes':if(hopeless())gameOver('faced');return;
     case 'collskip':endCollect();return;
-    case 'hidebroke':S.hideBroke=true;UI.confirm=null;toast('Hidden. It’s still on your computer’s Debts tab.');break;
+    case 'hidebroke':S.hideBroke=true;UI.confirm=null;toast('Banner hidden for this run. You can bring it back from your computer’s Debts tab.');break;
     case 'showbroke':S.hideBroke=false;M.set.brokeRibbon=true;break;
     case 'collpc':if(brokeBase(false))UI.confirm='collpc';break;
     case 'collpcyes':if(brokeBase(false))gameOver('faced');return;
