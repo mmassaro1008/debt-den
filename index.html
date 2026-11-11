@@ -612,7 +612,7 @@ function musicTick(){
 }
 function startMusic(){if(MUS.timer||!audio())return;MUS.t=AC.currentTime+.08;MUS.timer=setInterval(musicTick,25)}
 function setTrack(n){if(n!==undefined)MUS.want=n}
-function trackFor(){if(UI.scene==='settings')return MUS.want;if(UI.scene==='over')return null;if(UI.scene==='game')return UI.game==='holdem'?'poker':'casino';if(UI.scene==='world')return{street:'street',home:'home',casino:'casino',mart:'street',bar:'bar'}[UI.room];return'title'}
+function trackFor(){if(UI.scene==='settings')return MUS.want;if(UI.scene==='over')return null;if(UI.scene==='game')return UI.game==='holdem'?'poker':'casino';if(UI.scene==='world')return{street:'street',home:'home',casino:'casino',bar:'bar',pawn:'home',zora:'bar'}[UI.room];return'title'}
 function wakeAudio(){const ac=audio();if(!ac)return;if(ac.state!=='running')ac.resume().then(startMusic).catch(()=>{});else startMusic()}
 window.addEventListener('pointerdown',wakeAudio,{passive:true});window.addEventListener('keydown',wakeAudio);
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend().catch(()=>{});else AC.resume().catch(()=>{})});
@@ -673,27 +673,26 @@ function rollReqs(){const ladder=GAME_IDS.map(g=>GAMES[g].req).sort((a,b)=>a-b);
 const gReq=g=>S&&S.req&&S.req[g]!=null?S.req[g]:GAMES[g].req;
 const CRED=['Landlord','Uncle Vic','Cousin Ray','Pawn King','Mrs. Fenwick','Big Tony','1st Pixel Bank','Loan-O-Matic','The Twins','Mr. Gold','Dentist','Gus’s Brother'];
 const MART={
-  dog:{n:'Hot Dog',d:'+5 energy. Limit 5 a day.',p:6,lim:5},
+  dog:{n:'Hot Dogs',d:'+5 energy each. Limit 5 a day. Daily special.',p:6,lim:5},
   drink:{n:'Volt Energy',d:'+20 energy. Limit 3 a day.',p:22,lim:3},
-  scratch:{n:'Scratch-Off',d:'Instant prizes up to $1,000. Limit 10 a day.',p:10,lim:10},
-  charm:{n:'Lucky Charm',d:'+5% on every win until you sleep.',p:60,lim:1},
-  tip:{n:'Insider Tip',d:'A hot tip on tomorrow\u2019s move for one random stock. Right about 3 times in 4.',p:40,lim:1}
+  charm:{n:'Lucky Charm',d:'+5% on every win until you sleep. Daily special.',p:60,lim:1},
+  tip:{n:'Insider Tip',d:'A hot tip on tomorrow\u2019s move for one random stock. Right about 3 times in 4. Daily special.',p:40,lim:1}
 };
 const DRINKS=['Pixel Punch','8-Bit Bomb','Neon Fizz','Glitch Sour','Bling Sling','Debt Collector','Blue Screen','Cartridge Blower'];
 const DRINK_ROLLS=[[.1,10],[.5,18],[1,24],[1.5,24],[2,17],[3,7]];
 const SKILLS={
-  stam1:{b:'Stamina',n:'Second Wind',d:'+20 energy every day.',c:1},
-  stam2:{b:'Stamina',n:'Night Owl',d:'+20 more energy.',c:2,req:'stam1'},
-  stam3:{b:'Stamina',n:'Iron Liver',d:'+20 more energy.',c:3,req:'stam2'},
+  stam1:{b:'Stamina',n:'Dented Thermos',d:'+20 energy every day.',c:1},
+  stam2:{b:'Stamina',n:'Espresso Machine',d:'+20 more energy.',c:2,req:'stam1'},
+  stam3:{b:'Stamina',n:'Memory Foam Pillow',d:'+20 more energy.',c:3,req:'stam2'},
   luck1:{b:'Luck',n:'Lucky Socks',d:'+6% on every win.',c:1},
-  luck2:{b:'Luck',n:'Golden Touch',d:'+6% more on every win.',c:2,req:'luck1'},
-  luck3:{b:'Luck',n:'Midas',d:'+6% more on every win.',c:2,req:'luck2'},
-  hag1:{b:'Charm',n:'Haggler',d:'Mart and bar 25% cheaper.',c:1},
-  hag2:{b:'Charm',n:'Regular',d:'Another 25% off.',c:2,req:'hag1'},
-  talk:{b:'Charm',n:'Sweet Talker',d:'New debts are 20% smaller.',c:2,req:'hag1'},
-  count:{b:'Smarts',n:'Card Counter',d:'Blackjack shows the best move.',c:1},
-  thick:{b:'Smarts',n:'Thick Skin',d:'Get 6% of every losing bet back.',c:2,req:'count'},
-  insider:{b:'Smarts',n:'Inside Man',d:'A free stock tip every morning.',c:2,req:'count'}
+  luck2:{b:'Luck',n:'Gold Cufflinks',d:'+6% more on every win.',c:2,req:'luck1'},
+  luck3:{b:'Luck',n:'Midas Coin',d:'+6% more on every win.',c:2,req:'luck2'},
+  hag1:{b:'Charm',n:'Haggler’s Handbook',d:'Pawn counter and bar 25% cheaper.',c:1},
+  hag2:{b:'Charm',n:'Loyalty Punch Card',d:'Another 25% off.',c:2,req:'hag1'},
+  talk:{b:'Charm',n:'Fake Mustache',d:'New creditors don’t recognize you. New debts are 20% smaller.',c:2,req:'hag1'},
+  count:{b:'Smarts',n:'Counting Glasses',d:'Blackjack shows the best move.',c:1},
+  thick:{b:'Smarts',n:'Padded Wallet',d:'Get 6% of every losing bet back.',c:2,req:'count'},
+  insider:{b:'Smarts',n:'Broker’s Rolodex',d:'A free stock tip every morning.',c:2,req:'count'}
 };
 const TICK={
   BURG:{n:'Burger Barn',p:20,v:.04,m:.004},
@@ -719,17 +718,17 @@ const ACH={
   snail:['Good Snail','Win a Snail Derby bet.'],
   longshot:['Lil’ Goo Forever','Win on the 50x snail.'],
   drink3:['Bartender’s Pet','Roll a 3x drink at the bar.'],
-  scratch:['Scratch King','Win $1,000 on a scratch-off.'],
+  scratch:['Scratch King','Win $1,000 or more on one Scratch Card.'],
   stock2:['Diamond Hands','Sell a stock for double what you paid.'],
-  skill:['Self Improvement','Buy a skill from the Pawn King.'],
-  tree:['Fully Grown','Own 6 skills from the Pawn King in one run.'],
+  skill:['First Purchase','Buy something from the Pawn King’s display case.'],
+  tree:['Hoarder','Own 8 Pawn King items at once.'],
   debt10:['Clean Slate','Clear a Heat: pay off all 10 debts in one run.'],
   debt100:['Model Citizen','Pay off 100 debts across all runs.'],
   week:['Three Down','Pay off 3 debts in one run.'],
   month:['Turning Up the Heat','Clear Heat 10 or higher.'],
   year:['Iron Will','Clear a Heat without taking a loan.'],
   tourist:['Tourist','Play 12 different games in one run.'],
-  items100:['Regular Customer','Buy 100 things at the Mart.'],
+  items100:['Regular Customer','Buy 100 things at the Pawn King’s counter.'],
   drops:['Lots of Balls','Drop 1,000 Plinko balls across all runs.'],
   k100:['Six Figures','Hold $100,000 at once.'],
   million:['Millionaire','Hold $1,000,000 at once.'],
@@ -744,10 +743,10 @@ const ACH={
   keno5:['Full Card','Hit all 5 Keno numbers.'],
   vroyal:['Quad Squad','Hit four of a kind or better in Video Poker.'],
   penguin:['Cool Customer','Get the penguin across all 10 lanes.'],
-  reopen:['Open for Business','Reopen the Mart.'],
+  reopen:['Open for Business','Buy something at the Pawn King’s counter.'],
   allgames:['Grand Opening','Unlock every casino game in one run.'],
   quest1:['Odd Jobs','Complete one of Lucky Lou\u2019s daily quests.'],
-  loan:['Good Credit','Repay a Quik Loan.'],
+  loan:['Good Credit','Repay a loan from Vinnie.'],
   busker:['Patron of the Arts','Hear 3 of Benny’s lucky songs in one run.'],
   fortune:['Crossed Palms','Get a reading from Madame Zora.'],
   collector:['Collector','Own 4 pawn shop trinkets at once.'],
@@ -768,7 +767,7 @@ const ACH={
   war:['Declare War','Win or tie a war at Casino War.'],
   triple:['Triple Threat','Hit any triple at Sic Bo.'],
   derby:['Photo Finish','Win an Ace Derby race after your horse got knocked back.'],
-  wish:['Wish Granted','Get a lucky wish from the fountain.'],
+  wish:['Wish Granted','Hear Benny’s ballad about winners.'],
   tourwin:['Final Table','Win a poker tournament.'],
   tourcash:['In the Money','Finish in the top 3 of a poker tournament.']
 };
@@ -777,7 +776,7 @@ const MODS={
   sober:{n:'Sober',d:'The bar is closed.',m:.15,rep:25},
   cards:{n:'Cardsharp',d:'Only Poker and Blackjack are open.',m:.3,rep:60},
   tired:{n:'Night Shift',d:'Energy is capped at 35 a day.',m:.3,rep:120},
-  fasting:{n:'Fasting',d:'The Mart is closed.',m:.2,rep:200},
+  fasting:{n:'Fasting',d:'The Pawn King’s counter won’t serve you.',m:.2,rep:200},
   snail:{n:'Snail Whisperer',d:'Only Snail Derby is open.',m:.5,rep:400},
   low:{n:'Low Roller',d:'Bets are capped at 25% of your next debt.',m:.5,rep:700},
   trader:{n:'Day Trader',d:'The casino is closed. Stocks only, in a wild market, with 3 naps a day where prices move.',m:.7,rep:1200},
@@ -788,12 +787,12 @@ const LEGACY={
   energy:{n:'Morning Person',d:'+5 energy every day per rank.',max:10,base:5},
   luck:{n:'Horseshoe',d:'+1% on every win per rank (stacks with diminishing returns).',max:10,base:4},
   credit:{n:'Credit Score',d:'Debts are 2% smaller per rank.',max:15,base:6},
-  head:{n:'Head Start',d:'Start each run owning one random ★ skill from the Pawn King per rank.',max:5,base:25},
-  mart:{n:'Rewards Card',d:'Mart prices 3% lower per rank.',max:10,base:3},
+  head:{n:'Head Start',d:'Start each run with one random starter item per rank: Dented Thermos, Lucky Socks, Haggler’s Handbook or Counting Glasses.',max:5,base:25},
+  mart:{n:'Rewards Card',d:'Pawn counter prices 3% lower per rank.',max:10,base:3},
   interest:{n:'Savings Account',d:'Earn 0.5% interest on your cash each night per rank, up to 15% of your next debt.',max:10,base:8},
   ext:{n:'Extension',d:'Push a debt back 2 days. One use per run per rank.',max:3,base:15},
   bar:{n:'Bartender’s Friend',d:'Rank 1 removes the 0.1x drink. Rank 2 also removes 0.5x.',max:2,base:20},
-  xp:{n:'Hard Worker',d:'Side jobs pay +10% per rank.',max:10,base:5},
+  xp:{n:'Bargain Hunter',d:'Pawn King trinkets 2% cheaper per rank.',max:10,base:5},
   rep:{n:'Reputation',d:'+5% Rep from every run per rank.',max:20,base:8},
   vip:{n:'VIP Card',d:'Table minimums 10% lower per rank.',max:3,base:400,heat:5},
   lucky:{n:'Born Lucky',d:'Raises the ceiling on permanent win bonuses by 0.2% per rank.',max:5,base:1500,heat:10},
@@ -881,7 +880,7 @@ const skLuck=()=>.06*(sk('luck1')+sk('luck2')+sk('luck3'));
 /* Permanent bonuses (skills, Legacy, owned items) stack with diminishing returns so a big build tilts the odds without guaranteeing wins.
    Temporary boosts (charm, drinks, Zora, Hot Streak...) add on top, up to a hard cap. */
 const LOSS_C=.03,WIN_CAP=.12,LOSS_CAP=.04,WIN_MAX=3;const winC=()=>.08+.002*L('lucky');
-const heatTax=()=>S?.002*(S.heat||0)+.002*Math.max(0,(S.heat||0)-15):0;
+const heatTax=()=>S?.001*(S.heat||0):0;
 const DR=(raw,C)=>raw>0?C*(1-Math.exp(-raw/C)):0;
 const permWin=(g,mult)=>(S?skLuck()+.01*(tsum('winPct')+(g?tsum('gameWin',g):0)+(mult>=5?tsum('bigWin'):0)+(S.lstreak>=3?tsum('comeback'):0)+(g&&S.luckyG===g?tsum('luckyDay'):0)+(S._parlay?tsum('parlay'):0))+(tsum('streak')?Math.min(.15,.03*(S.wstreak||0)):0):0)+.01*L('luck');
 const tempWin=g=>S?(S.charm?.05:0)+buffV('hot')+(S.favor&&S.favor.day===S.day&&S.favor.g===g?.1:0):0;
@@ -898,8 +897,8 @@ const modOpen=k=>(M.repTotal||0)>=MODS[k].rep;
 function checkTiers(){let any=false;for(const[id,nm,,get,th]of TT){const v=get();th.forEach((t,i)=>{const key=id+i;if(v>=t&&!M.tiers[key]){M.tiers[key]=Date.now();const rw=2*(i+1)*(i+1);gainRep(rw);note(`TROPHY · <b>${nm} ${ROMAN[i]}</b> · +${rw} Rep`);any=true}})}if(any)SFX.ach()}
 const mod=k=>!!(S&&S.mods&&S.mods.includes(k));
 function gameOpen(k){if(mod('trader'))return false;if(mod('snail'))return k==='snail';if(mod('cards'))return k==='holdem'||k==='bj';return true}
-const SHOP_REQ={news:1,pawn:1,bar:2,mart:3,zora:5};const PAWN_CASE=2;
-const SHOP_N={news:'Newspaper box',bar:'The Bar',mart:'The Mart',pawn:'Pawn King & Loans',zora:'Madame Zora'};
+const SHOP_REQ={pawn:1,bar:2,zora:5};const PAWN_CASE=2,COUNTER_AT=3;const counterOpen=()=>!!S&&(S.paid||0)>=COUNTER_AT&&!mod('fasting');
+const SHOP_N={bar:'The Bar',pawn:'Pawn King & Loans',zora:'Madame Zora'};
 const shopOpen=id=>!SHOP_REQ[id]||(S&&S.paid>=SHOP_REQ[id]);
 const shopLock=id=>`${SHOP_N[id]}: opens at ${SHOP_REQ[id]} debt${SHOP_REQ[id]>1?'s':''} paid`;
 const placeOpen=p=>p==='casino'?!mod('trader'):p==='mart'?!mod('fasting'):p==='bar'?!mod('sober'):true;
@@ -940,9 +939,9 @@ function newG(){return{
 }}
 const sk=k=>S&&((S.trinkets&&S.trinkets['s_'+k])||(S.skills&&S.skills[k]))?1:0;
 const ES=5;
-const ECOST={holdem:1,bj:2,roulette:2,craps:4,sports:3,plinko:4,mines:2,flip:1,snail:2,slots:1,wheel:1,baccarat:1,crash:2,tower:2,keno:1,vpoker:2,penguin:2,hilo:2,scratch:2,dice:1,war:1,sicbo:1,derby:1};
+const ECOST={holdem:1,bj:2,roulette:2,craps:4,sports:0,plinko:4,mines:2,flip:1,snail:2,slots:1,wheel:1,baccarat:1,crash:2,tower:2,keno:1,vpoker:2,penguin:2,hilo:2,scratch:2,dice:1,war:1,sicbo:1,derby:1};
 const SNG_E=25;
-const ecost=g=>ECOST[g]||1;
+const ecost=g=>g in ECOST?ECOST[g]:1;
 const ecostLabel=g=>g==='holdem'?'1 per hand':g==='plinko'?ECOST.plinko+' per session':g==='craps'?ECOST.craps+' per come-out':g==='sports'?ECOST.sports+' per slip':ecost(g)+' per round';
 function maxEnergy(){return mod('tired')?7*ES:10*ES+4*ES*(sk('stam1')+sk('stam2')+sk('stam3'))+ES*L('energy')}
 function disc(){return 1-.25*(sk('hag1')+sk('hag2'))}
@@ -950,10 +949,10 @@ function mkStocks(){const o={};for(const k in TICK)o[k]={p:TICK[k].p,h:[TICK[k].
 function gauss(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
 function rollMoves(){const tr=S&&mod('trader'),o={},mk=tr?.018+.035*gauss():.007+.018*gauss();for(const k in TICK){const t=TICK[k];let r=Math.exp(mk*(t.b||1)+t.m+(tr?2.2:1)*t.v*gauss());const mn=tr?.05:.03;if(Math.abs(r-1)<mn)r=1+(r>=1?1:-1)*(mn+rnd()*.02);o[k]=r}return o}
 const DEBT_FLOOR=.6;const debtMult=()=>Math.max(DEBT_FLOOR,(1-.02*L('credit'))*(sk('talk')?.8:1)*(1-.01*tsum('debtCut')));
-const DEBT_START=[.6,.85,1.3],DEBT_G=1.3;
+const DEBT_START=[.6,.85,1.3],DEBT_G=1.15;
 function mkDebt(bal){
-  const n=S.debtN++,h=S.heat||0;let a=120*(1+.15*h)*(n<3?DEBT_START[n]:DEBT_START[2]*Math.pow(DEBT_G+.009*h+.006*Math.max(0,h-15),n-2))*1;
-  if(bal!=null){const lad=a;a=Math.max(.6*lad,Math.min(2*lad,.5*lad+.4*Math.max(0,bal)))}a*=debtMult();
+  const n=S.debtN++,h=S.heat||0;let a=120*(1+.05*h)*(n<3?DEBT_START[n]:DEBT_START[2]*Math.pow(DEBT_G+.003*h,n-2))*1;
+  if(bal!=null){const lad=a;a=Math.max(.45*lad,Math.min(2*lad,.4*lad+.2*Math.max(0,bal)))}a*=debtMult();
   const gap=mod('tight')?1:2;const due=Math.max(S.day+gap,(S.lastDue||1)+gap);S.lastDue=due;
   return{id:n,who:CRED[n%CRED.length],amt:r5(a),orig:r5(a),paidAmt:0,due};
 }
@@ -1071,16 +1070,14 @@ function makeQuest(){
     const amt=r5(Math.max(50,nextDue()*.5));pool.push({k:'profit',goal:amt,money:1,text:`Win ${fmt(amt)} in total today`})}
   pool.push({k:'pay',goal:1,text:'Pay off a debt today'},{k:'tip',goal:1,text:'Tip Benny the busker'});
   if(placeOpen('bar')&&shopOpen('bar'))pool.push({k:'drink',goal:1,text:'Order a drink at the bar'});
-  if(S.martOpen&&!mod('fasting'))pool.push({k:'buy',goal:2,text:'Buy 2 things at the Mart'});
+  if(counterOpen())pool.push({k:'buy',goal:2,text:'Buy 2 things at the Pawn King’s counter'});
   if(open.length){const w=r5(Math.max(60,nextDue()*.8));
     pool.push({k:'streak',goal:3,text:'Win 3 bets in a row'},{k:'big5',goal:1,text:'Win a single bet that pays 5x or more'},{k:'bold',goal:1,text:'Win a bet worth at least a quarter of your cash'},
       {k:'comeback',goal:1,text:'Win a bet right after losing 3 in a row'},{k:'bets',goal:15,text:'Place 15 bets today'},{k:'wager',goal:w,money:1,text:`Wager ${fmt(w)} in total today`});
     if(open.length>=3)pool.push({k:'tables',goal:3,text:'Win at 3 different casino games today'})}
   if(gameOpen('sports'))pool.push({k:'sbbet',goal:2,text:'Place 2 sports bets from your computer'});pool.push({k:'stockbuy',goal:1,text:'Buy shares of any stock'});
   if(S.day>1)pool.push({k:'stockwin',goal:1,text:'Sell a stock for more than you paid'});
-  if(shopOpen('fountain'))pool.push({k:'fountain',goal:1,text:'Toss a coin in the fountain'});
   if(shopOpen('zora'))pool.push({k:'zora',goal:1,text:'Have Madame Zora read your fortune'});
-  if(shopOpen('news'))pool.push({k:'job',goal:1,text:'Work a side job'});
   if(shopOpen('pawn'))pool.push({k:'pawn',goal:1,text:'Buy something from the Pawn King'});
   if(mod('trader'))pool.push({k:'nap',goal:2,text:'Take 2 naps between trades'});
   return Object.assign(pool[Math.floor(rnd()*pool.length)],{day:S.day,prog:0,done:false,claimed:false,reward:makeReward()});
@@ -1090,7 +1087,7 @@ function questEvent(type,p){
   if(q.k==='win'&&type==='win'&&p.game===q.g)inc=1;
   else if(q.k==='sp'&&type==='sp'&&p===q.sp)inc=1;
   else if(q.k==='profit'&&type==='win')inc=p.net;
-  else if(q.k===type&&['pay','drink','buy','tip','fountain','zora','job','pawn','stockbuy','stockwin','sbbet','nap'].includes(type))inc=1;
+  else if(q.k===type&&['pay','drink','buy','tip','zora','pawn','stockbuy','stockwin','sbbet','nap'].includes(type))inc=1;
   else if(type==='play'&&q.k==='bets')inc=1;
   else if(type==='play'&&q.k==='wager')inc=p.b||0;
   else if(type==='settle'){
@@ -1116,8 +1113,7 @@ function claimQuest(){
 }
 const LOU_HI=['"Hey kid. Got a job for you, if you got the nerve."','"Lucky Lou never forgets a favor. Do this for me."','"Back in my day we gambled uphill both ways. Here’s today’s job."','"You look like someone who owes money. I can help, a little."'];
 function busPanel(to){
-  const q=S.quest,warn=false;
-  return`<div class="box"><span class="lbl">Bus stop · 7 Express</span><p>${to==='casino'?'Straight to the casino doors, no stops.':'Straight back to your front door.'} Free with your transit card.</p>${warn?`<p class="lose">Heads up: the bus skips the park. You haven\u2019t talked to Lucky Lou today, so you\u2019ll miss his daily quest unless you walk back for it.</p>`:''}<button class="btn green wide" data-a="ride" data-v="${to}">Ride to ${to==='casino'?'the casino':'home'}</button></div>`;
+  return`<div class="box"><span class="lbl">Bus stop · 7 Express</span><p>${to==='casino'?'Straight to the casino doors, no stops.':'Straight back to your front door.'} Free with your transit card.</p><button class="btn green wide" data-a="ride" data-v="${to}">Ride to ${to==='casino'?'the casino':'home'}</button></div>`;
 }
 function louPanel(){
   const q=S.quest;if(!q)return'';const p=Math.min(q.prog,q.goal),pt=q.money?`${fmt(p)} / ${fmt(q.goal)}`:`${Math.floor(p)} / ${q.goal}`;
@@ -1126,15 +1122,6 @@ function louPanel(){
   <p>Reward: <b style="color:var(--y)">${q.reward.text}</b></p>
   ${q.done&&!q.claimed?`<button class="btn green wide" data-a="qclaim">Collect reward</button>`:''}</div>`;
 }
-function fountainAct(){
-  if((S.paid||0)<1||S.fountainDay===S.day||S.cash<1)return;S.fountainDay=S.day;S.cash-=1;questEvent('fountain');const r=rnd();
-  if(r<.45)S.fmsg='Plop. Nothing happens. A pigeon looks disappointed in you.';
-  else if(r<.7){S.energy+=2*ES;S.fmsg='The mist feels refreshing. +10 energy.'}
-  else if(r<.85){const a=r5(20+rnd()*Math.max(30,nextDue()*.15));S.cash+=a;S.fmsg=`Something glints in the water. You fish out ${fmt(a)}!`;SFX.win()}
-  else{S.wish=1.5;S.fmsg='Your wish is heard. Your next win pays 1.5x profit.';ach('wish')}
-  SFX.coin();checkCash();
-}
-function fountainPanel(){const used=S.fountainDay===S.day;return`<div class="box"><span class="lbl">Fountain Plaza</span><p>Pigeons, pennies and Benny’s guitar case. Toss a coin and make a wish, once a day.</p>${S.fmsg&&used?`<p class="win">${S.fmsg}</p>`:''}${(S.paid||0)<1?`<p class="muted">The city drained the fountain for repairs. It refills after you pay off your first debt.</p>`:`<button class="btn blue wide" data-a="fountain" ${used||S.cash<1?'disabled':''}>${used?'Come back tomorrow':'Toss $1 and make a wish'}</button>`}</div>`}
 const TIP_GAP=3;const tipReady=()=>!S.tipK&&S.day-(S.lastTipDay==null?-99:S.lastTipDay)>=TIP_GAP;
 function giveTip(force){if(force?S.tipK:!tipReady())return false;S.tipK=Object.keys(TICK)[Math.floor(rnd()*Object.keys(TICK).length)];S.tipTrue=rnd()<TIP_ACC;S.lastTipDay=S.day;return true}
 const TIP_ACC=.75,tipCap=()=>Math.max(50,netWorth()*.25);const tipUp=k=>(S.next[k]>=1)===(S.tipTrue!==false);
@@ -1146,7 +1133,7 @@ function tipAct(a){
   if(rnd()<[.12,.45,1][ti]){S.songs=(S.songs||0)+1;const r=Math.floor(rnd()*3);
     if(r===0){S.energy+=3*ES;S.bmsg='Benny plays your song. You feel pumped. +15 energy.'}
     else if(r===1){S.charm=true;S.bmsg='Benny plays a lucky tune. Lucky Charm active until you sleep.'}
-    else{S.wish=1.5;S.bmsg='Benny plays a ballad about winners. Your next win pays 1.5x profit.'}
+    else{S.wish=1.5;ach('wish');S.bmsg='Benny plays a ballad about winners. Your next win pays 1.5x profit.'}
     SFX.big()}
   if((S.songs||0)>=3)ach('busker');
 }
@@ -1160,7 +1147,7 @@ const TRINKETS={
   slotkey:{n:'Slot Key',d:'+15% on Slots wins.',p:150,t:1,fx:{t:'gameWin',g:'slots',v:15}},
   purse:{n:'Two-Tone Purse',d:'+10% on Coin Flip wins.',p:140,t:1,fx:{t:'gameWin',g:'flip',v:10}},
   shell:{n:'Champion Shell',d:'+20% on Snail Derby wins.',p:140,t:1,fx:{t:'gameWin',g:'snail',v:20}},
-  coupon:{n:'Coupon Book',d:'Everything at the Mart is 25% cheaper.',p:100,t:1,fx:{t:'martDisc',v:25}},
+  coupon:{n:'Coupon Book',d:'Everything at the Pawn King’s counter is 25% cheaper.',p:100,t:1,fx:{t:'martDisc',v:25}},
   ring:{n:'Pinky Ring',d:'Bar drinks never roll below 1x.',p:350,t:2,fx:{t:'drinkFloor'}},
   piggy:{n:'Piggy Bank',d:'2% interest on your cash each night, up to 7.5% of your next debt.',p:500,t:2,fx:{t:'interest'}},
   shades:{n:'Poker Shades',d:'Poker players read you as strong and fold more.',p:400,t:2,fx:{t:'pokerRead'}},
@@ -1192,14 +1179,14 @@ function buildLib(){const lib=[];[1,2,3,4].forEach(t=>{const ks=Object.keys(TRIN
   let added=true;while(added){added=false;for(const k of lib.slice()){const r=TRINKETS[k].req;if(r&&!lib.includes(r)){lib.push(r);added=true}}}return lib}
 function addStock(n){S.pawnStock=S.pawnStock||[];const lib=S.lib||Object.keys(TRINKETS);const pool=lib.filter(k=>TRINKETS[k]&&!S.pawnStock.includes(k)&&(S.paid||0)>=TIER_AT[TRINKETS[k].t]);const add=[];for(let i=0;i<n&&pool.length&&S.pawnStock.length<STOCK_MAX;i++){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0];S.pawnStock.push(k);add.push(k)}return add}
 const HOUSE={tv:['Your TV',80],console:['Your game console',60],jacket:['Your leather jacket',40],guitar:['Your old guitar',30]};
-const heatPrice=()=>1+.15*((S&&S.heat)||0);
-const tprice=k=>r5(TRINKETS[k].p*(1+.1*(S.day-1))*heatPrice());
+const heatPrice=()=>1+.06*((S&&S.heat)||0);
+const tprice=k=>r5(TRINKETS[k].p*(1+.1*(S.day-1))*heatPrice()*(1-.02*L('xp')));
 function pawnPanel(){
   if(!S.pawnStock){S.pawnStock=Object.keys(S.trinkets||{});addStock(4)}
   const keys=S.pawnStock.concat(Object.keys(S.trinkets).filter(k=>!S.pawnStock.includes(k)));
   const lib=S.lib||Object.keys(TRINKETS),left=lib.filter(k=>!S.pawnStock.includes(k)&&(S.paid||0)>=TIER_AT[TRINKETS[k].t]).length,locked=lib.filter(k=>(S.paid||0)<TIER_AT[TRINKETS[k].t]);
   return`<div class="box"><span class="lbl">Pawn King</span><p>"Fresh stock every time you pay a debt. I buy back what I sold you at 50%."</p><p class="muted">This run’s catalog: ${lib.length} items, different every run.${locked.length?` ${locked.length} rarer pieces are still in the vault.`:''}</p></div>
-  ${keys.map(k=>{const t=TRINKETS[k],own=S.trinkets[k],need=t.req&&!S.trinkets[t.req]?TRINKETS[t.req].n:null,sold=t.req&&Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===k);return`<div class="row ${own?'got':''}"><h3>${t.n} <span class="tt t${t.t}">${'★'.repeat(t.t)}</span>${t.fx&&t.fx.t==='skill'?' <span class="muted">skill</span>':''}</h3><p>${t.d}${own?' <span class="win">Owned.</span>':''}${need?` <span class="muted">Needs ${need} first.</span>`:''}</p>${own?`<button class="btn sm" data-a="tsell" data-v="${k}" ${sold?'disabled':''}>Pawn ${fmt(Math.round(own/2))}</button>`:`<button class="btn green sm" data-a="tbuy" data-v="${k}" ${S.cash<tprice(k)||need?'disabled':''}>${fmt(tprice(k))}</button>`}</div>`}).join('')}
+  ${keys.map(k=>{const t=TRINKETS[k],own=S.trinkets[k],need=t.req&&!S.trinkets[t.req]?TRINKETS[t.req].n:null,sold=t.req&&Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===k);return`<div class="row ${own?'got':''}"><h3>${t.n} <span class="tt t${t.t}">${'★'.repeat(t.t)}</span></h3><p>${t.d}${own?' <span class="win">Owned.</span>':''}${need?` <span class="muted">Needs ${need} first.</span>`:''}</p>${own?`<button class="btn sm" data-a="tsell" data-v="${k}" ${sold?'disabled':''}>Pawn ${fmt(Math.round(own/2))}</button>`:`<button class="btn green sm" data-a="tbuy" data-v="${k}" ${S.cash<tprice(k)||need?'disabled':''}>${fmt(tprice(k))}</button>`}</div>`}).join('')}
   <p class="muted">${S.pawnStock.length>=STOCK_MAX?'The shelves are full.':left?'More in the back. Pay a debt to see what comes in.':'Rarer, stronger stock comes out of the vault at 2, 4 and 7 debts paid.'}</p>`;
 }
 const zoraFee=()=>r5(30*(1+.15*(S.day-1))*heatPrice());
@@ -1211,21 +1198,11 @@ function zoraAct(){
   SFX.ach();
 }
 function zoraPanel(){const used=S.zoraDay===S.day;return`<div class="box"><span class="lbl">Madame Zora</span><p>"Cross my palm with silver and I shall tell you where fortune smiles today."</p>${used&&S.zmsg?`<p class="win">${S.zmsg}</p>`:''}<button class="btn wide" data-a="zora" ${used||S.cash<zoraFee()?'disabled':''}>${used?'The spirits rest until tomorrow':'Get a reading · '+fmt(zoraFee())}</button></div>`}
-const loanLimit=()=>r5(250*(1+S.paid)*(1+.15*(S.heat||0)));
+const loanLimit=()=>r5(Math.max((200+50*(S.paid||0))*(1+.05*(S.heat||0)),1.25*Math.max(0,...S.debts.filter(d=>!d.loan).map(d=>d.amt))));
 function loanAct(a){if(S.debts.some(d=>d.loan)||a<5)return;S.cash+=a;S.usedLoan=true;S.loanN=(S.loanN||0)+1;S.debts.push({id:-S.loanN,who:'Vinnie (Pawn King)',amt:r5(a*(tsum('loanRate')?1.15:1.3)),due:S.day+3,loan:true});toast(`Vinnie counts out ${fmt(a)}. You owe ${fmt(r5(a*1.3))} by day ${S.day+3}.`);SFX.coin();checkCash()}
 function loanPanel(){const act=S.debts.find(d=>d.loan),lim=loanLimit();
   return`<div class="box"><span class="lbl">Loan window · Vinnie</span><p>"The King sells, I lend. 30% fee, due in 3 days. Pay me here or online, I’m not picky. Don’t make me come looking."</p>
-  ${act?`<p class="lose">You owe Vinnie ${fmt(act.amt)} by day ${act.due}. Miss it and the collectors come.</p><div class="g2"><button class="btn green sm" data-a="pay" data-v="${act.id}" ${S.cash>=act.amt?'':'disabled'}>Pay back ${fmt(act.amt)}</button></div>`:`<div class="g3">${[.25,.5,1].map(f=>{const a=r5(lim*f);return`<button class="btn sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}</div><p class="muted">One loan at a time. Your limit grows as you pay off debts.</p>`}</div>`}
-const JOBS=[['flyers','Hand out flyers',1],['dishes','Wash dishes at the bar',2],['dog','Walk Mrs. Fenwick\u2019s dog',3]];const JOB_MAX=4;
-const jobRate=()=>Math.round(Math.max(5,6*(1+.3*(S.paid||0))*(1+.1*(S.heat||0))*(1+.1*L('xp'))));
-function jobAct(k){const j=JOBS.find(x=>x[0]===k);if(!j)return;const e=j[2],w=S.today.work||0;if(S.energy<e*ES||w+e>JOB_MAX)return;S.energy-=e*ES;S.today.work=w+e;questEvent('job');const pay=jobRate()*e;S.cash+=pay;SFX.coin();toast(`${j[1]}: +${fmt(pay)}.`);checkCash()}
-function jobsHTML(){const w=S.today.work||0,r=jobRate();return`<div class="box dark"><span class="lbl">Help wanted</span><p class="muted">Honest work for when the cards go cold. ${fmt(r)} per shift, up to ${JOB_MAX} shifts a day (${JOB_MAX-w} left today). Each shift takes ${ES} energy.</p>${JOBS.map(([k,n,e])=>`<div class="kv bl"><span>${n} <span class="muted">${e*ES} energy</span></span><button class="linkb" data-a="job" data-v="${k}" ${S.energy<e*ES||w+e>JOB_MAX?'disabled':''}>Earn ${fmt(r*e)}</button></div>`).join('')}</div>`}
-const HEAD=['Local man insists he is "due" for a win','Pigeon population hits record high near fountain','Casino adds more velvet rope, experts baffled','Mart hot dogs rated "technically food"','Snail Derby champion retires to lettuce farm','Lucky Lou spotted handing out odd jobs again','Gus denies wearing sunglasses indoors to hide tells','MoonCoin investors "very calm," sources say','Busker Benny learns fifth chord','Madame Zora predicts this headline'];
-function newsPanel(){
-  if(!S.paper||S.paper.day!==S.day){const ks=Object.keys(TICK),k=ks[Math.floor(rnd()*4)],truth=S.next[k]>=1;S.paper={day:S.day,k,up:rnd()<.65?truth:!truth,h:HEAD[Math.floor(rnd()*HEAD.length)]}}
-  const p=S.paper,rum=S.day%3===1;
-  return`<div class="box"><span class="lbl">The Daily Den · Day ${S.day}</span><h2 style="font-size:12px">${p.h.toUpperCase()}</h2><p><b style="color:var(--y)">Market rumor:</b> ${rum?`word is ${p.k} will ${p.up?'climb':'drop'} tomorrow. Rumors are right about two times in three.`:`quiet on the trading floor today. Next rumor on day ${S.day+((1-S.day%3)+3)%3}.`}</p><p><b style="color:var(--y)">Lucky Lou’s job today:</b> ${S.quest?S.quest.text:'none'}.</p><p class="muted">Around town: the Pawn King trades trinkets and Vinnie lends at 30% from the back window, Madame Zora reads fortunes, and Benny plays by the fountain.</p></div>${jobsHTML()}`;
-}
+  ${act?`<p class="lose">You owe Vinnie ${fmt(act.amt)} by day ${act.due}. Miss it and the collectors come.</p><div class="g2"><button class="btn green sm" data-a="pay" data-v="${act.id}" ${S.cash>=act.amt?'':'disabled'}>Pay back ${fmt(act.amt)}</button></div>`:`<div class="g3">${[.25,.5,1].map(f=>{const a=r5(lim*f);return`<button class="btn sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}</div><p class="muted">One loan at a time. Vinnie lends up to 125% of your biggest open bill, and never less than $200 plus $50 for every debt you’ve paid.</p>`}</div>`}
 function busStop(x,X){px(x,C.d,X,44,1,30);px(x,C.b,X-7,38,15,9);ptxt(x,'BUS',X-5,40,C.w);px(x,C.s,X-6,64,12,2);px(x,C.d,X-5,66,1,8);px(x,C.d,X+4,66,1,8)}
 function drawStreetExtra(x){
   x.save();x.translate(-120,0);
@@ -1234,8 +1211,6 @@ function drawStreetExtra(x){
   px(x,'#8a4a32',384,64,26,3);px(x,'#8a4a32',384,58,26,2);px(x,C.d,386,67,2,7);px(x,C.d,406,67,2,7);
   px(x,'#8a4a32',700,66,14,8);px(x,'#5a2f20',700,66,14,1);person(x,703,52,{shirt:C.p,hair:C.w,hat:'#6d3a28'});px(x,C.w,704,57,6,2);
   if(S&&S.quest&&!S.quest.claimed){const b=frame%2;ptxt(x,S.quest.done?'?':'!',705,35+b,S.quest.done?C.l:C.y,2,C.k)}
-  px(x,C.s,420,62,28,12);px(x,C.d,420,62,28,2);px(x,C.c,422,65,24,4);px(x,C.s,432,48,4,14);px(x,C.s,428,46,12,3);
-  for(let i=0;i<4;i++){const ph=(frame+i)%4;px(x,C.a,427+i*4,48+ph*3,1,2)}
   [[462,71],[470,72],[414,72]].forEach(([a,b],i)=>{const bob=(frame+i)%3===0?1:0;px(x,C.d,a,b-bob,4,3);px(x,C.s,a+3,b-1-bob,2,2);px(x,C.o,a+5,b-bob,1,1)});
   person(x,466,58,{shirt:C.r,hair:C.k,hat:C.k});px(x,'#8a4a32',463,66,9,4);px(x,'#8a4a32',471,63,6,1);px(x,C.y,465+(frame%2),67,1,2);
   px(x,C.k,478,71,12,3);px(x,C.y,480,71,2,1);px(x,C.y,484,72,2,1);
@@ -1248,10 +1223,8 @@ function drawStreetExtra(x){
   px(x,C.k,Tx+16,58,12,16);disc2(x,Tx+22,66,3,frame%2?C.a:C.c);px(x,C.y,Tx+21,26,3,4);
   const zw=pw('ZORA');px(x,C.k,Tx+22-zw/2-2,40,zw+4,9);ptxt(x,'ZORA',Tx+22-zw/2,42,C.a);
   px(x,'#1f6b46',Px+3,65,24,8);ptxt(x,'LOANS',Px+15-pw('LOANS')/2,66,frame%5?C.l:C.y);
-  px(x,'#2f9e58',604,66,64,8);[[616,0],[650,1]].forEach(([t,k])=>{px(x,'#6d3a28',t,50,3,18);disc2(x,t+1,44,8,C.g);disc2(x,t-3+k*6,41,5,'#2f9e58')});
-  px(x,C.d,632,60,2,14);px(x,C.w,626,54,14,7);ptxt(x,'PARK',627,55,C.g);
   x.restore();
-  px(x,C.b,140,62,10,12);px(x,C.w,141,64,8,4);px(x,C.k,142,65,6,1);px(x,C.d,141,72,2,2);px(x,C.d,147,72,2,2);
+
 }
 
 /* ================= betting core ================= */
@@ -1336,8 +1309,10 @@ function skyW(x,w,h){
   disc2(x,w-30,10,4,C.y);px(x,C.o,w-31,9,1,1);px(x,C.o,w-28,11,1,1);
   for(let o=0;o<w;o+=160)FAR.forEach(([fx,fw,fh],i)=>{px(x,C.e,fx+o,h-fh+14,fw,fh);for(let wy=h-fh+17;wy<h+10;wy+=4)for(let wx=fx+2;wx<fx+fw-2;wx+=3){if(WIN_LIT[(wx*7+wy*3+i+o)%200])px(x,C.y,wx+o,wy,1,2)}});
 }
+const SEGS=[[0,93,0],[151,298,58],[338,482,98],[550,760,166]];const SX=v=>v<93?v:v<298?v-58:v<482?v-98:v-166;
+function drawStreetW(x,w){for(const [a,b,d] of SEGS){x.save();x.beginPath();x.rect(a-d,0,b-a,90);x.clip();x.translate(-d,0);drawStreetRaw(x,760);x.restore()}}
 function lamp(x,X){px(x,C.d,X,44,1,30);px(x,C.d,X-2,73,5,1);px(x,C.y,X-2,43,5,2);if(frame%7)px(x,'rgba(255,205,117,.12)',X-8,45,17,29)}
-function drawStreetW(x,w){
+function drawStreetRaw(x,w){
   skyW(x,w,74);
   // home
   const H=10,hc=HOMES[M.ward.home]||HOMES.purple;px(x,hc[0],H,30,40,44);for(let yy=32;yy<74;yy+=3)px(x,hc[1],H,yy,40,1);
@@ -1347,16 +1322,6 @@ function drawStreetW(x,w){
   // tree + hydrant
   px(x,'#6d3a28',68,56,4,18);disc2(x,70,50,8,C.g);disc2(x,66,46,5,'#2f9e58');disc2(x,75,47,5,'#2f9e58');
   px(x,C.r,86,66,5,8);px(x,C.r,85,68,7,2);px(x,C.y,87,65,3,1);
-  // mart
-  const Mx=96;const mo=S&&S.martOpen&&!mod('fasting');
-  if(mo){px(x,C.t,Mx,34,44,40);px(x,C.w,Mx,34,44,9);ptxt(x,'MART',Mx+22-pw('MART')/2,36,C.r);
-    for(let i=0;i<44;i+=4){px(x,C.r,Mx+i,44,2,4);px(x,C.w,Mx+i+2,44,2,4)}
-    px(x,C.k,Mx+2,51,14,13);px(x,C.a,Mx+3,52,12,11);[[3,54,C.r],[7,54,C.y],[11,54,C.l],[3,58,C.c],[8,58,C.o]].forEach(([a,b,c])=>px(x,c,Mx+a,b,3,3));
-    px(x,C.k,Mx+17,56,10,18);px(x,C.a,Mx+18,57,8,17);
-    px(x,C.k,Mx+29,51,13,13);px(x,C.a,Mx+30,52,11,11);px(x,C.y,Mx+32,54,3,7);px(x,C.l,Mx+36,55,3,6)}
-  else{px(x,C.d,Mx,34,44,40);for(let yy=36;yy<74;yy+=4)px(x,'#4a5a72',Mx,yy,44,1);
-    px(x,C.w,Mx+4,36,36,9);ptxt(x,mod('fasting')?'CLOSED':'FOR LEASE',Mx+22-pw(mod('fasting')?'CLOSED':'FOR LEASE')/2,38,C.r);
-    px(x,C.k,Mx+3,50,38,24);for(let i=0;i<5;i++){px(x,C.o,Mx+3,52+i*4,38,2)}px(x,'#8a4a32',Mx+8,50,2,24);px(x,'#8a4a32',Mx+33,50,2,24)}
   lamp(x,156);
   // casino
   const Cx=612;px(x,C.r,Cx,18,100,56);for(let i=0;i<100;i+=4)px(x,'#9a3448',Cx+i,40,2,34);
@@ -1375,7 +1340,7 @@ function drawStreetW(x,w){
   lamp(x,598);lamp(x,730);
   // bench
   drawStreetExtra(x);
-  if(S&&!S.over){const POS={news:145,bar:202,pawn:406,zora:458};for(const k in POS){if(shopOpen(k))continue;const cx=POS[k],t=`${SHOP_REQ[k]} DEBT${SHOP_REQ[k]>1?'S':''}`,w=pw(t)+6;px(x,'#8a4a32',cx-w/2,44,w,15);px(x,'#5a2f20',cx-w/2,44,w,1);ptxt(x,'CLOSED',cx-pw('CLOSED')/2,46,C.y);ptxt(x,t,cx-pw(t)/2,52,C.w)}}
+  if(S&&!S.over){const POS={bar:202,pawn:406,zora:458};for(const k in POS){if(shopOpen(k))continue;const cx=POS[k],t=`${SHOP_REQ[k]} DEBT${SHOP_REQ[k]>1?'S':''}`,w=pw(t)+6;px(x,'#8a4a32',cx-w/2,44,w,15);px(x,'#5a2f20',cx-w/2,44,w,1);ptxt(x,'CLOSED',cx-pw('CLOSED')/2,46,C.y);ptxt(x,t,cx-pw(t)/2,52,C.w)}}
   for(let i=716;i<w;i+=4)px(x,C.s,i,58,2,16);px(x,C.s,714,60,Math.max(0,w-714),2);busStop(x,52);busStop(x,560);
   // ground
   px(x,C.s,0,74,w,6);for(let i=0;i<w;i+=8)px(x,C.d,i,74,1,6);
@@ -1469,6 +1434,7 @@ function drawPawnW(x,w){
   px(x,'#6d3a28',0,66,w,24);for(let y=70;y<90;y+=6)px(x,'#5a2f20',0,y,w,1);
   px(x,C.k,8,30,22,36);px(x,'#8a4a32',10,32,18,34);px(x,C.y,24,48,2,3);px(x,C.k,8,22,22,7);ptxt(x,'DOOR',11,23,C.l);
   px(x,C.d,40,14,36,2);px(x,C.d,40,30,36,2);[[42,6,C.y],[52,8,C.s],[62,7,C.r]].forEach(([a,h,c])=>px(x,c,a,14-h,7,h));[[44,C.o],[56,C.a],[66,C.l]].forEach(([a,c])=>disc2(x,a,26,3,c));
+  {const on=!!S&&counterOpen();px(x,C.k,38,32,22,34);px(x,on?C.c:C.e,40,34,18,26);for(let r=0;r<3;r++)for(let i=0;i<4;i++)px(x,on?[C.l,C.y,C.r][r]:C.d,42+i*4,37+r*8,2,5);px(x,C.w,41,35,1,24);px(x,C.k,38,60,22,6);ptxt(x,on?'COLD':'SOON',40,61,on?C.a:C.d)}
   person(x,88,34,{shirt:C.p,hair:C.k,chain:true,hat:C.y});
   px(x,'#8a4a32',62,52,62,16);px(x,C.a,64,48,58,6);px(x,C.k,64,54,58,1);
   const lock=!S||(S.paid||0)<PAWN_CASE;for(let i=0;i<6;i++){const c=[C.y,C.r,C.c,C.l,C.o,C.w][i];disc2(x,68+i*10,51,2,lock?C.d:c)}
@@ -1495,18 +1461,16 @@ function drawGus(x){
   [[40,66],[76,70],[112,66]].forEach(([a,b])=>{px(x,C.r,a,b,8,3);px(x,C.c,a,b-3,8,3);px(x,C.y,a+10,b,8,3)});
   ptxt(x,'GUS',6,6,C.y,2,C.k);ptxt(x,'8 SEATS',154-pw('8 SEATS'),8,C.a);
 }
-function drawTitle(x){x.save();x.translate(-520,0);drawStreetW(x,760);drawWeather(x,760);person(x,600,58,meLook());x.restore()}
-const ROOMS_W={street:760,home:200,mart:180,bar:180,pawn:190,zora:160};
+function drawTitle(x){x.save();x.translate(-SX(520),0);drawStreetW(x,594);drawWeather(x,594);person(x,SX(600),58,meLook());x.restore()}
+const ROOMS_W={street:594,home:200,mart:180,bar:180,pawn:190,zora:160};
 function roomW(r){return r==='casino'?CASINO_X0+GAME_IDS.length*CASINO_DX:ROOMS_W[r]}
-function martLabel(){return mod('fasting')?'Mart: closed by contract':!S.martOpen?'Look at the boarded-up Mart':'Enter the Mart'}
 function stationLabel(g){const G=GAMES[g];if(!gameOpen(g))return G.n+': closed by contract';if(S.paid<gReq(g))return`${G.n}: opens at ${gReq(g)} debt${gReq(g)===1?'':'s'} paid`;return'Play '+G.n}
 function roomSpots(r){
-  if(r==='street')return[{id:'home',x:30,lab:'Enter home'},{id:'mart',x:118,lab:shopOpen('mart')||S.martOpen?martLabel():shopLock('mart')},{id:'casino',x:662,lab:placeOpen('casino')?'Enter the casino':'Casino: closed by contract'},{id:'bar',x:202,lab:!placeOpen('bar')?'Bar: closed by contract':!shopOpen('bar')?shopLock('bar'):'Enter the bar'},{id:'bus',x:52,lab:'Bus stop: ride to the casino'},{id:'bus2',x:560,lab:'Bus stop: ride home'},{id:'news',x:145,lab:shopOpen('news')?'Read the Daily Den':shopLock('news')},{id:'lou',x:586,lab:S.quest&&S.quest.done&&!S.quest.claimed?'Collect your reward from Lucky Lou':'Talk to Lucky Lou'},{id:'fountain',x:330,lab:'Fountain Plaza: wish and Benny'},{id:'pawn',x:406,lab:shopOpen('pawn')?'Enter the Pawn King & Loans':shopLock('pawn')},{id:'zora',x:458,lab:shopOpen('zora')?'Enter Madame Zora’s tent':shopLock('zora')}];
+  if(r==='street')return[{id:'home',x:30,lab:'Enter home'},{id:'bus',x:52,lab:'Bus stop: ride to the casino'},{id:'bar',x:SX(202),lab:!placeOpen('bar')?'Bar: closed by contract':!shopOpen('bar')?shopLock('bar'):'Enter the bar'},{id:'busker',x:SX(346),lab:'Listen to Benny the busker'},{id:'pawn',x:SX(406),lab:shopOpen('pawn')?'Enter the Pawn King':shopLock('pawn')},{id:'zora',x:SX(458),lab:shopOpen('zora')?'Enter Madame Zora’s tent':shopLock('zora')},{id:'bus2',x:SX(560),lab:'Bus stop: ride home'},{id:'lou',x:SX(586),lab:S.quest&&S.quest.done&&!S.quest.claimed?'Collect your reward from Lucky Lou':'Talk to Lucky Lou'},{id:'casino',x:SX(662),lab:placeOpen('casino')?'Enter the casino':'Casino: closed by contract'}];
   if(r==='home')return[{id:'door',x:22,lab:'Go outside'},{id:'bed',x:72,lab:'Go to bed'},{id:'pc',x:153,lab:'Use the computer'}];
   if(r==='casino')return[{id:'door',x:20,lab:'Go outside'},...floorOrder().map((g,i)=>({id:'g:'+g,x:CASINO_X0+i*CASINO_DX,lab:stationLabel(g)}))];
-  if(r==='mart')return[{id:'door',x:19,lab:'Go outside'},{id:'counter',x:136,lab:'Talk to the clerk'}];
   if(r==='bar')return[{id:'door',x:19,lab:'Go outside'},{id:'barkeep',x:92,lab:'Order at the bar'}];
-  if(r==='pawn')return[{id:'door',x:19,lab:'Go outside'},{id:'pawnking',x:92,lab:(S.paid||0)>=PAWN_CASE?'Browse the display case':`Display case: opens at ${PAWN_CASE} debts paid`},{id:'vinnie',x:160,lab:S.debts.some(d=>d.loan)?'Pay Vinnie back':'Loan window: talk to Vinnie'}];
+  if(r==='pawn')return[{id:'door',x:19,lab:'Go outside'},{id:'cooler',x:50,lab:!placeOpen('mart')?'Counter: closed by contract':counterOpen()?'Counter: energy & daily specials':`Counter: opens at ${COUNTER_AT} debts paid`},{id:'pawnking',x:92,lab:(S.paid||0)>=PAWN_CASE?'Browse the display case':`Display case: opens at ${PAWN_CASE} debts paid`},{id:'vinnie',x:160,lab:S.debts.some(d=>d.loan)?'Pay Vinnie back':'Loan window: talk to Vinnie'}];
   if(r==='zora')return[{id:'door',x:19,lab:'Go outside'},{id:'crystal',x:104,lab:S.zoraDay===S.day?'Madame Zora is resting':'Sit for a reading'}];
   return[];
 }
@@ -1515,7 +1479,7 @@ function nearSpot(){let best=null,bd=13;for(const s of roomSpots(UI.room)){const
 function drawWorld(x){
   if(!S)return;const w=roomW(UI.room),p=UI.wx[UI.room],cam=camX();
   x.save();x.translate(-cam,0);
-  ({street:drawStreetW,home:drawHomeW,casino:drawCasinoW,mart:drawMartW,bar:drawBarW,pawn:drawPawnW,zora:drawZoraW})[UI.room](x,w);if(UI.room==='street')drawWeather(x,w);
+  ({street:drawStreetW,home:drawHomeW,casino:drawCasinoW,bar:drawBarW,pawn:drawPawnW,zora:drawZoraW})[UI.room](x,w);if(UI.room==='street')drawWeather(x,w);
   const ns=nearSpot();if(ns){const by=(frame%2);px(x,C.w,ns.x-2,1+by,5,1);px(x,C.w,ns.x-1,2+by,3,1);px(x,C.w,ns.x,3+by,1,1)}
   const step=UI.moving?Math.floor(performance.now()/140)%2:0;
   person(x,Math.round(p)-4,58-(step?1:0),Object.assign(meLook(),{step,face:UI.face}));
@@ -1538,7 +1502,7 @@ function tick(t){
 const BENCH=['A pigeon stares at you. You feel judged.','Someone walks by saying MoonCoin is going to the moon. Again.','The bench is wet. Of course it is.','A guy whispers that Gus bluffs on the river. Probably.','You count your debts instead of sheep.','A street musician plays the Price Is Wrong theme. Rude.'];
 function enterRoom(to,from){
   UI.panel=null;UI.confirm=null;UI.room=to;UI.target=null;UI.pending=null;
-  if(to==='street'&&from)UI.wx.street={home:30,mart:118,casino:662,bar:202,pawn:406,zora:458}[from]||UI.wx.street;
+  if(to==='street'&&from)UI.wx.street={home:30,casino:SX(662),bar:SX(202),pawn:SX(406),zora:SX(458)}[from]||UI.wx.street;
   else if(to!=='street')UI.wx[to]=32;
   UI.scene='world';save();render();
 }
@@ -1547,18 +1511,18 @@ function interact(id){
   if(r==='street'){
     if(id==='home')return enterRoom('home');
     if(id==='casino'){if(!placeOpen('casino'))return toast('The bouncer shakes his head. Your contract says no casino.');return enterRoom('casino')}
-    if(SHOP_REQ[id]&&!shopOpen(id)&&!(id==='mart'&&S.martOpen)){toast(`${SHOP_N[id]} opens after you pay off ${SHOP_REQ[id]} debt${SHOP_REQ[id]>1?'s':''}. You’ve paid ${S.paid}.`);return}
+    if(SHOP_REQ[id]&&!shopOpen(id)){toast(`${SHOP_N[id]} opens after you pay off ${SHOP_REQ[id]} debt${SHOP_REQ[id]>1?'s':''}. You’ve paid ${S.paid}.`);return}
     if(id==='bar'){if(!placeOpen('bar'))return toast('You signed the Sober contract. Keep walking.');return enterRoom('bar')}
-    if(id==='mart'){if(mod('fasting'))return toast('Closed. You signed the Fasting contract.');if(!S.martOpen){UI.panel='lease';render();return scrollPanel()}return enterRoom('mart')}
     if(id==='pawn')return enterRoom('pawn');
     if(id==='zora')return enterRoom('zora');
     if(id==='lou')S.louDay=S.day;
-    if(['news','lou','fountain','bus','bus2'].includes(id)){UI.panel=id;UI.confirm=null;render();return scrollPanel()}
+    if(['lou','busker','bus','bus2'].includes(id)){UI.panel=id;UI.confirm=null;render();return scrollPanel()}
   }
   if(id==='door')return enterRoom('street',r);
   if(id.startsWith('g:')){const g=id.slice(2);if(!gameOpen(g))return toast('Closed by your contract.');if(S.paid<gReq(g))return toast(`${GAMES[g].n} opens after you pay off ${gReq(g)} debt${gReq(g)>1?'s':''}. You’ve paid ${S.paid}.`);UI.game=g;UI.scene='game';if(g==='holdem'){const bb=STAKES[S.g.pk.stake||0][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}render();window.scrollTo(0,0);return}
+  if(id==='cooler'&&!counterOpen())return toast(mod('fasting')?'The Fasting contract: no snacks, no energy drinks.':`"Snacks and specials once you’ve paid ${COUNTER_AT} debts." You’ve paid ${S.paid}.`);
   if(id==='pawnking'&&(S.paid||0)<PAWN_CASE)return toast(`"Come back when you’ve paid ${PAWN_CASE} debts. I don’t sell to deadbeats." You’ve paid ${S.paid}.`);
-  UI.panel={pc:'pc',bed:'bed',counter:'mart',barkeep:'bar',pawnking:'pawn',vinnie:'loans',crystal:'zora'}[id]||null;UI.confirm=null;render();scrollPanel();
+  UI.panel={pc:'pc',bed:'bed',cooler:'mart',barkeep:'bar',pawnking:'pawn',vinnie:'loans',crystal:'zora'}[id]||null;UI.confirm=null;render();scrollPanel();
 }
 function scrollPanel(){setTimeout(()=>{const p=$('#panel');if(p&&p.firstElementChild)p.firstElementChild.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'})},30)}
 function drawIcon(x,k){
@@ -1775,7 +1739,7 @@ function mnAct(v,i){
 const TMIN={bj:5,roulette:5,plinko:5,mines:2,flip:1,snail:2,sports:5,slots:2,wheel:5,baccarat:10,crash:5,tower:5,keno:5,vpoker:5,penguin:5,hilo:10,scratch:10,dice:10,war:15,sicbo:15,derby:15};
 const LVLMIN={0:2,1:3,2:4,3:5,4:6,5:8,6:10,7:12,8:15};
 const MINPCT=r=>.02+.005*r;
-function tableMin(g){if(!S||g==='holdem'||!GAMES[g])return 0;const r=gReq(g);const base=Math.max(LVLMIN[r]!=null?LVLMIN[r]:15,nextDue()*MINPCT(r));return Math.max(1,Math.round(base*(1+.05*(S.heat||0))*(1-.01*tsum('minCut'))*(1-.1*L('vip'))))}
+function tableMin(g){if(!S||g==='holdem'||!GAMES[g])return 0;const r=gReq(g);const base=Math.max(LVLMIN[r]!=null?LVLMIN[r]:15,nextDue()*MINPCT(r));return Math.max(1,Math.round(base*(1+.03*(S.heat||0))*(1-.01*tsum('minCut'))*(1-.1*L('vip'))))}
 const curMin=()=>UI.scene==='game'&&UI.game&&UI.game!=='holdem'?tableMin(UI.game):UI.panel==='pc'&&UI.tab==='sports'?tableMin('sports'):0;
 /* ================= collectors ================= */
 function portfolio(){let v=0;for(const k in S.stocks){const st=S.stocks[k];v+=st.own*st.p+shortVal(st)}return v}
@@ -1783,7 +1747,7 @@ function hopeless(strict=true){return brokeBase(strict)&&!loanAvail()}
 function brokeChoice(strict=true){return brokeBase(strict)&&loanAvail()}
 const inPlay=()=>{try{return busy()||(S.g.pk&&S.g.pk.seated)}catch(e){return false}};
 const ribbonOn=()=>M.set.brokeRibbon!==false&&!S.hideBroke;
-const loanAvail=()=>shopOpen('loans')&&!S.debts.some(d=>d.loan)&&!mod('trader')&&loanLimit()>=5;
+const loanAvail=()=>shopOpen('pawn')&&!S.debts.some(d=>d.loan)&&!mod('trader')&&loanLimit()>=5;
 function brokeBase(strict=true){
   if(!S||S.over)return false;
   if(strict&&S.cash>=1)return false;
@@ -1793,7 +1757,6 @@ function brokeBase(strict=true){
   if(S.cash>=need)return false;
   if(portfolio()>=1)return false;
   if(shopOpen('pawn')&&Object.keys(S.trinkets||{}).length)return false;
-  if(shopOpen('news')&&((S.energy>=ES&&(S.today.work||0)<4)||!S.debts.some(d=>d.due<=S.day&&!canRoll(d))))return false;
   if(S.quest&&S.quest.done&&!S.quest.claimed)return false;
   if(S.sb&&S.sb.bets&&S.sb.bets.some(b=>b.st==='open'))return false;
   if(S.g&&S.g.cp&&Object.keys(S.g.cp.bets).length)return false;
@@ -2180,7 +2143,7 @@ function gSB(){
   const slip=s.slip.filter(l=>{const g=sbGame(l.gid);return g&&!g.res});
   const slipBox=slip.length?`<div class="box sbslip"><span class="lbl">Bet slip · ${slip.length>1?slip.length+'-leg parlay':'single'}</span>${slip.map(l=>{const g=sbGame(l.gid);return`<div class="kv bl"><span>${pickName(g,l.pick)} <span class="muted">${SPORTS[g.sp].tag} · ${Math.round(g.o[l.pick]*100)}%</span></span><button class="linkb" data-a="sbpick" data-v="${g.id}:${l.pick}">Remove</button></div>`}).join('')}
     <div class="kv"><span>Hits about</span><b>${Math.max(.1,Math.round(slipProb()*1000)/10)}% of the time</b></div><div class="kv"><span>Pays</span><b class="px" style="color:var(--y);font-size:12px">${slipMult().toFixed(2)}x · ${fmt(Math.round(clampBet()*slipMult()))}</b></div></div>
-    <!--act-->${betBar(!!SBW,'Stake')}<button class="btn green wide" data-a="sbplace" ${canPlay()&&!SBW?'':'disabled'}>Place ${slip.length>1?'parlay':'bet'} · ${ecost('sports')} energy</button>`:'';
+    <!--act-->${betBar(!!SBW,'Stake')}<button class="btn green wide" data-a="sbplace" ${canPlay()&&!SBW?'':'disabled'}>Place ${slip.length>1?'parlay':'bet'} · no energy</button>`:'';
   return watch+tabs+body+slipBox;
 }
 /* ================= hi-lo ================= */
@@ -2221,7 +2184,7 @@ function scAct(v){
     s.cells=cells;s.win=win;s.rev=[];s.phase='play';s.msg='Scratch all nine. Three of a kind wins.';SFX.coin()}
   else if(s.phase==='play'&&(v==='all'||v[0]==='c')){
     if(v==='all')s.rev=[0,1,2,3,4,5,6,7,8];else{const i=+v.slice(1);if(!s.rev.includes(i))s.rev.push(i);SFX.tick()}
-    if(s.rev.length>=9){const r=settle('scratch',s.bet,s.win?s.bet*s.win[1]:0);s.phase='done';s.msg=s.win?`Three ${s.win[0]}! Pays ${s.win[1]}x. `+resText(r):'No match this time. '+resText(r);if(s.win&&s.win[1]>=50)ach('scratch50')}
+    if(s.rev.length>=9){const r=settle('scratch',s.bet,s.win?s.bet*s.win[1]:0);s.phase='done';s.msg=s.win?`Three ${s.win[0]}! Pays ${s.win[1]}x. `+resText(r):'No match this time. '+resText(r);if(s.win&&s.win[1]>=50)ach('scratch50');if(s.win&&s.bet*s.win[1]>=1000)ach('scratch')}
   }
   save();render();
 }
@@ -2381,7 +2344,7 @@ const GUIDE={
     pays:[['Pass Line / Come','2x (1:1)'],['Don’t Pass / Don’t Come','2x (1:1), a 12 on the come-out pushes'],['Odds behind the Pass Line (up to 3x)','4 or 10 pay 2:1, 5 or 9 pay 3:2, 6 or 8 pay 6:5. No house edge.'],['Place 4 or 10','Wins 9:5'],['Place 5 or 9','Wins 7:5'],['Place 6 or 8','Wins 7:6'],['Field (one roll: 2,3,4,9,10,11,12)','2x, a 2 pays 3x, a 12 pays 4x'],['Hard 4 or 10 (doubles before easy way or 7)','Wins 7:1'],['Hard 6 or 8','Wins 9:1'],['Any 7 (one roll)','5x (4:1)'],['Any craps: 2, 3 or 12 (one roll)','8x (7:1)'],['Yo 11 (one roll)','16x (15:1)'],['Aces 2 or Boxcars 12 (one roll)','31x (30:1)']],
     extra:'Mastery only counts a win when your Pass or Don’t Pass bet wins.'}),
   sports:()=>({goal:'Bet on today’s games across basketball, baseball, soccer, tennis, football and hockey.',
-    rules:['Each side shows its chance to win as a percentage. Soccer can end in a draw, so it has three choices.','Tap one side for a single bet, or 2 to 6 sides from different games for a parlay. Every leg of a parlay must win.',`Placing a bet slip costs ${ECOST.sports} energy.`,'Watch any game as a live pixel broadcast, or sim it straight to the final. Watching a game locks it, so bet first.','Bets still open when you sleep settle overnight. A new slate of games arrives every day.'],
+    rules:['Each side shows its chance to win as a percentage. Soccer can end in a draw, so it has three choices.','Tap one side for a single bet, or 2 to 6 sides from different games for a parlay. Every leg of a parlay must win.','Sports bets cost no energy, just like stocks.','The games are played overnight and every bet settles while you sleep.','Lie down in bed to watch the games you bet on as live pixel broadcasts before you fall asleep. A new slate arrives every day.'],
     pays:[['Single bet','About 0.95 ÷ win chance. A 50% side pays 1.90x.'],['Parlay','Every leg’s multiplier multiplied together. Three 50% legs pay about 6.86x.']],
     extra:'Teams that win gain strength for the rest of the run, so records matter.'}),
   plinko:()=>({goal:'Drop a ball through 8 rows of pegs and land it in a payout slot.',
@@ -2826,10 +2789,10 @@ const SAGA_SCN=[
 ];
 /* ---- clearing each heat (all 10 debts), first time ---- */
 const HEAT_END=[
-['TEN DOWN','Ten debts down and you’re still here. Lucky Lou buys you a hot dog. It’s the first free thing anyone’s given you all year.','park coin pop'],
+['TEN DOWN','Ten debts down and you’re still here. Lucky Lou buys you a hot dog. It’s the first free thing anyone’s given you all year.','street coin pop'],
 ['A REGULAR','The bartender knows your drink. The Snail Derby knows your face. Heat 1 is behind you.','casino champagne pop'],
 ['ON TIME','You paid rent on time twice in a row. The landlord had to sit down.','home door shake'],
-['HONEST WORK','Side jobs, side bets, side hustles. You cleared Heat 3 with dishpan hands and a full wallet.','street clipboard pop'],
+['NO DAY JOB','No paycheck, no safety net, just nerve. You cleared Heat 3 and the cards still like you.','street clipboard pop'],
 ['MOVING UP','Pixel City’s small-time crowd throws you a going-away party. You’re moving up a league.','street confetti rain'],
 ['LOCAL LEGEND','Kids on Main Street play pretend as you. Mostly they pretend to owe money.','street cutout pop'],
 ['THE INTERVIEW','Pixel City Tonight finally airs your interview. The whitening was worth it.','tv camera flash'],
@@ -3337,7 +3300,7 @@ function payDebt(id){
   S.cash-=d.amt;S.debts.splice(i,1);questEvent('pay');if(d.loan){toast('Loan repaid. Vinnie nods slowly.');SFX.coin();ach('loan');save();checkClear();return}S.paid++;M.debts++;{const nw=Object.keys(SHOP_REQ).filter(k=>SHOP_REQ[k]===S.paid&&k!=='mart');if(nw.length)setTimeout(()=>note(`Now open on Main Street: <b>${nw.map(k=>SHOP_N[k]).join(' & ')}</b>`),900)}{const ns=addStock(2);if(ns.length)setTimeout(()=>note(`The Pawn King got new stock: <b>${TRINKETS[ns[0]].n}</b>`),600)}if(S.debtN<DEBTS_PER_HEAT){const bal=netWorth()-S.debts.filter(x=>x.loan).reduce((a,x)=>a+x.amt,0);const nd=mkDebt(bal);S.debts.push(nd);queueDebtScene(nd,bal)}
   toast(`Paid ${d.who}.`);SFX.coin();
   if(S.paid>=3)ach('week');if(M.debts>=100)ach('debt100');S.mods.forEach(k=>M.modBest[k]=Math.max(M.modBest[k]||0,S.paid));M.heatBest[S.heat]=Math.max(M.heatBest[S.heat]||0,S.paid);checkTiers();
-  if(S.paid===3&&!S.martOpen&&!mod('fasting'))toast('The Mart\u2019s landlord will talk to you now.');if(GAME_IDS.every(g=>S.paid>=gReq(g)))ach('allgames');
+  if(S.paid===COUNTER_AT&&!mod('fasting'))toast('The Pawn King\u2019s counter is open: energy drinks and daily specials.');if(GAME_IDS.every(g=>S.paid>=gReq(g)))ach('allgames');
   checkClear();
 }
 function extDebt(id){const d=S.debts.find(x=>x.id===id);if(!d||S.ext<1)return;d.due+=2;S.ext--;S.lastDue=Math.max(S.lastDue,d.due);toast(`${d.who} gives you 2 more days.`)}
@@ -3401,7 +3364,7 @@ function vRecap(){
   const sp='';
   return`<section class="stack" style="padding-top:18px;gap:12px"><span class="lbl">Night ${R.day} · the ledger</span><h2 class="px" style="font-size:14px;color:var(--y)">${R.profit>=0?'Up':'Down'} ${fmt(Math.abs(R.profit))} on the day</h2>
   <div class="box dark">${svg}<div class="lgnd">${S4.map(([l,,c])=>`<span><i class="lgk" style="background:${c}"></i>${l}</span>`).join('')}<span><i class="lgk" style="background:var(--w)"></i>Net</span></div></div>
-  <div class="box">${row('Won on bets','+'+fmt(L.w),'win','var(--l)')}${row('Bonus winnings (skills, items, drinks)','+'+fmt(L.b),'win','var(--y)')}${row('Lost on bets','-'+fmt(L.l),'lose','var(--o)')}${row('Saved by bonuses (refunds, loss back)','+'+fmt(L.s),'win','var(--a)')}${R.stk?row('Stock trades',(R.stk>=0?'+':'-')+fmt(Math.abs(R.stk)),R.stk>=0?'win':'lose'):''}
+  <div class="box">${row('Won on bets','+'+fmt(L.w),'win','var(--l)')}${row('Bonus winnings (items, drinks)','+'+fmt(L.b),'win','var(--y)')}${row('Lost on bets','-'+fmt(L.l),'lose','var(--o)')}${row('Saved by bonuses (refunds, loss back)','+'+fmt(L.s),'win','var(--a)')}${R.stk?row('Stock trades',(R.stk>=0?'+':'-')+fmt(Math.abs(R.stk)),R.stk>=0?'win':'lose'):''}
   ${row('Bets settled',L.n)}${row('Day profit',(R.profit>=0?'+':'-')+fmt(Math.abs(R.profit)),R.profit>=0?'win':'lose')}${R.prev!=null?row('Yesterday',(R.prev>=0?'+':'-')+fmt(Math.abs(R.prev))):''}</div>
   ${sp}<button class="btn green wide" data-a="wake">${R.msg?`Start day ${S.day}`:'Back'}</button></section>`;
 }
@@ -3431,14 +3394,12 @@ function drawSpark(x,k){
 const mprice=k=>Math.max(1,Math.round(MART[k].p*heatPrice()*disc()*(1-.03*L('mart'))*(1-.01*tsum('martDisc'))));
 const drinkRolls=()=>DRINK_ROLLS.filter(([m])=>!(L('bar')>=1&&m===.1)&&!(L('bar')>=2&&m===.5)&&!(trinket('ring')&&m<1));
 function martBuy(k){
-  const it=MART[k],pr=mprice(k),n=S.today.buy[k]||0;if(n>=it.lim||S.cash<pr)return;
-  S.cash-=pr;S.today.buy[k]=n+1;questEvent('buy');M.items++;if(M.items>=100)ach('items100');SFX.coin();
+  const it=MART[k];if(!it||!counterOpen()||!counterItems().includes(k))return;const pr=mprice(k),n=S.today.buy[k]||0;if(n>=it.lim||S.cash<pr)return;
+  S.cash-=pr;S.today.buy[k]=n+1;questEvent('buy');ach('reopen');M.items++;if(M.items>=100)ach('items100');SFX.coin();
   if(k==='dog'){S.energy+=ES;UI.martMsg='You wolf down a hot dog. +5 energy.'}
   else if(k==='drink'){S.energy+=4*ES;UI.martMsg='Volt Energy hits hard. +20 energy.'}
   else if(k==='charm'){S.charm=true;UI.martMsg='The Lucky Charm is warm in your pocket. +5% on wins until you sleep.'}
-  else if(k==='tip'){if(!giveTip())return;UI.martMsg=`The clerk slides you a folded note about <b>${S.tipK}</b>. Check Stocks on your computer at home.`}
-  else if(k==='scratch'){const r=rnd();const prize=r<.002?1000:r<.02?100:r<.10?30:r<.30?10:0;S.cash+=prize;if(prize>=1000)ach('scratch');
-    UI.martMsg=`<div class="ticket">${prize?`WINNER <b>${fmt(prize)}</b>`:'No luck. <b>TRY AGAIN</b>'}</div>`;if(prize)SFX.win()}
+  else if(k==='tip'){if(!giveTip())return;UI.martMsg=`The Pawn King slides you a folded note about <b>${S.tipK}</b>. Check Stocks on your computer at home.`}
   checkCash();
 }
 const barPrice=()=>r5(25*(1+.15*(S.day-1))*heatPrice()*disc());
@@ -3454,7 +3415,7 @@ function barBuy(){
 function boosts(){
   if(!S)return[];const g=UI.scene==='game'?UI.game:null,out=[],P=v=>Math.round(v*100)+'%';
   const add=(k,cls,short,long,v)=>out.push({k,cls,short,long,v:v||0});
-  const lk=skLuck();if(lk)add('skill','win',`+${P(lk)} LUCK`,`Luck skills from the Pawn King: +${P(lk)} profit on every win this run.`,lk);if(sk('thick'))add('thick','safe','6% THICK SKIN','Thick Skin skill: 6% of every losing bet comes back.');
+  const lk=skLuck();if(lk)add('skill','win',`+${P(lk)} LUCK`,`Lucky Socks, Gold Cufflinks and Midas Coin from the Pawn King: +${P(lk)} profit on every win this run.`,lk);if(sk('thick'))add('thick','safe','6% PADDED WALLET','Padded Wallet: 6% of every losing bet comes back.');
   if(L('luck'))add('shoe','win',`+${L('luck')}% HORSESHOE`,`Horseshoe (Legacy): +${L('luck')}% profit on every win.`,.01*L('luck'));
   if(S.charm)add('charm','win','+5% CHARM','Lucky Charm: +5% profit on every win until you sleep.',.05);
   const hot=buffV('hot');if(hot)add('hot','win',`+${P(hot)} HOT STREAK`,`Hot Streak: +${P(hot)} profit on every win today.`,hot);
@@ -3474,7 +3435,7 @@ function boosts(){
   if(S.heat)add('heat','bad',`-${+(heatTax()*100).toFixed(1)}% HEAT`,`Heat ${S.heat}: the house keeps ${+(heatTax()*100).toFixed(1)}% of the profit on every win.`);
   if(!out.length)return out;
   const pw=permWin(g||null,2),pe=DR(pw,winC()),pl=DR(permLoss(),LOSS_C);
-  if(pw>0||permLoss()>0)add('dim','info',`PERMANENT: +${P(pe)} WINS${pl?` · ${P(pl)} BACK`:''}`,`Skills, Legacy and items stack with diminishing returns. Yours list +${P(pw)} on wins${permLoss()?` and ${P(permLoss())} loss back`:''}, which works out to +${P(pe)}${pl?` and ${P(pl)}`:''}. Permanent bonuses top out near +${P(winC())} on wins and ${P(LOSS_C)} back on losses, so the house can still win.`);
+  if(pw>0||permLoss()>0)add('dim','info',`PERMANENT: +${P(pe)} WINS${pl?` · ${P(pl)} BACK`:''}`,`Legacy and items stack with diminishing returns. Yours list +${P(pw)} on wins${permLoss()?` and ${P(permLoss())} loss back`:''}, which works out to +${P(pe)}${pl?` and ${P(pl)}`:''}. Permanent bonuses top out near +${P(winC())} on wins and ${P(LOSS_C)} back on losses, so the house can still win.`);
   const sum=Math.min(WIN_CAP,pe+tempWin(g||null))-heatTax(),mult=(S.drink?S.drink.m:1)*(S.wish||1);
   let s;if(g==='holdem')s={k:'sum',cls:'sum',short:`SESSION +${P(sum)}`,long:'At the poker table, bonuses apply to your whole session when you cash out.'};
   else s={k:'sum',cls:'sum',short:`WINS ${sum<0?'-':'+'}${P(Math.abs(sum))}${mult!==1?` · NEXT x${+mult.toFixed(2)}`:''}`,long:`Your win bonuses${g?' in '+GAMES[g].n:''} work out to ${sum<0?'-':'+'}${P(Math.abs(sum))} profit${mult!==1?`, and your next win is multiplied by ${+mult.toFixed(2)}`:''}. Tap any badge for details.`};
@@ -3526,7 +3487,7 @@ function vSetup(){
   const mult=(1+.25*st.heat)*modMult(st.mods)*(1+.05*L('rep'));const h=st.heat;
   return topbar('New run','title')+`<div class="box"><span class="lbl">Heat</span>
   <div class="stepper"><button class="chip" style="width:56px" data-a="heat" data-v="-1" ${h<=0?'disabled':''} aria-label="Lower heat">-</button><b>${h}</b><button class="chip" style="width:56px" data-a="heat" data-v="1" ${h>=M.heatMax?'disabled':''} aria-label="Higher heat">+</button></div>
-  <p class="muted">First debt ${fmt(r5(120*DEBT_START[0]*(1+.15*h)*(1-.02*L('credit'))))}, growing slowly at first, then ${Math.round((DEBT_G-1+.009*h+.006*Math.max(0,h-15))*100)}% bigger each time.${h?` The house keeps ${+((h*.2)+.2*Math.max(0,h-15)).toFixed(1)}% of the profit on every win.`:''} Pay off all 10 debts at your highest Heat to unlock the next one. Max Heat 30.</p></div>
+  <p class="muted">First debt ${fmt(r5(120*DEBT_START[0]*(1+.05*h)*(1-.02*L('credit'))))}, growing slowly at first, then ${Math.round((DEBT_G-1+.003*h)*100)}% bigger each time.${h?` The house keeps ${+(h*.1).toFixed(1)}% of the profit on every win.`:''} Pay off all 10 debts at your highest Heat to unlock the next one. Max Heat 30.</p></div>
   <span class="lbl">Contracts (optional)</span>
   <div class="stack" style="gap:6px">${Object.entries(MODS).map(([k,m])=>{const lock=!modOpen(k),on=st.mods.includes(k);return`<button class="node ${on?'own':''}" data-a="modt" data-v="${k}" ${lock?'disabled':''}><h3>${m.n} <span style="color:var(--y)">+${Math.round(m.m*100)}% Rep</span></h3><p>${m.d}${M.modBest[k]?` Best: ${Math.min(M.modBest[k],DEBTS_PER_HEAT)}/${DEBTS_PER_HEAT} debts.`:''}</p><small>${lock?'UNLOCKS AT '+m.rep.toLocaleString()+' LIFETIME REP':on?'SIGNED':'TAP TO SIGN'}</small></button>`}).join('')}</div>
   <div class="box dark"><div class="kv"><span>Rep multiplier</span><b class="px" style="color:var(--y);font-size:12px">${mult.toFixed(2)}x</b></div><p class="muted">Rep at the end of a run = (debts paid x 4, +20 for clearing the Heat) x multiplier.</p></div>
@@ -3560,13 +3521,13 @@ function trophyView(){
   return head+`<p class="muted">Every ladder tier pays Rep, more for higher tiers.</p><div class="stack" style="gap:6px">${TT.map(([id,nm,dsc,get,th])=>{const v=get();let i=0;while(i<th.length&&M.tiers[id+i])i++;const done=i>=th.length,next=th[Math.min(i,th.length-1)],p=done?1:Math.max(0,Math.min(1,v/next));
     return`<div class="row ${i?'got':''}"><h3>${i?'★ ':''}${nm}${i?' '+ROMAN[i-1]:''} <span class="muted">${i}/${th.length}</span></h3><p>${done?'All tiers done.':dsc.replace('{t}',f(id,next))+` (${f(id,Math.min(v,next))})`}</p><div class="prog"><i style="width:${p*100}%"></i></div></div>`}).join('')}</div>`;
 }
-const ROOM_NAMES={street:'Main Street',home:'Home',casino:'Casino Floor',mart:'The Mart',bar:'The Bar',pawn:'Pawn King',zora:'Zora’s Tent'};
+const ROOM_NAMES={street:'Main Street',home:'Home',casino:'Casino Floor',bar:'The Bar',pawn:'Pawn King',zora:'Zora’s Tent'};
 function vWorld(){
   const tired=S.energy<=0,open=GAME_IDS.filter(g=>S.paid>=gReq(g)).length;
   return hud()+`<div class="top"><h2>${ROOM_NAMES[UI.room]}</h2><small>${UI.room==='casino'?`${open}/${GAME_IDS.length} games open`:UI.room==='street'?'Tap a door to walk there':'Exit by the door'}</small></div>
   <canvas class="pix tap world" data-s="world" data-fill data-anim width="160" height="90" aria-label="${ROOM_NAMES[UI.room]}"></canvas>
   <div class="pad"><button class="padb" data-move="-1" aria-label="Walk left">&lt;</button><button class="btn act" id="actbtn" data-a="interact"><span id="prompt">Walk up to something</span></button><button class="padb" data-move="1" aria-label="Walk right">&gt;</button></div>
-  ${tired&&UI.room!=='home'&&!UI.panel?`<p class="note">You’re out of energy. Head home to sleep${S.martOpen?', or grab a Volt Energy at the Mart':''}.</p>`:''}
+  ${tired&&UI.room!=='home'&&!UI.panel?`<p class="note">You’re out of energy. Head home to sleep${counterOpen()?', or grab a Volt Energy at the Pawn King':''}.</p>`:''}
   ${UI.room==='street'&&!UI.panel&&(S.mods.length||S.heat)?`<p class="muted">Heat ${S.heat}${S.mods.length?' · '+S.mods.map(k=>MODS[k].n).join(', '):''}</p>`:''}
   <div id="panel" class="stack">${panelHTML()}</div>`;
 }
@@ -3575,7 +3536,7 @@ function lineupCard(){const now=GAME_IDS.filter(g=>gReq(g)<=S.paid),pins=passOn(
   <p class="muted">Coming up: ${next.map(g=>`${GAMES[g].n} (${gReq(g)} debt${gReq(g)>1?'s':''})`).join(', ')}.</p><button class="btn green wide" data-a="lineupok">Let’s go</button></div>`}
 function panelHTML(){
   const p=UI.panel;if(!p)return'';const done=`<button class="btn dim sm" data-a="closep">Done</button>`;
-  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;if(p==='lease')return leasePanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),news:newsPanel,lou:louPanel,fountain:()=>fountainPanel()+buskerPanel(),pawn:pawnPanel,zora:zoraPanel,loans:loanPanel}[p];if(T)return T()+done;return'';
+  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),lou:louPanel,busker:buskerPanel,pawn:pawnPanel,zora:zoraPanel,loans:loanPanel}[p];if(T)return T()+done;return'';
 }
 const shortVal=st=>Math.max(0,2*st.sColl-st.short*st.p);
 function pcPanel(){
@@ -3601,24 +3562,21 @@ function pcPanel(){
       <div class="acts"><button class="btn blue" data-a="stk" data-v="${k}:b1" ${S.cash>=st.p?'':'disabled'}>Buy 1</button><button class="btn blue" data-a="stk" data-v="${k}:b10" ${S.cash>=st.p*10?'':'disabled'}>Buy 10</button><button class="btn blue" data-a="stk" data-v="${k}:bmax" ${S.cash>=st.p?'':'disabled'}>Buy max</button><button class="btn" data-a="stk" data-v="${k}:sall" ${st.own?'':'disabled'}>Sell all</button>
       <button class="btn red" data-a="stk" data-v="${k}:h1" ${S.cash>=st.p?'':'disabled'}>Short 1</button><button class="btn red" data-a="stk" data-v="${k}:h10" ${S.cash>=st.p*10?'':'disabled'}>Short 10</button><button class="btn red" data-a="stk" data-v="${k}:hmax" ${S.cash>=st.p?'':'disabled'}>Short max</button><button class="btn green" data-a="stk" data-v="${k}:cv" ${st.short?'':'disabled'}>Cover</button></div></div>`}).join('');
   }else if(UI.tab==='town'){
-    const shops=['fountain','lou'].map(k=>`<div class="kv"><span>${k==='lou'?'Lucky Lou (daily quests)':'Fountain Plaza (wish + Benny)'}</span><b class="win">Open</b></div>`).join('')+Object.keys(SHOP_REQ).map(k=>`<div class="kv"><span>${SHOP_N[k]}</span>${shopOpen(k)||(k==='mart'&&S.martOpen)?'<b class="win">Open</b>':`<b class="muted">${SHOP_REQ[k]} debt${SHOP_REQ[k]>1?'s':''}</b>`}</div>`).join('');
+    const shops=['busker','lou'].map(k=>`<div class="kv"><span>${k==='lou'?'Lucky Lou (daily quests)':'Benny the busker'}</span><b class="win">Open</b></div>`).join('')+Object.keys(SHOP_REQ).map(k=>`<div class="kv"><span>${SHOP_N[k]}</span>${shopOpen(k)?'<b class="win">Open</b>':`<b class="muted">${SHOP_REQ[k]} debt${SHOP_REQ[k]>1?'s':''}</b>`}</div>`).join('')+`<div class="kv"><span>Pawn King’s counter</span>${counterOpen()?'<b class="win">Open</b>':`<b class="muted">${mod('fasting')?'contract':COUNTER_AT+' debts'}</b>`}</div>`;
     body=`<span class="lbl">Main Street</span>${shops}`;
   }else body=gameOpen('sports')?gSB():'<p class="muted">The Sportsbook is closed under this contract.</p>';
   return`<div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${l}</button>`).join('')}</div><div class="stack">${body}</div>`;
 }
 function bedPanel(){
   const dueD=S.debts.filter(d=>d.due<=S.day),bad=dueD.filter(d=>!canRoll(d)),roll=dueD.filter(d=>canRoll(d)),dueNow=bad.length>0;
-  if(!dueNow&&roll.length&&UI.confirm!=='sleep')return`<div class="box"><p><span style="color:var(--y)">${roll.map(d=>d.who).join(', ')} ${roll.length>1?'are':'is'} due today.</span> If you sleep, it rolls over 2 days with a 25% late fee. That uses a late strike (${(S.strikes||0)+roll.length} of 3).</p><button class="btn wide" data-a="sleep">Sleep and roll it over · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
   if(UI.confirm==='sleep')return`<div class="confirm"><p>${bad.map(d=>d.who).join(', ')} ${bad.length>1?'are':'is'} due today and you can\u2019t cover it. If you sleep now, the collectors come and the run is over.</p><div class="g2"><button class="btn red" data-a="sleepyes">Sleep anyway</button><button class="btn dim" data-a="cancel">Stay up</button></div></div>`;
   const tg=!dueNow&&S.sb&&sbOpenGames().length;
   return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills, stock prices move and sports bets settle overnight.'}</p>${napBtn()}${tg?`<button class="btn green wide" data-a="tonight">Lie down and watch tonight’s games (${sbOpenGames().length})</button>`:''}<button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
 }
 const leaseCost=()=>r5(150*(1+.15*(S.heat||0)));
-function leasePanel(){const need=3,c=leaseCost();
-  return`<div class="box"><span class="lbl">For lease</span><p>${S.paid<need?`The old Mart is boarded up. The landlord won’t rent to you until you’ve paid off ${need} debts. You’ve paid ${S.paid}.`:`The landlord will hand over the keys for ${fmt(c)}. Snacks, energy drinks, scratch-offs and stock tips, back in business for the rest of this run.`}</p>
-  ${S.paid>=need?`<button class="btn green wide" data-a="lease" ${S.cash>=c?'':'disabled'}>Reopen the Mart · ${fmt(c)}</button>`:''}</div>`}
+function counterItems(){if(!S.counter||S.counter.day!==S.day){const sp=['charm','tip','dog'];sp.splice(Math.floor(rnd()*3),1);S.counter={day:S.day,items:['drink'].concat(sp)}}return S.counter.items}
 function martPanel(){
-  return`<div class="stack">${Object.entries(MART).map(([k,it])=>{const n=S.today.buy[k]||0,pr=mprice(k),out=n>=it.lim||(k==='tip'&&!S.tipK&&!tipReady()),has=(k==='charm'&&S.charm)||(k==='tip'&&S.tipK);
+  return`<div class="box"><span class="lbl">The counter</span><p>"Volt Energy, always cold. The specials change every morning."</p></div><div class="stack">${counterItems().map(k=>[k,MART[k]]).map(([k,it])=>{const n=S.today.buy[k]||0,pr=mprice(k),out=n>=it.lim||(k==='tip'&&!S.tipK&&!tipReady()),has=(k==='charm'&&S.charm)||(k==='tip'&&S.tipK);
     return`<div class="row"><h3>${it.n}</h3><p>${it.d}${k==='charm'&&S.charm?' <span class="win">Active.</span>':''}${k==='tip'&&S.tipK?` <span class="win">You have a tip on ${S.tipK}.</span>`:''}</p><button class="btn ${out||has?'':'green'} sm" data-a="buy" data-v="${k}" ${out||has||S.cash<pr?'disabled':''}>${k==='tip'&&!S.tipK&&!tipReady()?`Back day ${(S.lastTipDay||0)+TIP_GAP}`:out?'Sold out':fmt(pr)}</button></div>`}).join('')}</div>
   ${UI.martMsg?`<div class="box dark">${UI.martMsg}</div>`:''}`;
 }
@@ -3647,7 +3605,7 @@ function gBJ(){
   let ctl;
   if(s.phase==='ins'){const a=Math.floor(s.hands[0].bet/2);ctl=`<div class="g2"><button class="btn blue" data-a="bj" data-v="ins" ${a>=1&&S.cash>=a?'':'disabled'}>Insurance · ${fmt(a)}</button><button class="btn" data-a="bj" data-v="noins">No insurance</button></div>`}
   else if(s.phase==='play'){const h=s.hands[s.hi],canD=h.c.length===2&&S.cash>=h.bet,canS=bjCanSplit(h);
-    const hint=sk('count')?`<p class="hint">Card Counter says: ${bjHint(h,s.d[0])}</p>`:'';
+    const hint=sk('count')?`<p class="hint">Your Counting Glasses say: ${bjHint(h,s.d[0])}</p>`:'';
     ctl=hint+`<div class="g2"><button class="btn" data-a="bj" data-v="hit">Hit</button><button class="btn" data-a="bj" data-v="stand">Stand</button><button class="btn blue" data-a="bj" data-v="double" ${canD?'':'disabled'}>Double</button><button class="btn blue" data-a="bj" data-v="split" ${canS?'':'disabled'}>Split</button></div>`}
   else ctl=betBar(false)+`<button class="btn green wide" data-a="bj" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`;
   return`<div class="felt"><div class="hand"><span class="hlab">DEALER${s.d.length?' · '+(hide?hv([s.d[0]]):hv(s.d)):''}</span><div class="cards">${dealer||'<p class="ph">Dealer stands on 17</p>'}</div></div>${hands}</div>
@@ -3825,26 +3783,25 @@ function vTrophies(){return topbar('Trophies','title')+`<p class="muted">${troph
 function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">THE DEAL.</b> You start with $100 and two debts. Each one has a due day. Pay it at your home computer before you sleep on that day, or the collectors end your run.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">DEBTS GROW.</b> Paying a debt brings in a new one, due a couple of days later, along with the next chapter of your story. Each new debt is sized from the debt ladder and your balance when you pay (cash, stocks, chips on the table and open bets): the more you\u2019re holding, the more they want, between 60% and 200% of the ladder amount. Every Heat tier has its own 30-chapter storyline, with a cutscene showing how each debt happened. Your place in each storyline carries over between runs. Clearing a Heat (all 10 debts) for the first time plays its ending, finishing a storyline plays its finale, and clearing Heat 30 plays something special.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">BUS.</b> The bus runs between your home and the stop by the casino, skipping the long walk. It drops you right next to Lucky Lou. The newspaper box lists side jobs that pay for energy.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">ENERGY.</b> You get ${maxEnergy()} energy a day (50 to start). Longer games cost more per round: ${['holdem','slots','flip','baccarat','roulette','crash','snail','bj','mines','tower','hilo'].map(g=>GAMES[g].n+' '+ecost(g)).join(', ')}. Craps costs ${ECOST.craps} per come-out, Plinko ${ECOST.plinko} per session, a sports slip ${ECOST.sports} and a Sit & Go ${SNG_E}. Every game shows its cost at the top. Sleep to refill, or buy snacks at the Mart.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">SKILLS.</b> Skills are sold at the Pawn King alongside his other stock: more energy, bigger wins, cheaper shopping and smarter play. Some build on each other, so you need the first one before the next. They last for the run, and he buys them back at half price. After you sleep, the ledger charts your day: what you won, what bonuses added, what you lost and what bonuses saved.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">GETTING AROUND.</b> Walk with the arrow buttons (or arrow keys), or tap where you want to go. Press the big button to use whatever you’re standing next to: doors, your computer, your bed, the clerk, the bartender and every casino game.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou and Benny at the Fountain Plaza are there from day 1 (the fountain itself refills at 1 debt paid). The rest of Main Street opens as you pay debts, the same way every run: the Pawn King & Loans and the Newspaper box at 1 debt paid (the Pawn King’s display case at 2), the Bar at 2, the Mart at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: the fountain grants one wish a day while Benny plays lucky songs for tips, the Pawn King sells run-long trinkets and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day. The newspaper box by the Mart has a daily market rumor.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">BUS.</b> The bus runs between your home and the stop by the casino, skipping the long walk. It drops you right next to Lucky Lou.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">ENERGY.</b> You get ${maxEnergy()} energy a day (50 to start). Longer games cost more per round: ${['holdem','slots','flip','baccarat','roulette','crash','snail','bj','mines','tower','hilo'].map(g=>GAMES[g].n+' '+ecost(g)).join(', ')}. Craps costs ${ECOST.craps} per come-out, Plinko ${ECOST.plinko} per session and a Sit & Go ${SNG_E}. Sports bets and stock trades are free. Every game shows its cost at the top. Sleep to refill, or buy a Volt Energy at the Pawn King’s counter.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">THE PAWN KING.</b> His display case sells items that last the whole run: more energy, bigger wins, cheaper shopping and smarter play. Some build on each other, so you need the first one before the next. He buys anything back at half price. After you sleep, the ledger charts your day: what you won, what bonuses added, what you lost and what bonuses saved.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">GETTING AROUND.</b> Walk with the arrow buttons (or arrow keys), or tap where you want to go. Press the big button to use whatever you’re standing next to: doors, your computer, your bed, the Pawn King, the bartender and every casino game.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou and Benny the busker are there from day 1. The rest of Main Street opens as you pay debts, the same way every run: the Pawn King & Loans at 1 debt paid, the Bar and the Pawn King’s display case at 2, the Pawn King’s counter (energy drinks and daily specials) at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: Benny plays lucky songs for tips, the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BETS.</b> Every bet panel has Clear, Repeat (your last bet in that game) and Double. At roulette, Repeat last and Double last rebuild your previous spin’s whole layout.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">UNLOCKS.</b> Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus 4 random games. Paying off debts opens the rest, two at a time, until every game is open by your 8th debt. The boarded-up Mart can be reopened once you’ve paid off 3 debts.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 5% per Heat. When cash runs low, only the cheap tables will take you. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">UNLOCKS.</b> Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus 4 random games. Paying off debts opens the rest, two at a time, until every game is open by your 8th debt.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 3% per Heat. When cash runs low, only the cheap tables will take you. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">CRAPS.</b> Bet the Pass Line and roll the come-out: 7 or 11 wins, 2, 3 or 12 loses, anything else sets the point. Roll the point again before a 7 to win. Back it with Odds (true odds, no house edge), add Come, Place, Field, hard ways and one-roll props. The come-out roll costs ${ECOST.craps} energy, and every roll after it is free until the shooter sevens out or makes the point.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">SPORTSBOOK.</b> Every day has a slate of games across basketball, baseball, soccer, tennis, football and hockey. Odds are shown as each side\u2019s chance to win. Pick one side for a single bet, or 2 to 6 sides for a parlay that pays the multipliers stacked together. Each slip costs ${ECOST.sports} energy. Watch any game as a live pixel broadcast, or sim it to the final. Open bets settle overnight.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">SPORTSBOOK.</b> Bet from the Sports tab on your home computer. Every day has a slate of games across basketball, baseball, soccer, tennis, football and hockey. Odds are shown as each side\u2019s chance to win. Pick one side for a single bet, or 2 to 6 sides for a parlay that pays the multipliers stacked together. Slips cost no energy, just like stocks. The games are played overnight and bets settle when you wake up. Lie down in bed to watch the games you bet on before you fall asleep.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BROKE?</b> When you have no cash, nothing to pawn, no loan left and no bets out, a Face the Collectors button appears so you can end the run on your own terms. If Vinnie will still lend, you get the choice: borrow or face them.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">SHUFFLED CASINO.</b> Every run deals a new casino lineup: which games are open on day 1 and which unlock as you pay off debts is random. Win a game enough times and you earn its day-one pass, which guarantees it a starting slot.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">STOCKS.</b> Four stocks move once a night. Buy to bet on a rise, or short to bet on a fall. An Insider Tip from the Mart shows tomorrow’s move for one random stock.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">STOCKS.</b> Four stocks move once a night. Buy to bet on a rise, or short to bet on a fall. An Insider Tip from the Pawn King’s counter (when it’s that day’s special) shows tomorrow’s move for one random stock.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">THE BAR.</b> A drink multiplies the profit on your next win, from 0.1x up to 3x.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">POKER.</b> Pick your stakes at a cash table, or enter a Sit & Go: 8 players (top 3 paid), 6 players (top 2) or 3 players (winner takes all). Each player has a style (Fish, Loose, Rock, Maniac, Pro, and Gus the Shark); tap a seat to read them. Each cash-game hand costs 1 energy. A Sit & Go costs ${SNG_E} energy to enter, then its hands are free. A full 8-handed table with a real 52-card deck and side pots. Your odds against the players still in the hand come from simulating thousands of run-outs, and all-in odds are exact once one or two cards are left to come.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">REP &amp; LEGACY.</b> Every run pays a little Rep when it ends. Leveling up and trophy ladders pay a little more. Legacy upgrades are expensive on purpose: it takes many runs before they really change the game. Trophies and wardrobe items carry across every run and Heat.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">SPORTSBOOK.</b> Bet on tonight\u2019s games from the Sports tab on your home computer. The games are played overnight and bets settle when you wake up. Lie down to watch the games you bet on before you fall asleep.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">HEAT.</b> Each run has 10 debts. Pay them all to clear the Heat; clear your highest Heat to unlock the next, up to 30. Higher Heat means bigger debts that grow faster, a house cut of 0.2% per Heat on every win’s profit (0.4% per Heat above 15), and more Rep.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">STACKING BONUSES.</b> Skills, Legacy and pawn shop items stack with diminishing returns: together they top out near +8% on wins and 3% back on losses. Short boosts like the Lucky Charm, Hot Streak and Madame Zora stack on top, but every bonus together stops at +12% on wins and 4% back on losses, so even a perfect build only edges past the house by a hair, and no stack of boosts, drinks and wishes can pay more than 3x profit on one win. Debt discounts from skills, Legacy and items stack too, but never past 40% off. Every game still has a house edge before bonuses, so no build guarantees a win. The Boosts tab shows what yours work out to.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">HEAT.</b> Each run has 10 debts. Pay them all to clear the Heat; clear your highest Heat to unlock the next, up to 30. Higher Heat means bigger debts that grow faster, a house cut of 0.1% per Heat on every win’s profit, and more Rep.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">STACKING BONUSES.</b> Legacy and pawn shop items stack with diminishing returns: together they top out near +8% on wins and 3% back on losses. Short boosts like the Lucky Charm, Hot Streak and Madame Zora stack on top, but every bonus together stops at +12% on wins and 4% back on losses, so even a perfect build only edges past the house by a hair, and no stack of boosts, drinks and wishes can pay more than 3x profit on one win. Debt discounts from Legacy and items stack too, but never past 40% off. Every game still has a house edge before bonuses, so no build guarantees a win. The Boosts tab shows what yours work out to.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">CONTRACTS.</b> Optional rules that make a run harder for more Rep. New ones unlock as your lifetime Rep grows.</p>
   <p class="muted">Play money only. Progress saves on this device.</p><span class="lbl">Game guides</span><p class="muted">Rules and payouts for every game. You can also open these from the top of any game screen.</p>${GAME_IDS.map(g=>`<details class="gdet"><summary>${GAMES[g].n}</summary>${guideHTML(g)}</details>`).join('')}</div>`}
 
@@ -3897,7 +3854,7 @@ function render(){
   if(['world','game'].includes(UI.scene)&&(!S||S.over))UI.scene='title';
   if(UI.scene==='over'&&(!S||!S.over))UI.scene='title';
   if(UI.scene==='world'&&S&&UI.room!=='street'&&UI.room!=='home'&&!placeOpen(UI.room)){UI.room='street'}
-  if(UI.scene==='world'&&S&&UI.room==='mart'&&!S.martOpen)UI.room='street';
+  if(UI.scene==='world'&&S&&UI.room==='mart')UI.room='street';
   if(S&&!S.over&&(!S.quest||S.quest.day!==S.day))S.quest=makeQuest();
   {const bk=UI.scene+'|'+UI.room+'|'+UI.game;if(UI._bk&&UI._bk!==bk){UI.bview=false;UI.qview=false;UI.bsel=null}UI._bk=bk}
   if(S&&S.g&&S.g.pl&&!(UI.scene==='game'&&UI.game==='plinko'))S.g.pl.session=false;
@@ -3929,7 +3886,6 @@ function act(a,v,el){
     case 'continue':UI.scene='world';UI.panel=null;break;
     case 'interact':{const sp=nearSpot();if(sp)interact(sp.id);return}
     case 'closep':UI.panel=null;UI.confirm=null;UI.martMsg='';UI.barMsg='';break;
-    case 'lease':{const c=leaseCost();if(S.paid<3||S.cash<c||S.martOpen)return;S.cash-=c;S.martOpen=true;ach('reopen');SFX.win();toast('The Mart is open for business.');UI.panel=null;save();enterRoom('mart');return}
     case 'new':if(S&&!S.over&&UI.scene==='title'){UI.confirm='new';break}UI.scene='setup';UI.confirm=null;break;
     case 'newyes':UI.scene='setup';UI.confirm=null;break;
     case 'daily':if(S&&!S.over){UI.confirm='daily';break}newRun(dailyCfg());return;
@@ -4030,14 +3986,12 @@ function act(a,v,el){
     case 'betclr':UI.bet=0;break;
     case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
-    case 'fountain':fountainAct();break;
     case 'tip':tipAct(+v);break;
-    case 'tbuy':{const p=tprice(v);const rq=TRINKETS[v]&&TRINKETS[v].req;if((S.paid||0)<PAWN_CASE||S.trinkets[v]||S.cash<p||(rq&&!S.trinkets[rq]))return;if(TRINKETS[v].fx&&TRINKETS[v].fx.t==='skill'){ach('skill');setTimeout(()=>{if(Object.keys(S.trinkets).filter(x=>x.startsWith('s_')).length>=6)ach('tree')},0)}S.cash-=p;S.trinkets[v]=p;questEvent('pawn');SFX.coin();toast(`Bought the ${TRINKETS[v].n}.`);if(Object.keys(S.trinkets).length>=4)ach('collector');break}
-    case 'tsell':{const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the skill that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
+    case 'tbuy':{const p=tprice(v);const rq=TRINKETS[v]&&TRINKETS[v].req;if((S.paid||0)<PAWN_CASE||S.trinkets[v]||S.cash<p||(rq&&!S.trinkets[rq]))return;{ach('skill');setTimeout(()=>{if(S&&Object.keys(S.trinkets).length>=8)ach('tree')},0)}S.cash-=p;S.trinkets[v]=p;questEvent('pawn');SFX.coin();toast(`Bought the ${TRINKETS[v].n}.`);if(Object.keys(S.trinkets).length>=4)ach('collector');break}
+    case 'tsell':{const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the item that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
     case 'pawnitem':{if(S.pawned[v])return;S.pawned[v]=1;S.cash+=HOUSE[v][1];SFX.coin();toast(`The Pawn King gives you ${fmt(HOUSE[v][1])} for ${HOUSE[v][0].toLowerCase()}.`);break}
     case 'zora':zoraAct();break;
-    case 'job':jobAct(v);break;
-    case 'ride':{UI.panel=null;flash('rgba(26,28,44,.9)',500);SFX.thunk();UI.wx.street=v==='casino'?560:52;UI.scene='world';UI.room='street';toast(v==='casino'?'The 7 Express drops you at the stop by the casino. Lucky Lou is right there.':'The bus drops you outside your apartment.');break}
+    case 'ride':{UI.panel=null;flash('rgba(26,28,44,.9)',500);SFX.thunk();UI.wx.street=v==='casino'?SX(560):52;UI.scene='world';UI.room='street';toast(v==='casino'?'The 7 Express drops you at the stop by the casino. Lucky Lou is right there.':'The bus drops you outside your apartment.');break}
     case 'loan':UI.confirm=null;loanAct(+v);break;
     case 'pldrop':plDrop();return;
     case 'mn':mnAct(v,el.dataset.i);return;
