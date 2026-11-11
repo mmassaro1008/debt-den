@@ -1565,10 +1565,11 @@ function bjHint(h,up){
 function bjAct(v){
   const s=S.g.bj;
   if(v==='deal'){if(!canPlay())return;const b=clampBet();placeBet('bj',b);
-    Object.assign(s,{hn:(s.hn||0)+1,phase:'play',hands:[{c:[draw(),draw()],bet:b,dbl:false,done:false,split:false,res:''}],hi:0,d:[draw(),draw()],msg:'',ins:0});
-    if(s.d[0].r===1){s.phase='ins';s.msg=hv(s.hands[0].c)===21?'Blackjack! The dealer shows an Ace. Take insurance (even money) or risk a push?':'Dealer shows an Ace. Insurance pays 2:1 if the dealer has blackjack.';save();render();return}
+    Object.assign(s,{hn:(s.hn||0)+1,phase:'play',hands:[{c:[draw(),draw()],bet:b,dbl:false,done:false,split:false,res:''}],hi:0,d:[draw(),draw()],msg:'',ins:0,em:false,emOffer:false});
+    if(s.d[0].r===1){s.phase='ins';s.emOffer=hv(s.hands[0].c)===21;s.msg=s.emOffer?`Blackjack! But the dealer shows an Ace. Take even money now (${fmt(b*2)} back, a sure 1:1 win), or play it out: 3:2 if the dealer doesn’t have blackjack, a push if they do.`:'Dealer shows an Ace. Insurance pays 2:1 if the dealer has blackjack.';save();render();return}
     if(hv(s.hands[0].c)===21||hv(s.d)===21)return bjEnd();save();render();return}
-  if(s.phase==='ins'&&(v==='ins'||v==='noins')){if(v==='ins'){const a=Math.floor(s.hands[0].bet/2);if(a>=1&&S.cash>=a){S.cash-=a;s.ins=a;gs('bj').bet+=a;SFX.coin()}}
+  if(s.phase==='ins'&&s.emOffer&&(v==='em'||v==='noins')){s.em=v==='em';s.phase='play';return bjEnd()}
+  if(s.phase==='ins'&&!s.emOffer&&(v==='ins'||v==='noins')){if(v==='ins'){const a=Math.floor(s.hands[0].bet/2);if(a>=1&&S.cash>=a){S.cash-=a;s.ins=a;gs('bj').bet+=a;SFX.coin()}}
     s.phase='play';if(hv(s.hands[0].c)===21||hv(s.d)===21)return bjEnd();s.msg=s.ins?`No dealer blackjack. Insurance (${fmt(s.ins)}) loses. Play on.`:'No dealer blackjack. Play on.';save();render();return}
   if(s.phase!=='play')return;const h=s.hands[s.hi];
   if(v==='hit'){h.c.push(draw());if(hv(h.c)>=21){h.done=true;return bjNext()}}
@@ -1586,12 +1587,12 @@ function bjEnd(){
   if(s.hands.some(h=>hv(h.c)<=21)&&!nat&&!dn)while(hv(s.d)<17)s.d.push(draw());
   const dh=hv(s.d);let tb=0,tg=0,splitWin=false;
   s.hands.forEach(h=>{const ph=hv(h.c),hn=single&&!h.split&&h.c.length===2&&ph===21;let g=0,r;
-    if(ph>21)r='Bust';else if(hn&&dn){g=h.bet;r='Push'}else if(hn){g=h.bet*2.5;r='Blackjack';ach('natural');questEvent('sp','bj_nat')}else if(dn)r='Lose';
+    if(ph>21)r='Bust';else if(hn&&s.em){g=h.bet*2;r='Even money';ach('natural');questEvent('sp','bj_nat')}else if(hn&&dn){g=h.bet;r='Push'}else if(hn){g=h.bet*2.5;r='Blackjack';ach('natural');questEvent('sp','bj_nat')}else if(dn)r='Lose';
     else if(dh>21||ph>dh){g=h.bet*2;r='Win'}else if(ph===dh){g=h.bet;r='Push'}else r='Lose';
     h.res=r;tb+=h.bet;tg+=g;if(h.split&&g>h.bet)splitWin=true});
   if(s.ins){tb+=s.ins;if(dn)tg+=s.ins*3}
   const r=settle('bj',tb,tg);if(splitWin){ach('split');questEvent('sp','bj_split')}
-  s.phase='done';s.msg=(dn?`Dealer blackjack.${s.ins?' Insurance pays 2:1.':''} `:(s.ins?'Insurance lost. ':'')+(dh>21?'Dealer busts! ':`Dealer has ${dh}. `))+resText(r);save();render();
+  s.phase='done';s.msg=(s.em?`Even money taken. ${dn?'Good call: the dealer had blackjack.':'The dealer didn’t have it.'} `:dn?`Dealer blackjack.${s.ins?' Insurance pays 2:1.':''} `:(s.ins?'Insurance lost. ':'')+(dh>21?'Dealer busts! ':`Dealer has ${dh}. `))+resText(r);save();render();
 }
 
 /* ================= roulette ================= */
@@ -2334,7 +2335,7 @@ const GUIDE={
     extra:'Hand ranks, best first: royal flush, straight flush, four of a kind, full house, flush, straight, three of a kind, two pair, one pair, high card.'}),
   bj:()=>({goal:'Beat the dealer’s hand without going over 21.',
     rules:['Cards 2-10 count face value, J/Q/K count 10, aces count 1 or 11.','Hit for another card, stand to stop. Over 21 is a bust and loses.','Double: on your first two cards, double your bet and take exactly one more card.','Split: two cards of the same value become two hands with equal bets, up to 4 hands. Split aces get one card each. 21 on a split hand is not a blackjack.','The dealer draws until reaching 17 or more, and stands on all 17s.'],
-    pays:[['Win','2x (1:1)'],['Blackjack (ace + 10-value on the deal)','2.5x (3:2)'],['Push (tie)','Bet returned'],['Dealer blackjack','You lose unless you also have one'],['Insurance (half your bet, offered when the dealer shows an Ace)','3x (2:1) if the dealer has blackjack']]}),
+    pays:[['Win','2x (1:1)'],['Blackjack (ace + 10-value on the deal)','2.5x (3:2)'],['Push (tie)','Bet returned'],['Dealer blackjack','You lose unless you also have one'],['Insurance (half your bet, offered when the dealer shows an Ace)','3x (2:1) if the dealer has blackjack'],['Even money (offered when you have blackjack and the dealer shows an Ace)','2x (1:1) right away. Decline and it pays 3:2, or pushes if the dealer has blackjack too']]}),
   roulette:()=>({goal:'Guess where the ball lands on a single-zero wheel of 0 to 36.',
     rules:['Pick a chip size, then tap spots on the board. You can stack many bets on one spin. Undo removes your last chip, again and again until the table is empty.','Inside bets cover specific numbers. Outside bets cover big groups.','0 is green: every outside bet loses when it hits.',`Spinning costs ${ECOST.roulette} energy, no matter how many chips are down.`],
     pays:[['Straight up (1 number)','36x (35:1)'],['Split (2 numbers)','18x (17:1)'],['Street (3)','12x (11:1)'],['Corner (4)','9x (8:1)'],['Six line (6)','6x (5:1)'],['Dozen or column (12)','3x (2:1)'],['Red/black, odd/even, 1-18/19-36','2x (1:1)']],
@@ -3603,7 +3604,8 @@ function gBJ(){
   const dealer=s.d.map((c,i)=>i===1&&hide?back(`bj${s.hn}d1`,3):face(c,`bj${s.hn}d${i}`,i===0?1:i===1?3:10+i)).join('');
   const hands=s.hands.length?s.hands.map((h,i)=>`<div class="hand ${s.phase==='play'&&i===s.hi&&s.hands.length>1?'cur':''}"><span class="hlab">${s.hands.length>1?'HAND '+(i+1):'YOU'} · ${hv(h.c)} · ${fmt(h.bet)}${h.dbl?' · DBL':''}${h.res&&s.phase==='done'?' · '+h.res.toUpperCase():''}</span><div class="cards">${h.c.map((c,j)=>face(c,`bj${s.hn}h${i}c${j}x${c.r}${c.s}`,s.hands.length===1&&!h.split&&j<2?j*2:20+j)).join('')}</div></div>`).join(''):'<div class="hand"><span class="hlab">YOU</span><div class="cards"><p class="ph">Blackjack pays 3:2. Split any pair.</p></div></div>';
   let ctl;
-  if(s.phase==='ins'){const a=Math.floor(s.hands[0].bet/2);ctl=`<div class="g2"><button class="btn blue" data-a="bj" data-v="ins" ${a>=1&&S.cash>=a?'':'disabled'}>Insurance · ${fmt(a)}</button><button class="btn" data-a="bj" data-v="noins">No insurance</button></div>`}
+  if(s.phase==='ins'&&s.emOffer){ctl=`<div class="g2"><button class="btn green" data-a="bj" data-v="em">Even money · ${fmt(s.hands[0].bet*2)}</button><button class="btn" data-a="bj" data-v="noins">Play it out</button></div>`}
+  else if(s.phase==='ins'){const a=Math.floor(s.hands[0].bet/2);ctl=`<div class="g2"><button class="btn blue" data-a="bj" data-v="ins" ${a>=1&&S.cash>=a?'':'disabled'}>Insurance · ${fmt(a)}</button><button class="btn" data-a="bj" data-v="noins">No insurance</button></div>`}
   else if(s.phase==='play'){const h=s.hands[s.hi],canD=h.c.length===2&&S.cash>=h.bet,canS=bjCanSplit(h);
     const hint=sk('count')?`<p class="hint">Your Counting Glasses say: ${bjHint(h,s.d[0])}</p>`:'';
     ctl=hint+`<div class="g2"><button class="btn" data-a="bj" data-v="hit">Hit</button><button class="btn" data-a="bj" data-v="stand">Stand</button><button class="btn blue" data-a="bj" data-v="double" ${canD?'':'disabled'}>Double</button><button class="btn blue" data-a="bj" data-v="split" ${canS?'':'disabled'}>Split</button></div>`}
