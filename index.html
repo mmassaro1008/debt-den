@@ -521,7 +521,7 @@ body{-webkit-text-size-adjust:100%}
 .toast{background:var(--n);border:3px solid var(--y);color:var(--w);padding:8px 12px;font-size:19px;max-width:460px;width:100%;transition:opacity .3s}
 .toast b{color:var(--y)}
 .toast.out{opacity:0}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+html.noanim *{animation:none!important;transition:none!important}
 </style>
 
 </head>
@@ -537,7 +537,7 @@ const $=s=>document.querySelector(s);
 const app=$('#app');
 const rnd=Math.random;
 const C={k:'#1a1c2c',p:'#5d275d',r:'#b13e53',o:'#ef7d57',y:'#ffcd75',l:'#a7f070',g:'#38b764',t:'#257179',n:'#29366f',b:'#3b5dc9',c:'#41a6f6',a:'#73eff7',w:'#f4f4f4',s:'#94b0c2',d:'#566c86',e:'#333c57',sk:'#f2c29b',sk2:'#a0684a'};
-function fmt(n){n=Math.round(n);const a=Math.abs(n);const t=a>=1e12?(a/1e12).toFixed(2)+'T':a>=1e9?(a/1e9).toFixed(2)+'B':a>=1e7?(a/1e6).toFixed(2)+'M':a.toLocaleString('en-US');return(n<0?'-':'')+'$'+t}
+function fmt(n){if(Math.abs(n)<10&&Math.round(n*100)%100!==0){const v=Math.round(n*100)/100;return(v<0?'-':'')+'$'+Math.abs(v).toFixed(2)}n=Math.round(n);const a=Math.abs(n);const t=a>=1e12?(a/1e12).toFixed(2)+'T':a>=1e9?(a/1e9).toFixed(2)+'B':a>=1e7?(a/1e6).toFixed(2)+'M':a.toLocaleString('en-US');return(n<0?'-':'')+'$'+t}
 const fmtP=p=>p>=1000?fmt(p):'$'+p.toFixed(2);
 const r5=n=>Math.max(5,Math.round(n/5)*5);
 const pct=x=>Math.round(x*100)+'%';
@@ -634,9 +634,9 @@ function trackFor(){if(UI.scene==='settings')return MUS.want;if(UI.scene==='over
 function wakeAudio(){const ac=audio();if(!ac)return;if(ac.state!=='running')ac.resume().then(startMusic).catch(()=>{});else startMusic()}
 window.addEventListener('pointerdown',wakeAudio,{passive:true});window.addEventListener('keydown',wakeAudio);
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend().catch(()=>{});else AC.resume().catch(()=>{})});
-const SET_DEF={master:.8,music:.5,sfx:.8,musicOn:true,sfxOn:true,shake:true,flash:true,banners:true,haptics:true,speed:'normal',text:'normal',confirmBig:true,brokeRibbon:true};
+const SET_DEF={master:.8,music:.5,sfx:.8,musicOn:true,sfxOn:true,shake:true,flash:true,banners:true,haptics:true,speed:'fast',text:'normal',confirmBig:true,brokeRibbon:true};
 const SP=()=>M.set.speed==='fast'?.5:1;
-function applySettings(){if(typeof applyCosmetics==='function')applyCosmetics();RM=RM0||M.set.speed==='instant';document.documentElement.classList.toggle('lt',M.set.text==='large');document.documentElement.classList.toggle('fastanim',M.set.speed==='fast');applyVolumes()}
+function applySettings(){if(typeof applyCosmetics==='function')applyCosmetics();if(!M.set.speedSet){M.set.speed='fast';M.set.speedSet=1}RM=M.set.speed==='instant';document.documentElement.classList.toggle('noanim',RM);document.documentElement.classList.toggle('lt',M.set.text==='large');document.documentElement.classList.toggle('fastanim',M.set.speed==='fast');applyVolumes()}
 
 const SFX={
   click:()=>beep(880,.04,.025),
@@ -1233,8 +1233,9 @@ function drawStreetExtra(x){
 }
 
 /* ================= betting core ================= */
-function clampBet(){if(!S)return 0;const c=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));let v=Math.round(UI.bet)||0;const mn=curMin();if(v>0&&v<mn)v=mn;return v<=0?0:Math.min(v,c)}
-function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>=1&&clampBet()>=Math.max(1,curMin())}
+const betCap=()=>S?Math.max(0,Math.round(Math.min(S.cash,mod('low')?lowCap():Infinity)*100)/100):0;
+function clampBet(){if(!S)return 0;const c=betCap();let v=Math.ceil(UI.bet)||0;if(v<=0||c<=0)return 0;const mn=curMin();if(v<mn)v=mn;return v>=Math.floor(c)?c:v}
+function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>0&&clampBet()>0}
 function busy(){if(!S)return false;const g=S.g;return !!S.peel||g.bj.phase==='play'||g.bj.phase==='ins'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||(g.db&&g.db.busy)||!!SBW}
 function placeBet(game,b){cancelFX();
   S.cash-=b;if(game==='plinko'){if(!S.g.pl.session){S.energy-=ecost('plinko');S.g.pl.session=true}}else S.energy-=ecost(game);const st=gs(game);st.r++;st.bet+=b;addXP(2);checkTiers();
@@ -1571,10 +1572,10 @@ function finishAway(){
 document.addEventListener('visibilitychange',()=>{if(document.hidden)finishAway();else if(EARLY){EARLY=false;location.reload()}});
 window.addEventListener('pagehide',finishAway);
 let PEEL_OK=false;const PEELFIN={};
-const peelOn=()=>!RM&&M.set.speed!=='instant';
+const peelOn=auto=>!window.__NOPEEL&&(!auto||(!RM&&M.set.speed!=='instant'));
 const peeling=ck=>!!(S&&S.peel&&S.peel.keys.includes(ck));
 let PEEL_T=null;
-function peelGate(g,keys,auto){if(!peelOn()||!keys.length){S.peel=null;return PEELFIN[g]()}S.peel={g,keys,auto:!!auto};PEEL_OK=true;SFX.tick();save();render();
+function peelGate(g,keys,auto){if(!peelOn(auto)||!keys.length){S.peel=null;return PEELFIN[g]()}S.peel={g,keys,auto:!!auto};PEEL_OK=true;SFX.tick();save();render();
   if(auto){clearTimeout(PEEL_T);const step=()=>{const p=S&&S.peel;if(!p||!p.auto||p.g!==g)return;const more=p.keys.length>1;peelAct(p.keys[0]);if(more)PEEL_T=setTimeout(step,1250*SP())};PEEL_T=setTimeout(step,1150*SP())}}
 function peelAct(k,user){const p=S&&S.peel;if(!p||(user&&p.auto))return;const i=p.keys.indexOf(k);if(i<0)return;p.keys.splice(i,1);buzz(18);if(!p.keys.length){S.peel=null;return PEELFIN[p.g]()}save();render()}
 function face(c,ck,ord){if(ck&&peeling(ck)&&S.peel.auto)return back(ck,ord);if(ck&&peeling(ck))return`<button class="cardb peel" data-a="peel" data-v="${ck}" data-ck="${ck}" data-ord="${ord||0}" aria-label="Face-down card. Tap to peel it.">TAP</button>`;const red=c.s===1||c.s===2;return`<div class="cardf ${red?'red':''}" ${ck?`data-ck="${ck}" data-ord="${ord||0}"`:''}><span>${RN(c.r)}</span><span class="su">${SU[c.s]}</span></div>`}
@@ -1655,8 +1656,8 @@ function rlOptions(n,mode){
 }
 const rlTotal=()=>Object.values(S.g.rl.bets).reduce((a,b)=>a+b,0);
 function rlPlace(k){
-  const s=S.g.rl;if(s.busy)return;const chip=clampBet();if(chip<1)return;
-  if(rlTotal()+chip>S.cash){toast('Not enough cash for another chip that size.');return}
+  const s=S.g.rl;if(s.busy)return;const chip=clampBet();if(chip<=0)return;
+  if(rlTotal()+chip>S.cash+.001){toast('Not enough cash for another chip that size.');return}
   if(mod('low')&&rlTotal()+chip>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per spin.`);return}
   s.bets[k]=(s.bets[k]||0)+chip;(s.stack=s.stack||[]).push([k,chip]);UI.rlPick=null;SFX.coin();save();render();
 }
@@ -1693,7 +1694,7 @@ function drawRWheel(x,wa,ball){
 }
 function rlRest(x){const s=S.g.rl;drawRWheel(x,s.wa||0,s.last!=null?{a:(s.wa||0)+WHEEL.indexOf(s.last)*SEG,r:52}:null)}
 function rlSpin(){
-  const s=S.g.rl,tot=rlTotal();if(s.busy||!tot||S.energy<ecost('roulette')||tot>S.cash)return;if(tot<tableMin('roulette')){toast(`Table minimum is ${fmt(tableMin('roulette'))} total.`);return}
+  const s=S.g.rl,tot=rlTotal();if(s.busy||!tot||S.energy<ecost('roulette')||tot>S.cash+.004)return;if(tot<tableMin('roulette')&&tot<S.cash-.004){toast(`Table minimum is ${fmt(tableMin('roulette'))} total, or go all in.`);return}
   s.lastBets=Object.assign({},s.bets);placeBet('roulette',tot);s.busy=true;s.msg='No more bets!';UI.rlPick=null;const res=Math.floor(rnd()*37);
   render();window.scrollTo({top:0,behavior:RM?'auto':'smooth'});
   const fin=pendFin(()=>{let g=0;const wins=[];for(const k in s.bets){const ns=betNums(k);if(ns.includes(res)){g+=s.bets[k]*36/ns.length;wins.push(betLabel(k))}}
@@ -1782,7 +1783,7 @@ const ribbonOn=()=>M.set.brokeRibbon!==false&&!S.hideBroke;
 const loanAvail=()=>shopOpen('pawn')&&!S.debts.some(d=>d.loan)&&!mod('trader')&&loanLimit()>=5;
 function brokeBase(strict=true){
   if(!S||S.over)return false;
-  if(strict&&S.cash>=1)return false;
+  if(S.cash>=.01)return false;
   if(inPlay())return false;
   const open=GAME_IDS.filter(g=>gameOpen(g)&&S.paid>=gReq(g)&&g!=='holdem');
   const need=open.length?Math.min(...open.map(g=>tableMin(g)||1)):1;
@@ -1867,7 +1868,7 @@ function cpBet(k){
   const s=S.g.cp;if(s.busy)return;if(!cpAllowed(k)){toast(k==='podds'?'Odds go behind a Pass Line bet once the point is on, up to 3x.':(k==='pass'||k==='dp')?'Line bets go down before the come-out roll.':'Come bets work once the point is on.');return}
   if(k==='hardall'){const a=clampBet();if(S.cash<a*4){toast(`All four hard ways cost ${fmt(a*4)}.`);return}[4,6,8,10].forEach(n=>{s.bets['hard'+n]=(s.bets['hard'+n]||0)+a});(s.stack=s.stack||[]).push([4,6,8,10].map(n=>['hard'+n,a]));S.cash-=a*4;gs('craps').bet+=a*4;s.flash=null;SFX.coin();save();render();return}
   let a=clampBet();if(k==='podds')a=Math.min(a,s.bets.pass*3-(s.bets.podds||0));
-  if(a<1||S.cash<a){toast(`You need ${fmt(Math.max(a,1))} for that chip.`);return}
+  if(a<=0||S.cash<a){toast(`You need ${fmt(Math.max(a,1))} for that chip.`);return}
   S.cash-=a;s.bets[k]=(s.bets[k]||0)+a;(s.stack=s.stack||[]).push([[k,a]]);gs('craps').bet+=a;s.flash=null;S.lastBet.craps=a;SFX.coin();save();render();
 }
 const CP_FIXED=k=>['pass','dp','come','dcome'].includes(k)||k.startsWith('comeN')||k.startsWith('dcomeN');
@@ -2174,7 +2175,7 @@ function gSB(){
   }
   const slip=s.slip.filter(l=>{const g=sbGame(l.gid);return g&&!g.res});
   const slipBox=slip.length?`<div class="box sbslip"><span class="lbl">Bet slip · ${slip.length>1?slip.length+'-leg parlay':'single'}</span>${slip.map(l=>{const g=sbGame(l.gid);return`<div class="kv bl"><span>${pickName(g,l.pick)} <span class="muted">${SPORTS[g.sp].tag} · ${Math.round(g.o[l.pick]*100)}%</span></span><button class="linkb" data-a="sbpick" data-v="${g.id}:${l.pick}">Remove</button></div>`}).join('')}
-    <div class="kv"><span>Hits about</span><b>${Math.max(.1,Math.round(slipProb()*1000)/10)}% of the time</b></div><div class="kv"><span>Pays</span><b class="px" style="color:var(--y);font-size:12px">${slipMult().toFixed(2)}x · ${fmt(Math.round(clampBet()*slipMult()))}</b></div></div>
+    <div class="kv"><span>Hits about</span><b>${Math.max(.1,Math.round(slipProb()*1000)/10)}% of the time</b></div><div class="kv"><span>Pays</span><b class="px" style="color:var(--y);font-size:12px" data-paym="${slipMult()}" data-pre="${slipMult().toFixed(2)}x · ">${slipMult().toFixed(2)}x · ${fmt(Math.round(clampBet()*slipMult()*100)/100)}</b></div><div class="kv"><span>Profit if it hits</span><b class="win" data-paym="${slipMult()-1}" data-pre="+">+${fmt(Math.round(clampBet()*(slipMult()-1)*100)/100)}</b></div></div>
     <!--act-->${betBar(!!SBW,'Stake')}<button class="btn green wide" data-a="sbplace" ${canPlay()&&!SBW?'':'disabled'}>Place ${slip.length>1?'parlay':'bet'} · no energy</button>`:'';
   return watch+tabs+body+slipBox;
 }
@@ -2282,12 +2283,17 @@ function gWR(){
 const CHIPG={bc:'baccarat',sbo:'sicbo',wh:'wheel',sn:'snail',db:'derby'},CHIPACT={bc:'bc',sbo:'sbo',wh:'wh',snrace:'sn',db:'db'};
 const chipTot=s=>Object.values(s.bets||{}).reduce((a,b)=>a+b,0);
 function chipFix(s){if(!s.bets||typeof s.bets!=='object')s.bets={};if(!Array.isArray(s.stack))s.stack=[];return s}
-function chipAdd(code,k){const s=chipFix(S.g[code]);if(s.busy)return;const c=clampBet();if(c<1){toast('Set a chip size first.');return}const t=chipTot(s)+c;
+function chipAdd(code,k){const s=chipFix(S.g[code]);if(s.busy)return;const c=clampBet();if(c<=0){toast('Set a chip size first.');return}const t=chipTot(s)+c;
   if(t>S.cash){toast('Not enough cash for another chip that size.');return}if(mod('low')&&t>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per round.`);return}
   s.bets[k]=(s.bets[k]||0)+c;s.stack.push([k,c]);S.lastBet[UI.game]=c;SFX.coin();save();render()}
 function chipUndo(code){const s=chipFix(S.g[code]);if(s.busy)return;const x=s.stack.pop();if(!x)return;s.bets[x[0]]=(s.bets[x[0]]||0)-x[1];if(s.bets[x[0]]<=0)delete s.bets[x[0]];SFX.tick();save();render()}
+function tableReset(g){try{
+  if(g==='roulette'){const s=S.g.rl;if(!s.busy){s.bets={};s.stack=[];UI.rlPick=null}}
+  else if(g==='craps'){const s=S.g.cp;if(!s.busy){s.stack=[];let back=0;for(const k in s.bets){if(CP_FIXED(k)&&s.point)continue;back+=s.bets[k];delete s.bets[k]}if(back)S.cash+=back;s.flash=null}}
+  else{const code=Object.keys(CHIPG).find(k=>CHIPG[k]===g);if(code){const s=chipFix(S.g[code]);if(!s.busy){s.bets={};s.stack=[]}}}
+}catch(e){}}
 function chipClear(code){const s=chipFix(S.g[code]);if(s.busy)return;s.bets={};s.stack=[];save();render()}
-function chipWhy(code){const s=chipFix(S.g[code]),g=CHIPG[code],t=chipTot(s);if(!S||S.over)return'x';if(!t)return'Tap a bet to place a chip.';if(t>S.cash)return`Your chips (${fmt(t)}) are more than your cash. Undo or clear some.`;if(mod('low')&&t>lowCap())return`Low Roller contract: ${fmt(lowCap())} max per round.`;if(t<tableMin(g))return`Table minimum is ${fmt(tableMin(g))} total.`;if(S.energy<ecost(g))return'Too tired. Go home and sleep.';return''}
+function chipWhy(code){const s=chipFix(S.g[code]),g=CHIPG[code],t=chipTot(s);if(!S||S.over)return'x';if(!t)return'Tap a bet to place a chip.';if(t>S.cash+.004)return`Your chips (${fmt(t)}) are more than your cash. Undo or clear some.`;if(mod('low')&&t>lowCap())return`Low Roller contract: ${fmt(lowCap())} max per round.`;if(t<tableMin(g)&&t<S.cash-.004)return`Table minimum is ${fmt(tableMin(g))} total, or go all in.`;if(S.energy<ecost(g))return'Too tired. Go home and sleep.';return''}
 const chipReady=code=>!S.g[code].busy&&!chipWhy(code);
 function chipStart(code){const w=chipWhy(code);if(S.g[code].busy)return 0;if(w){if(w!=='x')toast(w);return 0}const t=chipTot(S.g[code]);placeBet(CHIPG[code],t);return t}
 const chipTag=(s,k)=>s.bets&&s.bets[k]?`<i class="chipm" data-ck="cm${k}-${s.bets[k]}" data-fx="pop">${chipTxt(s.bets[k])}</i>`:'';
@@ -3499,10 +3505,10 @@ const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fil
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
 function betX(lock){const lb=S&&S.lastBet&&S.lastBet[UI.game];return`<div class="betx"><button class="chip" data-a="betclr" ${lock?'disabled':''}>Clear</button><button class="chip" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' $'+chipTxt(lb):''}</button><button class="chip" data-a="betdbl" ${lock||!lb?'disabled':''}>Double${lb?' $'+chipTxt(lb*2):''}</button></div>`}
 function betBar(lock,label,noX){
-  const b=clampBet(),cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity)),mn=curMin(),lb=S&&S.lastBet&&S.lastBet[UI.game],d=lock?'disabled':'';
+  const b=clampBet(),cap=betCap(),mn=curMin(),lb=S&&S.lastBet&&S.lastBet[UI.game],d=lock?'disabled':'';
   const ch=(v,l)=>`<button class="chip" data-a="bet" data-v="${v}" ${d}>${l}</button>`;
   return`<div class="betbar"><div class="brow">${ch('-10','−')}<span class="betin">$<input id="betin" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value="${b}" ${d} aria-label="${label||'Bet'} in dollars"></span>${ch('+10','+')}${ch('half','½')}${ch('x2','2×')}${ch('max','MAX')}</div>
-  <div class="bmeta"><span>${mn?'min '+fmt(mn)+' · ':''}max ${fmt(cap)}</span>${noX?'':`<span><button class="linkb" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' '+fmt(lb):''}</button> · <button class="linkb" data-a="betclr" ${d}>Clear</button></span>`}</div>${mn&&S.cash<mn?`<p class="lose bwarn">Need ${fmt(mn)} to play here.</p>`:''}</div>`;
+  <div class="bmeta"><span>${mn?'min '+fmt(mn)+' · ':''}max ${fmt(cap)}</span>${noX?'':`<span><button class="linkb" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' '+fmt(lb):''}</button> · <button class="linkb" data-a="betclr" ${d}>Clear</button></span>`}</div>${mn&&S.cash>0&&S.cash<mn?`<p class="bwarn" style="color:var(--y)">You’re under the ${fmt(mn)} minimum, so the table takes your whole ${fmt(S.cash)} as an all-in.</p>`:''}</div>`;
 }
 function lvlBar(){return`<div class="lvl"><span>${M.rep.toLocaleString()} REP</span><span class="muted">${(M.repTotal||0).toLocaleString()} earned all-time</span></div>`}
 function vTitle(){
@@ -3844,7 +3850,7 @@ function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BETS.</b> Every bet panel has Clear, Repeat (your last bet in that game) and Double. At roulette, Repeat last and Double last rebuild your previous spin’s whole layout.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">UNLOCKS.</b> Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus 4 random games. Paying off debts opens the rest, two at a time, until every game is open by your 8th debt.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 3% per Heat. When cash runs low, only the cheap tables will take you. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 3% per Heat. If you can’t cover a table’s minimum, you can still go all in with everything you have, down to the last cent. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">CRAPS.</b> Bet the Pass Line and roll the come-out: 7 or 11 wins, 2, 3 or 12 loses, anything else sets the point. Roll the point again before a 7 to win. Back it with Odds (true odds, no house edge), add Come, Place, Field, hard ways and one-roll props. The come-out roll costs ${ECOST.craps} energy, and every roll after it is free until the shooter sevens out or makes the point.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">SPORTSBOOK.</b> Bet from the Sports tab on your home computer. Every day has a slate of games across basketball, baseball, soccer, tennis, football and hockey. Odds are shown as each side\u2019s chance to win. Pick one side for a single bet, or 2 to 6 sides for a parlay that pays the multipliers stacked together. Slips cost no energy, just like stocks. The games are played overnight and bets settle when you wake up. Lie down in bed to watch the games you bet on before you fall asleep.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BROKE?</b> When you have no cash, nothing to pawn, no loan left and no bets out, a Face the Collectors button appears so you can end the run on your own terms. If Vinnie will still lend, you get the choice: borrow or face them.</p>
@@ -3877,7 +3883,7 @@ function vSettings(){
     ${tog('banners','Big banners','BIG WIN, MEGA WIN, OUCH and WIPED OUT banners.')}
     ${tog('haptics','Vibration','Buzzes on big moments, on phones that support it.')}</div>
   <div class="box"><span class="lbl">Gameplay</span>
-    ${opt('speed','Animation speed',[['normal','Normal','full show'],['fast','Fast','half time'],['instant','Instant','no waiting']])}
+    ${opt('speed','Animation speed',[['normal','Slow','full show'],['fast','Medium','half time'],['instant','Instant','no waiting']])}
     ${tog('confirmBig','Confirm big bets','Ask before you bet half or more of your cash.')}
     ${tog('brokeRibbon','Broke reminder','Show the red ribbon when you hit $0 with nothing left in play. The same options are always on your computer’s Debts tab.')}</div>
   <div class="box"><span class="lbl">Display</span>
@@ -3910,7 +3916,7 @@ function render(){
   if(UI.scene==='world'&&S&&UI.room!=='street'&&UI.room!=='home'&&!placeOpen(UI.room)){UI.room='street'}
   if(UI.scene==='world'&&S&&UI.room==='mart')UI.room='street';
   if(S&&!S.over&&(!S.quest||S.quest.day!==S.day))S.quest=makeQuest();
-  {const bk=UI.scene+'|'+UI.room+'|'+UI.game;if(UI._bk&&UI._bk!==bk){UI.wprev=null;UI.bview=false;UI.qview=false;UI.bsel=null}UI._bk=bk}
+  {const bk=UI.scene+'|'+UI.room+'|'+UI.game;if(UI._bk&&UI._bk!==bk){{const pb=UI._bk.split('|');if(pb[0]==='game'&&S&&!S.over)tableReset(pb[2])}UI.wprev=null;UI.bview=false;UI.qview=false;UI.bsel=null}UI._bk=bk}
   if(S&&S.g&&S.g.pl&&!(UI.scene==='game'&&UI.game==='plinko'))S.g.pl.session=false;
   if(UI.scene!=='game'&&UI.scene!=='recap'&&UI.inbox&&UI.inbox.length){const ib=UI.inbox;UI.inbox=[];setTimeout(()=>{if(ib.length<=3)ib.forEach(h=>toast(h));else{toast(ib[0]);toast(`+${ib.length-1} more while you played`)}},250)}
   if(!M.mastFix){for(const k in M.gw){const t=tierOf(M.gw[k],k);if(t>=0)M.mastery[k]=Math.max(M.mastery[k]==null?-1:M.mastery[k],t)}M.mastFix=1}
@@ -3968,7 +3974,7 @@ function act(a,v,el){
     case 'boost':UI.bsel=UI.bsel===v?null:v;break;
     case 'bview':UI.bview=!UI.bview;break;
     case 'settog':M.set[v]=!M.set[v];applySettings();if(v==='sfxOn'&&M.set.sfxOn)SFX.coin();break;
-    case 'setopt':{const[k,val]=v.split(':');M.set[k]=val;applySettings();break}
+    case 'setopt':{const[k,val]=v.split(':');M.set[k]=val;if(k==='speed')M.set.speedSet=1;applySettings();break}
     case 'exp':UI.exp=!UI.exp;break;
     case 'copyexp':{const t=$('#expout');if(!t)return;const done=()=>toast('Save code copied.');try{navigator.clipboard.writeText(t.value).then(done).catch(()=>{t.select();toast('Select the code and copy it.')})}catch(e){t.select();toast('Select the code and copy it.')}return}
     case 'imp':{const t=$('#impin');const raw=(t&&t.value||'').trim();if(!raw){toast('Paste a save code first.');return}
@@ -3998,7 +4004,7 @@ function act(a,v,el){
     case 'stk':{const[k,q]=v.split(':');stockTrade(k,q);break}
     case 'buy':martBuy(v);break;
     case 'drink':barBuy();break;
-    case 'bet':{const c=Math.floor(S.cash);let b=clampBet();if(v==='-10')b-=10;else if(v==='+10')b+=10;else if(v==='x2')b*=2;else if(v==='half')b=Math.floor(b/2);else if(v==='max')b=c;UI.bet=Math.max(1,Math.min(c,b));break}
+    case 'bet':{const c=Math.ceil(betCap());let b=Math.ceil(clampBet());if(v==='-10')b-=10;else if(v==='+10')b+=10;else if(v==='x2')b*=2;else if(v==='half')b=Math.floor(b/2);else if(v==='max')b=c;UI.bet=Math.max(1,Math.min(c,b));break}
     case 'bj':bjAct(v);return;
     case 'rlnum':rlTap(+v);return;
     case 'rlout':rlPlace(v);return;
@@ -4042,7 +4048,7 @@ function act(a,v,el){
     case 'pkread':{const p=P().seats[+v];if(p&&!p.out){const st=PK_STY[p.sk||'pro'];toast(`<b>${p.n}</b> · ${st.n}: ${st.d}`)}return}
     case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>lowCap())){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};s.stack=[];for(const k in lb){s.bets[k]=lb[k]*f;s.stack.push([k,lb[k]*f])}SFX.coin();break}
     case 'betclr':UI.bet=0;break;
-    case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity));if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=cap}UI.bet=v;break}
+    case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=betCap();if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=Math.ceil(cap)}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
     case 'tbuy':{const p=tprice(v);const rq=TRINKETS[v]&&TRINKETS[v].req;if((S.paid||0)<PAWN_CASE||S.trinkets[v]||S.cash<p||(rq&&!S.trinkets[rq]))return;{ach('skill');setTimeout(()=>{if(S&&Object.keys(S.trinkets).length>=8)ach('tree')},0)}S.cash-=p;S.trinkets[v]=p;questEvent('pawn');SFX.coin();toast(`Bought the ${TRINKETS[v].n}.`);if(Object.keys(S.trinkets).length>=4)ach('collector');break}
     case 'tsell':{const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the item that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
@@ -4096,8 +4102,8 @@ app.addEventListener('pointerdown',e=>{
     let sp=null,bd=16;for(const s of roomSpots(UI.room)){const d=Math.abs(s.x-wx);if(d<bd){bd=d;sp=s}}
     UI.target=sp?sp.x:Math.max(8,Math.min(w-8,wx));UI.pending=sp?sp.id:null;startLoop()}
 });
-app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0});
-app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=b;e.target.value=b;save()});
+app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0;document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.round(clampBet()*+el.dataset.paym*100)/100)})});
+app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=Math.ceil(b);e.target.value=b;save();document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.round(b*+el.dataset.paym*100)/100)})});
 app.addEventListener('keydown',e=>{if(e.target.id==='betin'&&e.key==='Enter'){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusin',e=>{if(e.target.id==='betin'){try{e.target.select()}catch(_){}}});
 const stopMove=()=>{UI.move=0};
