@@ -472,6 +472,9 @@ html.cb-rainbow .cardb,html.cb-rainbow .mb{background:repeating-linear-gradient(
 .row.sbg{display:flex;flex-direction:column;align-items:stretch;gap:8px}.sbg .btn{grid-row:auto;grid-column:auto;margin:3px}
 .sbg h3{font-size:9px;line-height:1.6}
 .sbslip{background:var(--e)}
+.sbpin{max-height:32vh;overflow-y:auto;gap:5px}.sbp .kv{font-size:16px;line-height:1.1}.sbpin .sbleg{font-size:16px}.sbp{border:2px solid var(--d);padding:5px 7px;background:var(--e)}.sbp.dead{opacity:.6}.sbp.hit{border-color:var(--l)}
+.sbleg{display:flex;gap:8px;align-items:center;font-family:var(--vt);font-size:18px;line-height:1.15;color:var(--s)}.sbleg i{font-style:normal;width:16px;text-align:center;color:var(--d)}.sbleg small{font-family:var(--px);font-size:7px;color:var(--d)}
+.sbleg.ok{color:var(--w)}.sbleg.ok i{color:var(--l)}.sbleg.no{text-decoration:line-through}.sbleg.no i{color:var(--r);text-decoration:none}.sbleg.live i{color:var(--o)}
 .sbwatch .msg{min-height:44px}
 /* scratchers */
 .scard{background:linear-gradient(135deg,#ffcd75,#ef7d57);color:var(--k);border-color:var(--k)}
@@ -3396,7 +3399,18 @@ function stockTrade(k,v){
   else{let q=v==='sall'?st.own:Math.min(+v.slice(1),st.own);if(q<1)return;const avg=st.cost/st.own;if(st.p>=2*avg)ach('stock2');if(st.p>avg)questEvent('stockwin');S.today.stk=(S.today.stk||0)+Math.round(q*(st.p-avg));S.cash+=q*st.p;st.own-=q;st.cost-=avg*q;if(st.own===0)st.cost=0;SFX.coin()}
   checkCash();
 }
+function freshTables(){
+  const o=S.g||{},n=newG();
+  if(o.cp&&o.cp.bets){let back=0;for(const k in o.cp.bets)back+=o.cp.bets[k]||0;if(back>0){S.cash=Math.round((S.cash+back)*100)/100;if(!RM)setTimeout(()=>toast(`The craps crew cleared the table overnight and returned your <b>${fmt(back)}</b> in chips.`),1800)}}
+  const keep={rl:['mode'],mn:['m'],tw:['diff'],pg:['diff'],cr:['auto'],pl:['balls'],dc:['target','mode'],fl:['side']};
+  for(const g in n){if(g==='pk')continue;const was=o[g]||{};
+    ['hn','n','k'].forEach(c=>{if(typeof was[c]==='number')n[g][c]=was[c]});
+    (keep[g]||[]).forEach(c=>{if(was[c]!==undefined)n[g][c]=was[c]})}
+  n.pk=o.pk&&o.pk.seated?o.pk:Object.assign({},o.pk||{},newG().pk);
+  S.g=n;S.peel=null;UI.rlPick=null;
+}
 function sleep(){
+  freshTables();
   if(S.sb&&S.sb.slate){S.sb.slate.forEach(g=>{if(!g.res&&S.sb.bets.some(b=>b.st==='open'&&b.legs.some(l=>l.gid===g.id)))sbResolve(g)});sbSettleAll()}
   {const T=S.today||{},ld=Object.assign({w:0,b:0,l:0,s:0,n:0},T.led||{}),stk=Math.round(T.stk||0),profit=dayProfit(T),need=spNeed(),prev=S.lastProfit==null?null:S.lastProfit;
     const earned=false;
@@ -3424,8 +3438,17 @@ function vTonight(){
   return`<section class="stack" style="padding-top:18px;gap:12px"><span class="lbl">Night ${S.day} · lights out</span><h2 class="px" style="font-size:14px;color:var(--y)">Tonight’s games</h2>
   <p class="muted">You’re in bed. Nothing left to do tonight but watch. Bets settle when you wake up.</p>
   ${screen?`<div class="box dark sbwatch"><canvas class="pix" data-s="sbw" data-fill data-max="4" width="160" height="90" aria-label="Live game"></canvas><p class="msg" id="sbcap">${live?sbCaption(screen,0):sbCaption(screen,1)}</p>${live?`<button class="btn dim wide" data-a="sbskip">Skip to the final</button>`:''}</div>`:''}
-  ${mine.map(g=>`<div class="row ${g.watched?'got':''}"><h3>${tName(g.sp,g.h)} <span class="muted">${g.sp==='ten'?'vs':'host'}</span> ${tName(g.sp,g.a)}</h3><p>${SPORTS[g.sp].n} · your pick: <b style="color:var(--y)">${myPicks(g)}</b></p>${g.watched?`<div class="kv"><span class="win">FINAL</span><b>${tShort(g.sp,g.h)} ${g.sp==='ten'?g.res.sets.map(x=>x.join('-')).join(' '):g.res.hs+' – '+g.res.as} ${tShort(g.sp,g.a)}</b></div>`:`<button class="btn sm" data-a="sbwatch" data-v="${g.id}" ${SBW?'disabled':''}>Watch</button>`}</div>`).join('')}
-  <button class="btn blue wide" data-a="tonightsleep" ${SBW?'disabled':''}>Go to sleep · start day ${S.day+1}</button></section>`;
+  ${mine.map(g=>`<div class="row ${g.watched?'got':''}"><h3>${tName(g.sp,g.h)} <span class="muted">${g.sp==='ten'?'vs':'host'}</span> ${tName(g.sp,g.a)}</h3><p>${SPORTS[g.sp].n} · your pick: <b style="color:var(--y)">${myPicks(g)}</b></p>${SBW&&SBW.gid===g.id?`<div class="kv"><span style="color:var(--o)">● LIVE</span><b class="muted">watching now</b></div>`:g.watched?`<div class="kv"><span class="win">FINAL</span><b>${tShort(g.sp,g.h)} ${g.sp==='ten'?g.res.sets.map(x=>x.join('-')).join(' '):g.res.hs+' – '+g.res.as} ${tShort(g.sp,g.a)}</b></div>`:`<button class="btn sm" data-a="sbwatch" data-v="${g.id}" ${SBW?'disabled':''}>Watch</button>`}</div>`).join('')}
+  <button class="btn blue wide" data-a="tonightsleep" ${SBW?'disabled':''}>Go to sleep · start day ${S.day+1}</button>${sbSlipBar()}</section>`;
+}
+function sbSlipBar(){
+  const s=S.sb,seen=g=>g&&g.res&&g.watched&&!(SBW&&SBW.gid===g.id);
+  const slips=s.bets.filter(b=>b.st==='open'&&b.legs.some(l=>sbGame(l.gid)));if(!slips.length)return'';
+  return`<div class="actbar sbpin"><span class="lbl">Your bet slip${slips.length>1?'s':''}</span>${slips.map(b=>{
+    const legs=b.legs.map(l=>{const g=sbGame(l.gid),sn=seen(g),ok=sn&&g.res.w===l.pick,live=SBW&&g&&SBW.gid===g.id;return{g,l,sn,ok,live}});
+    const lost=legs.some(x=>x.sn&&!x.ok),hit=legs.filter(x=>x.ok).length,all=legs.every(x=>x.sn);
+    const st=lost?`<b class="lose">MISSED</b>`:all?`<b class="win">HITS · pays ${fmt(Math.round(b.stake*b.mult*100)/100)}</b>`:`<b style="color:var(--y)">${hit}/${legs.length} in</b>`;
+    return`<div class="sbp ${lost?'dead':all?'hit':''}"><div class="kv"><span>${b.legs.length>1?b.legs.length+'-leg parlay':'Single'} · ${fmt(b.stake)} at ${b.mult.toFixed(2)}x</span>${st}</div>${legs.map(x=>`<div class="sbleg ${x.sn?(x.ok?'ok':'no'):x.live?'live':''}"><i>${x.sn?(x.ok?'✓':'✗'):x.live?'●':'○'}</i><span>${x.g?pickName(x.g,x.l.pick):'?'} <small>${x.g?SPORTS[x.g.sp].tag:''}</small></span></div>`).join('')}</div>`}).join('')}<p class="muted" style="font-size:15px;margin:0">Winnings are paid when you wake up.</p></div>`;
 }
 function vRecap(){
   const R=S.recap,lg=[[0,0,0,0]].concat(R.log.map(r=>r.slice(0,4))),n=lg.length,net=lg.map(r=>r[0]+r[1]-r[2]+r[3]);
