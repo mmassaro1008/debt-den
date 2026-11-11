@@ -172,6 +172,7 @@ h2{font-family:var(--px);font-size:14px;color:var(--y);line-height:1.5;text-wrap
 .opt small{font-family:var(--vt);font-size:16px;color:var(--s)}
 .opt.on{background:var(--n);border-color:var(--y);color:var(--y)}
 .opt.prev{border-color:var(--a);color:var(--a)}
+.wbar{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));border-top:3px solid var(--y)}.wbar>*{max-width:488px;width:100%;margin-inline:auto}.wspace{height:210px}
 .wbar .wrow{display:flex;gap:10px;align-items:center}.wbar .wpic{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:96px}.wbar .winfo{min-width:0;display:flex;flex-direction:column;gap:2px}.wbar .winfo b{font-size:11px;color:var(--y)}.wbar .winfo small{font-family:var(--vt);font-size:17px;color:var(--s);line-height:1.1}.wfelt{width:96px;height:72px;border:3px solid var(--k);box-shadow:inset 0 0 0 3px var(--t);display:grid;place-items:center}.wfelt .cardb{width:30px;height:42px}
 .opt:disabled{opacity:.5;cursor:not-allowed}
 .o-red{color:var(--o)}
@@ -1325,7 +1326,7 @@ function sky(x,h){
   FAR.forEach(([fx,fw,fh],i)=>{px(x,C.e,fx,h-fh+14,fw,fh);for(let wy=h-fh+17;wy<h+10;wy+=4)for(let wx=fx+2;wx<fx+fw-2;wx+=3){if(WIN_LIT[(wx*7+wy*3+i)%200])px(x,C.y,wx,wy,1,2)}});
 }
 function meLook(){const w=M.ward;return{shirt:C[w.shirt]||C.l,hair:C[w.hair]||C.o,ht:w.hat==='none'?null:w.hat,skin:SKINS[w.skin]||SKINS.sk,pants:C[w.pants]||C.e}}
-function drawMe(x){px(x,C.n,0,0,48,36);for(let i=0;i<48;i+=6)px(x,'#243066',i,0,3,28);px(x,C.p,0,28,48,8);person(x,20,10,meLook())}
+function drawMe(x){const p=UI.wprev,on=p&&UI.scene==='legacy'&&['hat','shirt','pants','hair','skin'].includes(p.slot),o=on?M.ward[p.slot]:null;if(on)M.ward[p.slot]=p.id;try{px(x,C.n,0,0,48,36);for(let i=0;i<48;i+=6)px(x,'#243066',i,0,3,28);px(x,C.p,0,28,48,8);person(x,20,10,meLook());if(on)ptxt(x,'PREVIEW',2,2,C.y)}finally{if(on)M.ward[p.slot]=o}}
 const STARSW=Array.from({length:110},()=>[Math.floor(Math.random()*720),Math.floor(Math.random()*50)]);
 let DAYSKY=false;
 function skyW(x,w,h){
@@ -3619,7 +3620,7 @@ function wardBar(){
   else if(p.slot==='felt')pic=`<div class="wfelt" style="background:${FELTS[p.id]||FELTS.green}"><div class="cardb"></div></div>`;
   else if(WCHAR.includes(p.slot))pic=`<canvas class="pix" data-s="wprev" data-anim width="48" height="36" data-fill data-max="3" aria-label="Preview of ${nm}"></canvas>`;
   else pic=`<canvas class="pix" data-s="wprev" data-anim width="96" height="54" data-fill data-max="2" aria-label="Preview of ${nm}"></canvas>`;
-  return`<div class="actbar wbar"><div class="wrow"><div class="wpic">${pic}</div><div class="winfo"><span class="lbl">Preview · ${WARD[p.slot].label}</span><b class="px">${nm}</b><small>${lock?'\u{1F512} '+reqText(rq):short>0?`You have ${M.rep.toLocaleString()} Rep. Need ${short.toLocaleString()} more.`:`You have ${M.rep.toLocaleString()} Rep.`}</small></div></div>
+  return`<div class="wspace"></div><div class="actbar wbar" role="dialog" aria-label="Cosmetic preview"><div class="wrow"><div class="wpic">${pic}</div><div class="winfo"><span class="lbl">Preview · ${WARD[p.slot].label}</span><b class="px">${nm}</b><small>${lock?'\u{1F512} '+reqText(rq):short>0?`You have ${M.rep.toLocaleString()} Rep. Need ${short.toLocaleString()} more.`:`You have ${M.rep.toLocaleString()} Rep.`}</small></div></div>
     <div class="g2">${lock?`<button class="btn" disabled>Locked</button>`:`<button class="btn green" data-a="wardbuy" ${short>0?'disabled':''}>Purchase for ${c.toLocaleString()} Rep</button>`}<button class="btn dim" data-a="wardx">Cancel</button></div></div>`;
 }
 function vStats(){
