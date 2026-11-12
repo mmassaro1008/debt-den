@@ -1029,6 +1029,7 @@ function animateNew(){
   app.querySelectorAll('[data-tot]').forEach(el=>{let seq;try{seq=JSON.parse(el.dataset.tot)}catch(e){return}let shown=null,any=false;
     seq.forEach(([ck,v])=>{if(endAt.has(ck)){any=true;setTimeout(()=>{if(el.isConnected)el.textContent=v},Math.max(0,endAt.get(ck)-140*SP()))}else if(!any)shown=v});
     if(any)el.textContent=shown==null?'0':shown});
+  if(QUIET_R){QUIET_R=false;return 0}
   app.querySelectorAll('[data-after]').forEach(el=>{el.style.animationDelay=(t+(el.dataset.after==='late'?750*SP():0))+'ms';el.classList.add('after')});
   ANIM_UNTIL=performance.now()+t;return t;
 }
@@ -2308,10 +2309,12 @@ function tableReset(g){try{
   else if(g==='craps'){const s=S.g.cp;if(!s.busy){s.stack=[];let back=0;for(const k in s.bets){if(CP_FIXED(k)&&s.point)continue;back+=s.bets[k];delete s.bets[k]}if(back)S.cash+=back;s.flash=null}}
   else{const code=Object.keys(CHIPG).find(k=>CHIPG[k]===g);if(code){const s=chipFix(S.g[code]);if(!s.busy){s.bets={};s.stack=[]}}}
 }catch(e){}}
+let QUIET_R=false;
 function roundClear(game){if(roundClear.q)return;roundClear.q=1;Promise.resolve().then(()=>{roundClear.q=0;if(!S)return;
   if(game==='roulette'){const s=S.g.rl;if(s.busy)return;s.bets={};s.stack=[];UI.rlPick=null}
   else{const code=Object.keys(CHIPG).find(k=>CHIPG[k]===game);if(code){const s=chipFix(S.g[code]);if(s.busy)return;s.bets={};s.stack=[]}else UI.bet=0}
-  save();if(UI.scene==='game'&&!window.__NOPEEL)render()})}
+  save();if(UI.scene!=='game'||window.__NOPEEL)return;const sc=UI.scene,gm=UI.game;
+  const later=()=>{if(!S||UI.scene!==sc||UI.game!==gm)return;const w=ANIM_UNTIL+900*SP()-performance.now();if(w>30||busy()){setTimeout(later,Math.max(120,w));return}QUIET_R=true;render()};later()})}
 function chipRebet(code,f){const s=chipFix(S.g[code]);if(s.busy)return;const lb=s.lastBets||{},t=Object.values(lb).reduce((a,b)=>a+b,0)*f;if(!t)return;
   if(t>S.cash){toast(`That layout costs ${fmt(t)}. You have ${fmt(S.cash)}.`);return}if(mod('low')&&t>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per round.`);return}
   s.bets={};s.stack=[];for(const k in lb){s.bets[k]=lb[k]*f;s.stack.push([k,lb[k]*f])}SFX.coin();save();render()}
