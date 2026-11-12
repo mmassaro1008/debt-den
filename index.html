@@ -521,6 +521,7 @@ details.more{border:2px dashed var(--d);padding:0 8px}details.more>summary{font-
 .ledg{width:100%;height:auto;display:block;font-family:var(--vt);font-size:13px}.ledg text{fill:var(--s)}
 .lgnd{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:16px;color:var(--s)}
 .lgk{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:middle}
+.rebet{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .rlact{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.rlact.rl4{grid-template-columns:1fr 1fr 1fr 2fr}.opt{position:relative}.opt .chipm{top:-8px;right:-6px;bottom:auto;z-index:1}.rlbar{margin:0}
 .cpbtns{display:grid;grid-template-columns:1fr 1fr 2fr;gap:6px}.cpbtns .btn{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .qchip{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:6px;padding:6px 10px;background:var(--e);border:2px solid var(--l);color:var(--l);font-family:var(--px);font-size:8px;text-align:left}
@@ -554,8 +555,8 @@ const $=s=>document.querySelector(s);
 const app=$('#app');
 const rnd=Math.random;
 const C={k:'#1a1c2c',p:'#5d275d',r:'#b13e53',o:'#ef7d57',y:'#ffcd75',l:'#a7f070',g:'#38b764',t:'#257179',n:'#29366f',b:'#3b5dc9',c:'#41a6f6',a:'#73eff7',w:'#f4f4f4',s:'#94b0c2',d:'#566c86',e:'#333c57',sk:'#f2c29b',sk2:'#a0684a'};
-function fmt(n){if(Math.abs(n)<10&&Math.round(n*100)%100!==0){const v=Math.round(n*100)/100;return(v<0?'-':'')+'$'+Math.abs(v).toFixed(2)}n=Math.round(n);const a=Math.abs(n);const t=a>=1e12?(a/1e12).toFixed(2)+'T':a>=1e9?(a/1e9).toFixed(2)+'B':a>=1e7?(a/1e6).toFixed(2)+'M':a.toLocaleString('en-US');return(n<0?'-':'')+'$'+t}
-const fmtP=p=>p>=1000?fmt(p):'$'+p.toFixed(2);
+function fmt(n){n=Math.round(n);const a=Math.abs(n);const t=a>=1e12?(a/1e12).toFixed(2)+'T':a>=1e9?(a/1e9).toFixed(2)+'B':a>=1e7?(a/1e6).toFixed(2)+'M':a.toLocaleString('en-US');return(n<0?'-':'')+'$'+t}
+const fmtP=p=>fmt(Math.max(1,Math.round(p)));const sp=st=>Math.max(1,Math.round(st.p));
 const r5=n=>Math.max(5,Math.round(n/5)*5);
 const pct=x=>Math.round(x*100)+'%';
 
@@ -633,7 +634,7 @@ function mdrum(k,t){
   s.connect(f);f.connect(g);g.connect(GU);s.start(t);s.stop(t+.15)}
 function musicTick(){
   if(!AC||AC.state!=='running')return;
-  if(!M.set.musicOn||M.mute){MUS.t=AC.currentTime+.05;return}
+  if(!M.set.musicOn||M.mute||!hasGuitar()){MUS.t=AC.currentTime+.05;return}
   if(MUS.t<AC.currentTime)MUS.t=AC.currentTime+.05;
   while(MUS.t<AC.currentTime+.15){
     if(MUS.want!==MUS.name&&MUS.step%16===0){MUS.name=MUS.want;MUS.step=0}
@@ -762,7 +763,7 @@ const ACH={
   debt100:['Model Citizen','Pay off 100 debts across all runs.'],
   week:['Three Down','Pay off 3 debts in one run.'],
   month:['Turning Up the Heat','Clear Heat 10 or higher.'],
-  year:['Iron Will','Clear a Heat without taking a loan.'],
+  year:['Iron Will','Clear a Heat without selling anything to the Pawn King.'],
   tourist:['Tourist','Play 12 different games in one run.'],
   items100:['Regular Customer','Buy 100 things at the Pawn King’s counter.'],
   drops:['Lots of Balls','Drop 1,000 Plinko balls across all runs.'],
@@ -782,7 +783,6 @@ const ACH={
   reopen:['Open for Business','Buy something at the Pawn King’s counter.'],
   allgames:['Grand Opening','Unlock every casino game in one run.'],
   quest1:['Odd Jobs','Complete one of Lucky Lou\u2019s daily quests.'],
-  loan:['Good Credit','Repay a loan from Vinnie.'],
   fortune:['Crossed Palms','Get a reading from Madame Zora.'],
   collector:['Collector','Own 4 pawn shop trinkets at once.'],
   hardway:['The Hard Way','Win a hard way bet at craps.'],
@@ -932,8 +932,8 @@ const modOpen=k=>(M.repTotal||0)>=MODS[k].rep;
 function checkTiers(){let any=false;for(const[id,nm,,get,th]of TT){const v=get();th.forEach((t,i)=>{const key=id+i;if(v>=t&&!M.tiers[key]){M.tiers[key]=Date.now();const rw=2*(i+1)*(i+1);gainRep(rw);note(`TROPHY · <b>${nm} ${ROMAN[i]}</b> · +${rw} Rep`);any=true}})}if(any)SFX.ach()}
 const mod=k=>!!(S&&S.mods&&S.mods.includes(k));
 function gameOpen(k){if(mod('trader'))return false;if(mod('snail'))return k==='snail';if(mod('cards'))return k==='holdem'||k==='bj';return true}
-const SHOP_REQ={pawn:1,bar:2,zora:5};const PAWN_CASE=2,COUNTER_AT=3;const counterOpen=()=>!!S&&(S.paid||0)>=COUNTER_AT&&!mod('fasting');
-const SHOP_N={bar:'The Bar',pawn:'Pawn King & Loans',zora:'Madame Zora'};
+const SHOP_REQ={pawn:0,bar:2,zora:5};const PAWN_CASE=2,COUNTER_AT=3;const counterOpen=()=>!!S&&(S.paid||0)>=COUNTER_AT&&!mod('fasting');
+const SHOP_N={bar:'The Bar',pawn:'Pawn King',zora:'Madame Zora'};
 const shopOpen=id=>!SHOP_REQ[id]||(S&&S.paid>=SHOP_REQ[id]);
 const shopLock=id=>`${SHOP_N[id]}: opens at ${SHOP_REQ[id]} debt${SHOP_REQ[id]>1?'s':''} paid`;
 const placeOpen=p=>p==='casino'?!mod('trader'):p==='mart'?!mod('fasting'):p==='bar'?!mod('sober'):true;
@@ -944,7 +944,7 @@ function dailyCfg(){const h=hashStr('den'+todayStr());const keys=Object.keys(MOD
 const modMult=mods=>1+mods.reduce((a,k)=>a+MODS[k].m,0);
 const trophyCount=()=>Object.keys(M.ach).length+Object.keys(M.tiers).length;
 const trophyTotal=()=>ACH_IDS.length+TIER_TOTAL;
-function save(){if(S)S.ui={room:UI.room,wx:UI.wx};try{localStorage.setItem(KEY,JSON.stringify({M,S}))}catch(e){}}
+function save(){if(S){if(S.trinkets)for(const k in S.trinkets)if(!TRINKETS[k]){S.cash+=Math.round(S.trinkets[k]/2);delete S.trinkets[k]}S.ui={room:UI.room,wx:UI.wx};if(S.cash%1)S.cash=Math.floor(S.cash+1e-6)}try{localStorage.setItem(KEY,JSON.stringify({M,S}))}catch(e){}}
 let UI={rlPick:null,scene:'title',tab:'debts',game:null,bet:10,confirm:null,martMsg:'',barMsg:'',setup:{heat:0,mods:[]},ltab:'up',ttab:'ms',lastCfg:null,room:'street',wx:{street:30,home:70,casino:32,mart:32,bar:32},panel:null,move:0,target:null,pending:null,moving:false,face:1};
 if(S&&S.ui){UI.room=S.ui.room||'street';Object.assign(UI.wx,S.ui.wx||{})}
 
@@ -1142,7 +1142,7 @@ function questEvent(type,p){
   if(q.prog>=q.goal){q.done=true;setTimeout(()=>{note('QUEST DONE · <b>Go see Lucky Lou outside the casino</b>');SFX.ach()},1100)}
 }
 function grantReward(r,overnight){
-  switch(r.t){case 'cash':S.cash+=r.v;break;case 'hot':case 'net':S.buffs.push({t:r.t,v:r.v,day:overnight?S.day:S.day+1});break;case 'energy':if(overnight)S.energy+=r.v;else S.buffs.push({t:r.t,v:r.v,day:S.day+1});break;case 'sp':S.sp+=1;break;
+  switch(r.t){case 'cash':S.cash+=Math.round(r.v);break;case 'hot':case 'net':S.buffs.push({t:r.t,v:r.v,day:overnight?S.day:S.day+1});break;case 'energy':if(overnight)S.energy+=r.v;else S.buffs.push({t:r.t,v:r.v,day:S.day+1});break;case 'sp':S.sp+=1;break;
     case 'relief':{const d=S.debts.filter(d=>!d.loan).sort((a,b)=>a.due-b.due)[0];if(d)d.amt=r5(d.amt*(1-r.v));break}
     case 'tip':if(!giveTip(overnight))S.cash+=r5(Math.max(30,nextDue()*.15));break;case 'charmw':S.charm=true;S.wish=2;ach('wish');break}
 }
@@ -1191,7 +1191,6 @@ const TRINKETS={
   almanac:{n:'Sports Almanac',d:'+25% on parlay wins of 3 legs or more.',p:600,t:3,fx:{t:'parlay',v:25}},
   pager:{n:'Stock Pager',d:'A free insider tip every morning.',p:450,t:3,fx:{t:'stockTip'}},
   card:{n:'Lawyer’s Card',d:'New debts are 10% smaller.',p:700,t:3,fx:{t:'debtCut',v:10}},
-  shake:{n:'Vinnie’s Handshake',d:'Vinnie charges 15% instead of 30%.',p:400,t:3,fx:{t:'loanRate'}},
   badge:{n:'Pit Boss Badge',d:'Table minimums are 25% lower.',p:650,t:4,fx:{t:'minCut',v:25}},
   shoe:{n:'Golden Horseshoe',d:'+12% on every win.',p:900,t:4,fx:{t:'winPct',v:12}},
   compass:{n:'Fortune Compass',d:'One random game each day pays +30% on wins.',p:800,t:4,fx:{t:'luckyDay',v:30}},
@@ -1207,16 +1206,21 @@ const LIB_PER_TIER={1:8,2:8,3:6,4:4};
 function buildLib(){const lib=[];[1,2,3,4].forEach(t=>{const ks=Object.keys(TRINKETS).filter(k=>TRINKETS[k].t===t);for(let i=ks.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ks[i],ks[j]]=[ks[j],ks[i]]}lib.push(...ks.slice(0,LIB_PER_TIER[t]))});
   let added=true;while(added){added=false;for(const k of lib.slice()){const r=TRINKETS[k].req;if(r&&!lib.includes(r)){lib.push(r);added=true}}}return lib}
 function addStock(n){S.pawnStock=S.pawnStock||[];const lib=S.lib||Object.keys(TRINKETS);const pool=lib.filter(k=>TRINKETS[k]&&!S.pawnStock.includes(k)&&(S.paid||0)>=TIER_AT[TRINKETS[k].t]);const add=[];for(let i=0;i<n&&pool.length&&S.pawnStock.length<STOCK_MAX;i++){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0];S.pawnStock.push(k);add.push(k)}return add}
-const HOUSE={tv:['Your TV',80],console:['Your game console',60],jacket:['Your leather jacket',40],guitar:['Your old guitar',30]};
+const HOUSE={tv:['Your TV',60,'You can’t watch your sports bets from bed until you buy it back.'],guitar:['Your old guitar',45,'The music stops until you buy it back.']};
+const hasTV=()=>!(S&&S.pawned&&S.pawned.tv),hasGuitar=()=>!(S&&S.pawned&&S.pawned.guitar);
+const houseBack=k=>Math.round(houseVal(k)*1.5);
+const houseVal=k=>Math.round(HOUSE[k][1]*(1+.05*((S&&S.heat)||0)));
+function sellStuffHTML(){return`<div class="box"><span class="lbl">Sell your stuff</span><p>"No loans here, kid. But I’ll buy what you’ve got at home, and hold it if you want it back. Buy-back is half again what I paid."</p>${Object.keys(HOUSE).map(k=>{const sold=(S.pawned||{})[k];return`<div class="row ${sold?'':'got'}"><h3>${HOUSE[k][0]}</h3><p>${sold?`<span class="lose">At the Pawn King.</span> ${HOUSE[k][2]}`:`At home. Sell it for ${fmt(houseVal(k))}. ${HOUSE[k][2].replace('until you buy it back','until you buy it back for '+fmt(houseBack(k)))}`}</p>${sold?`<button class="btn sm green" data-a="pawnback" data-v="${k}" ${S.cash<houseBack(k)?'disabled':''}>Buy back · ${fmt(houseBack(k))}</button>`:`<button class="btn sm" data-a="pawnitem" data-v="${k}">Sell · ${fmt(houseVal(k))}</button>`}</div>`}).join('')}</div>`}
 const heatPrice=()=>1+.06*((S&&S.heat)||0);
 const tprice=k=>r5(TRINKETS[k].p*(1+.1*(S.day-1))*heatPrice()*(1-.02*L('xp')));
 function pawnPanel(){
+  if((S.paid||0)<PAWN_CASE)return sellStuffHTML()+`<p class="muted">"My display case? Come back when you’ve paid ${PAWN_CASE} debts. I don’t sell to deadbeats."</p>`;
   if(!S.pawnStock){S.pawnStock=Object.keys(S.trinkets||{});addStock(4)}
   const keys=S.pawnStock.concat(Object.keys(S.trinkets).filter(k=>!S.pawnStock.includes(k)));
   const lib=S.lib||Object.keys(TRINKETS),left=lib.filter(k=>!S.pawnStock.includes(k)&&(S.paid||0)>=TIER_AT[TRINKETS[k].t]).length,locked=lib.filter(k=>(S.paid||0)<TIER_AT[TRINKETS[k].t]);
   return`<div class="box"><span class="lbl">Pawn King</span><p>"Fresh stock every time you pay a debt. I buy back what I sold you at 50%."</p><p class="muted">This run’s catalog: ${lib.length} items, different every run.${locked.length?` ${locked.length} rarer pieces are still in the vault.`:''}</p></div>
   ${keys.map(k=>{const t=TRINKETS[k],own=S.trinkets[k],need=t.req&&!S.trinkets[t.req]?TRINKETS[t.req].n:null,sold=t.req&&Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===k);return`<div class="row ${own?'got':''}"><h3>${t.n} <span class="tt t${t.t}">${'★'.repeat(t.t)}</span></h3><p>${t.d}${own?' <span class="win">Owned.</span>':''}${need?` <span class="muted">Needs ${need} first.</span>`:''}</p>${own?`<button class="btn sm" data-a="tsell" data-v="${k}" ${sold?'disabled':''}>Pawn ${fmt(Math.round(own/2))}</button>`:`<button class="btn green sm" data-a="tbuy" data-v="${k}" ${S.cash<tprice(k)||need?'disabled':''}>${fmt(tprice(k))}</button>`}</div>`}).join('')}
-  <p class="muted">${S.pawnStock.length>=STOCK_MAX?'The shelves are full.':left?'More in the back. Pay a debt to see what comes in.':'Rarer, stronger stock comes out of the vault at 2, 4 and 7 debts paid.'}</p>`;
+  ${sellStuffHTML()}<p class="muted">${S.pawnStock.length>=STOCK_MAX?'The shelves are full.':left?'More in the back. Pay a debt to see what comes in.':'Rarer, stronger stock comes out of the vault at 2, 4 and 7 debts paid.'}</p>`;
 }
 const zoraFee=()=>r5(30*(1+.15*(S.day-1))*heatPrice());
 function zoraAct(){
@@ -1227,11 +1231,6 @@ function zoraAct(){
   SFX.ach();
 }
 function zoraPanel(){const used=S.zoraDay===S.day;return`<div class="box"><span class="lbl">Madame Zora</span><p>"Cross my palm with silver and I shall tell you where fortune smiles today."</p>${used&&S.zmsg?`<p class="win">${S.zmsg}</p>`:''}<button class="btn wide" data-a="zora" ${used||S.cash<zoraFee()?'disabled':''}>${used?'The spirits rest until tomorrow':'Get a reading · '+fmt(zoraFee())}</button></div>`}
-const loanLimit=()=>r5(Math.max((200+50*(S.paid||0))*(1+.05*(S.heat||0)),1.25*Math.max(0,...S.debts.filter(d=>!d.loan).map(d=>d.amt))));
-function loanAct(a){if(S.debts.some(d=>d.loan)||a<5)return;S.cash+=a;S.usedLoan=true;S.loanN=(S.loanN||0)+1;S.debts.push({id:-S.loanN,who:'Vinnie (Pawn King)',amt:r5(a*(tsum('loanRate')?1.15:1.3)),due:S.day+3,loan:true});toast(`Vinnie counts out ${fmt(a)}. You owe ${fmt(r5(a*1.3))} by day ${S.day+3}.`);SFX.coin();checkCash()}
-function loanPanel(){const act=S.debts.find(d=>d.loan),lim=loanLimit();
-  return`<div class="box"><span class="lbl">Loan window · Vinnie</span><p>"The King sells, I lend. 30% fee, due in 3 days. Pay me here or online, I’m not picky. Don’t make me come looking."</p>
-  ${act?`<p class="lose">You owe Vinnie ${fmt(act.amt)} by day ${act.due}. Miss it and the collectors come.</p><div class="g2"><button class="btn green sm" data-a="pay" data-v="${act.id}" ${S.cash>=act.amt?'':'disabled'}>Pay back ${fmt(act.amt)}</button></div>`:`<div class="g3">${[.25,.5,1].map(f=>{const a=r5(lim*f);return`<button class="btn sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}</div><p class="muted">One loan at a time. Vinnie lends up to 125% of your biggest open bill, and never less than $200 plus $50 for every debt you’ve paid.</p>`}</div>`}
 function busStop(x,X){px(x,C.d,X,44,1,30);px(x,C.b,X-7,38,15,9);ptxt(x,'BUS',X-5,40,C.w);px(x,C.s,X-6,64,12,2);px(x,C.d,X-5,66,1,8);px(x,C.d,X+4,66,1,8)}
 function drawStreetExtra(x){
   x.save();x.translate(-120,0);
@@ -1248,13 +1247,12 @@ function drawStreetExtra(x){
   const Tx=556;for(let y=30;y<74;y++){const hw=Math.round((y-30)/2);for(let X=Tx+22-hw;X<=Tx+22+hw;X++)px(x,Math.floor((X-Tx)/4)%2?C.p:C.y,X,y,1,1)}
   px(x,C.k,Tx+16,58,12,16);disc2(x,Tx+22,66,3,frame%2?C.a:C.c);px(x,C.y,Tx+21,26,3,4);
   const zw=pw('ZORA');px(x,C.k,Tx+22-zw/2-2,40,zw+4,9);ptxt(x,'ZORA',Tx+22-zw/2,42,C.a);
-  px(x,'#1f6b46',Px+3,65,24,8);ptxt(x,'LOANS',Px+15-pw('LOANS')/2,66,frame%5?C.l:C.y);
   x.restore();
 
 }
 
 /* ================= betting core ================= */
-const betCap=()=>S?Math.max(0,Math.round(Math.min(S.cash,mod('low')?lowCap():Infinity)*100)/100):0;
+const betCap=()=>S?Math.max(0,Math.floor(Math.min(S.cash,mod('low')?lowCap():Infinity)+1e-6)):0;
 function clampBet(){if(!S)return 0;const c=betCap();let v=Math.ceil(UI.bet)||0;if(v<=0||c<=0)return 0;const mn=curMin();if(v<mn)v=mn;return v>=Math.floor(c)?c:v}
 function canPlay(){return!!S&&!S.over&&(S.energy>=ecost(UI.game)||(UI.scene==='game'&&UI.game==='plinko'&&S.g.pl.session))&&S.cash>0&&clampBet()>0}
 function busy(){if(!S)return false;const g=S.g;return !!S.peel||g.bj.phase==='play'||g.bj.phase==='ins'||g.mn.phase==='play'||(g.pk.seated&&g.pk.phase==='play')||g.rl.busy||g.pl.busy||g.fl.busy||g.sn.busy||g.sl.busy||g.wh.busy||g.kn.busy||g.cr.phase==='fly'||g.tw.phase==='play'||g.vp.phase==='hold'||g.pg.phase==='play'||(g.cp&&g.cp.busy)||(g.hl&&g.hl.phase==='play')||(g.sc&&g.sc.phase==='play')||(g.wr&&g.wr.phase==='war')||(g.dc&&g.dc.busy)||(g.sbo&&g.sbo.busy)||(g.db&&g.db.busy)||!!SBW}
@@ -1274,7 +1272,7 @@ function settle(game,bet,gross,noMast){
     m=Math.min(m,WIN_MAX);gross=bet+(gross-bet)*m;
   }
   else if(gross<bet-.001){const loss=bet-gross;if(trinket('foot')&&!S.today.foot){S.today.foot=1;gross+=loss;note='Rabbit\u2019s Foot refund'}else{const nb=Math.min(LOSS_CAP,buffV('net')+DR(permLoss(),LOSS_C));if(nb){gross+=loss*nb;note=`${Math.round(nb*100)}% back`}}}
-  const c2=v=>Math.round(v*100)/100;gross=c2(gross);S.cash=c2(S.cash+gross);const net=c2(gross-bet);
+  const c2=v=>Math.round(v);gross=Math.floor(gross+1e-6);S.cash=Math.floor(S.cash+1e-6)+gross;const net=gross-bet;
   if(win){const w=c2(g0-bet);ledger(w,c2(net-w),0,0)}else if(g0<bet-.001){const l=c2(bet-g0);ledger(0,0,l,c2(net+l))}
   if(net>0){S.wstreak=(S.wstreak||0)+1;S.lstreak=0}else if(net<0){S.lstreak=(S.lstreak||0)+1;S.wstreak=0}
   questEvent('settle',{game,net,mult:bet>0?g0/bet:0,share:bet/Math.max(1,cb+bet),ls:ls0});
@@ -1282,6 +1280,7 @@ function settle(game,bet,gross,noMast){
   if(net>0){ach('first');S.stats.won+=net;if(net>S.stats.biggest)S.stats.biggest=net;const st=gs(game);st.w++;if(net>st.big)st.big=net;passCheck(game);M.stats.wins++;if(net>M.stats.big)M.stats.big=net;}
   queueFX(net,bet,S.cash-gross+bet);
   if(AWAY)AWAY.push([game,net]);
+  if(!['craps','holdem','sports'].includes(game))roundClear(game);
   checkCash();checkTiers();save();
   return{net,note};
 }
@@ -1467,10 +1466,8 @@ function drawPawnW(x,w){
   px(x,'#8a4a32',62,52,62,16);px(x,C.a,64,48,58,6);px(x,C.k,64,54,58,1);
   const lock=!S||(S.paid||0)<PAWN_CASE;for(let i=0;i<6;i++){const c=[C.y,C.r,C.c,C.l,C.o,C.w][i];disc2(x,68+i*10,51,2,lock?C.d:c)}
   if(lock){px(x,C.r,86,44,16,7);ptxt(x,'SHUT',87,45,C.w)}
-  px(x,C.k,138,18,44,48);px(x,'#1f6b46',140,20,40,10);ptxt(x,'LOANS',160-pw('LOANS')/2,22,frame%5?C.l:C.y);
-  px(x,C.e,142,32,36,20);for(let i=0;i<4;i++)px(x,C.s,145+i*9,32,1,20);
-  person(x,156,34,{shirt:C.e,hair:C.d,glasses:true});
-  px(x,C.d,140,52,40,4);px(x,C.y,150,50,8,3);ptxt(x,'$',152,50,C.g);
+  px(x,C.d,138,10,44,2);px(x,C.d,138,28,44,2);[[140,9,C.c],[150,6,C.o],[158,10,C.a],[168,7,C.l]].forEach(([a,h,c])=>px(x,c,a,10-h,8,h));[[142,C.y],[156,C.r],[170,C.w]].forEach(([a,c])=>disc2(x,a,24,3,c));
+  px(x,'#8a4a32',140,40,40,26);px(x,'#6d3a28',142,42,36,10);px(x,'#6d3a28',142,54,36,10);px(x,C.y,158,46,4,2);px(x,C.y,158,58,4,2);
 }
 function drawZoraW(x,w){
   px(x,C.p,0,0,w,90);for(let X=0;X<w;X+=12){for(let y=0;y<66;y++)if(((X/12)|0)%2)px(x,'#4a1f4a',X,y,6,1)}
@@ -1498,7 +1495,7 @@ function roomSpots(r){
   if(r==='home')return[{id:'door',x:22,lab:'Go outside'},{id:'bed',x:72,lab:'Go to bed'},{id:'pc',x:153,lab:'Use the computer'}];
   if(r==='casino')return[{id:'door',x:20,lab:'Go outside'},...floorOrder().map((g,i)=>({id:'g:'+g,x:CASINO_X0+i*CASINO_DX,lab:stationLabel(g)}))];
   if(r==='bar')return[{id:'door',x:19,lab:'Go outside'},{id:'barkeep',x:92,lab:'Order at the bar'}];
-  if(r==='pawn')return[{id:'door',x:19,lab:'Go outside'},{id:'cooler',x:50,lab:!placeOpen('mart')?'Counter: closed by contract':counterOpen()?'Counter: energy & daily specials':`Counter: opens at ${COUNTER_AT} debts paid`},{id:'pawnking',x:92,lab:(S.paid||0)>=PAWN_CASE?'Browse the display case':`Display case: opens at ${PAWN_CASE} debts paid`},{id:'vinnie',x:160,lab:S.debts.some(d=>d.loan)?'Pay Vinnie back':'Loan window: talk to Vinnie'}];
+  if(r==='pawn')return[{id:'door',x:19,lab:'Go outside'},{id:'cooler',x:50,lab:!placeOpen('mart')?'Counter: closed by contract':counterOpen()?'Counter: energy & daily specials':`Counter: opens at ${COUNTER_AT} debts paid`},{id:'pawnking',x:92,lab:(S.paid||0)>=PAWN_CASE?'Talk to the Pawn King':'Sell your stuff to the Pawn King'}];
   if(r==='zora')return[{id:'door',x:19,lab:'Go outside'},{id:'crystal',x:104,lab:S.zoraDay===S.day?'Madame Zora is resting':'Sit for a reading'}];
   return[];
 }
@@ -1549,8 +1546,7 @@ function interact(id){
   if(id==='door')return enterRoom('street',r);
   if(id.startsWith('g:')){const g=id.slice(2);if(!gameOpen(g))return toast('Closed by your contract.');if(S.paid<gReq(g))return toast(`${GAMES[g].n} opens after you pay off ${gReq(g)} debt${gReq(g)>1?'s':''}. You’ve paid ${S.paid}.`);UI.game=g;UI.scene='game';if(g==='holdem'){const bb=STAKES[S.g.pk.stake||0][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}render();window.scrollTo(0,0);return}
   if(id==='cooler'&&!counterOpen())return toast(mod('fasting')?'The Fasting contract: no snacks, no energy drinks.':`"Snacks and specials once you’ve paid ${COUNTER_AT} debts." You’ve paid ${S.paid}.`);
-  if(id==='pawnking'&&(S.paid||0)<PAWN_CASE)return toast(`"Come back when you’ve paid ${PAWN_CASE} debts. I don’t sell to deadbeats." You’ve paid ${S.paid}.`);
-  UI.panel={pc:'pc',bed:'bed',cooler:'mart',barkeep:'bar',pawnking:'pawn',vinnie:'loans',crystal:'zora'}[id]||null;UI.confirm=null;render();scrollPanel();
+    UI.panel={pc:'pc',bed:'bed',cooler:'mart',barkeep:'bar',pawnking:'pawn',crystal:'zora'}[id]||null;UI.confirm=null;render();scrollPanel();
 }
 function scrollPanel(){setTimeout(()=>{const p=$('#panel');if(p&&p.firstElementChild)p.firstElementChild.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'})},30)}
 function drawIcon(x,k){
@@ -1802,25 +1798,19 @@ function tableMin(g){if(!S||g==='holdem'||!GAMES[g])return 0;const r=gReq(g);con
 const curMin=()=>UI.scene==='game'&&UI.game&&UI.game!=='holdem'?tableMin(UI.game):UI.panel==='pc'&&UI.tab==='sports'?tableMin('sports'):0;
 /* ================= collectors ================= */
 function portfolio(){let v=0;for(const k in S.stocks){const st=S.stocks[k];v+=st.own*st.p+shortVal(st)}return v}
-function hopeless(strict=true){return brokeBase(strict)&&!loanAvail()}
-function brokeChoice(strict=true){return brokeBase(strict)&&loanAvail()}
+function hopeless(strict=true){return brokeBase(strict)}
+function brokeChoice(){return false}
 const inPlay=()=>{try{return busy()||(S.g.pk&&S.g.pk.seated)}catch(e){return false}};
 const ribbonOn=()=>M.set.brokeRibbon!==false&&!S.hideBroke;
-const loanAvail=()=>shopOpen('pawn')&&!S.debts.some(d=>d.loan)&&!mod('trader')&&loanLimit()>=5;
+const loanAvail=()=>false;
 function brokeBase(strict=true){
   if(!S||S.over)return false;
   if(S.cash>=.01)return false;
   if(inPlay())return false;
-  const open=GAME_IDS.filter(g=>gameOpen(g)&&S.paid>=gReq(g)&&g!=='holdem');
-  const need=open.length?Math.min(...open.map(g=>tableMin(g)||1)):1;
-  if(S.cash>=need)return false;
-  if(portfolio()>=1)return false;
-  if(shopOpen('pawn')&&Object.keys(S.trinkets||{}).length)return false;
-  if(S.quest&&S.quest.done&&!S.quest.claimed)return false;
-  if(S.sb&&S.sb.bets&&S.sb.bets.some(b=>b.st==='open'))return false;
   if(S.g&&S.g.cp&&Object.keys(S.g.cp.bets).length)return false;
   return true;
 }
+function brokeLeft(){const o=[];if(portfolio()>=1)o.push('stocks to sell');if(shopOpen('pawn')&&(Object.keys(S.trinkets||{}).length||Object.keys(HOUSE).some(k=>!(S.pawned||{})[k])))o.push('things to pawn');if(S.quest&&S.quest.done&&!S.quest.claimed)o.push('a reward from Lou');if(S.sb&&S.sb.bets&&S.sb.bets.some(b=>b.st==='open'))o.push('sports bets still open');return o}
 const COLL_LOOK={shirt:'#566c86',hair:'#1a1c2c',glasses:true,pants:'#333c57',chain:true,bow:true};
 const COLL_LINES=[[0,'A black van pulls up outside...'],[1.8,'<b>KNOCK KNOCK.</b> "Collection agency. We hear you’re broke."'],[3.2,'They take the TV.'],[3.9,'They take the couch.'],[4.6,'They take the bed.'],[5.3,'...they take the snail?!'],[6,'"Turn out your pockets."'],[7.4,'Everything’s gone. Even the hot dog.'],[8.6,'']];
 let COLL=null;
@@ -2099,7 +2089,7 @@ const sbOpenGames=()=>S.sb.slate.filter(g=>!g.res&&S.sb.bets.some(b=>b.st==='ope
 function sbSimAll(){sbOpenGames().forEach(g=>sbResolve(g));sbSettleAll()}
 /* ---- watch the game ---- */
 let SBW=null;
-function sbWatch(gid){
+function sbWatch(gid){if(!hasTV())return;
   const g=sbGame(gid);if(!g||g.res||SBW)return;sbResolve(g);g.watched=true;save();g.live=true;UI.sbTab='games';
   if(RM){sbFinish();return}
   SBW={gid,t0:performance.now(),D:14000*SP(),last:-1,fl:null};render();
@@ -2201,7 +2191,7 @@ function gSB(){
   }
   const slip=s.slip.filter(l=>{const g=sbGame(l.gid);return g&&!g.res});
   const slipBox=slip.length?`<div class="box sbslip"><span class="lbl">Bet slip · ${slip.length>1?slip.length+'-leg parlay':'single'}</span>${slip.map(l=>{const g=sbGame(l.gid);return`<div class="kv bl"><span>${pickName(g,l.pick)} <span class="muted">${SPORTS[g.sp].tag} · ${Math.round(g.o[l.pick]*100)}%</span></span><button class="linkb" data-a="sbpick" data-v="${g.id}:${l.pick}">Remove</button></div>`}).join('')}
-    <div class="kv"><span>Hits about</span><b>${Math.max(.1,Math.round(slipProb()*1000)/10)}% of the time</b></div><div class="kv"><span>Pays</span><b class="px" style="color:var(--y);font-size:12px" data-paym="${slipMult()}" data-pre="${slipMult().toFixed(2)}x · ">${slipMult().toFixed(2)}x · ${fmt(Math.round(clampBet()*slipMult()*100)/100)}</b></div><div class="kv"><span>Profit if it hits</span><b class="win" data-paym="${slipMult()-1}" data-pre="+">+${fmt(Math.round(clampBet()*(slipMult()-1)*100)/100)}</b></div></div>
+    <div class="kv"><span>Hits about</span><b>${Math.max(.1,Math.round(slipProb()*1000)/10)}% of the time</b></div><div class="kv"><span>Pays</span><b class="px" style="color:var(--y);font-size:12px" data-paym="${slipMult()}" data-pre="${slipMult().toFixed(2)}x · ">${slipMult().toFixed(2)}x · ${fmt(Math.floor(clampBet()*slipMult()))}</b></div><div class="kv"><span>Profit if it hits</span><b class="win" data-paym="${slipMult()-1}" data-pre="+">+${fmt(Math.floor(clampBet()*slipMult())-clampBet())}</b></div></div>
     <!--act-->${betBar(!!SBW,'Stake')}<button class="btn green wide" data-a="sbplace" ${canPlay()&&!SBW?'':'disabled'}>Place ${slip.length>1?'parlay':'bet'} · no energy</button>`:'';
   return watch+tabs+body+slipBox;
 }
@@ -2318,13 +2308,22 @@ function tableReset(g){try{
   else if(g==='craps'){const s=S.g.cp;if(!s.busy){s.stack=[];let back=0;for(const k in s.bets){if(CP_FIXED(k)&&s.point)continue;back+=s.bets[k];delete s.bets[k]}if(back)S.cash+=back;s.flash=null}}
   else{const code=Object.keys(CHIPG).find(k=>CHIPG[k]===g);if(code){const s=chipFix(S.g[code]);if(!s.busy){s.bets={};s.stack=[]}}}
 }catch(e){}}
+function roundClear(game){if(roundClear.q)return;roundClear.q=1;Promise.resolve().then(()=>{roundClear.q=0;if(!S)return;
+  if(game==='roulette'){const s=S.g.rl;if(s.busy)return;s.bets={};s.stack=[];UI.rlPick=null}
+  else{const code=Object.keys(CHIPG).find(k=>CHIPG[k]===game);if(code){const s=chipFix(S.g[code]);if(s.busy)return;s.bets={};s.stack=[]}else UI.bet=0}
+  save();if(UI.scene==='game'&&!window.__NOPEEL)render()})}
+function chipRebet(code,f){const s=chipFix(S.g[code]);if(s.busy)return;const lb=s.lastBets||{},t=Object.values(lb).reduce((a,b)=>a+b,0)*f;if(!t)return;
+  if(t>S.cash){toast(`That layout costs ${fmt(t)}. You have ${fmt(S.cash)}.`);return}if(mod('low')&&t>lowCap()){toast(`Low Roller contract: ${fmt(lowCap())} max per round.`);return}
+  s.bets={};s.stack=[];for(const k in lb){s.bets[k]=lb[k]*f;s.stack.push([k,lb[k]*f])}SFX.coin();save();render()}
 function chipClear(code){const s=chipFix(S.g[code]);if(s.busy)return;s.bets={};s.stack=[];save();render()}
 function chipWhy(code){const s=chipFix(S.g[code]),g=CHIPG[code],t=chipTot(s);if(!S||S.over)return'x';if(!t)return'Tap a bet to place a chip.';if(t>S.cash+.004)return`Your chips (${fmt(t)}) are more than your cash. Undo or clear some.`;if(mod('low')&&t>lowCap())return`Low Roller contract: ${fmt(lowCap())} max per round.`;if(t<tableMin(g)&&t<S.cash-.004)return`Table minimum is ${fmt(tableMin(g))} total, or go all in.`;if(S.energy<ecost(g))return'Too tired. Go home and sleep.';return''}
 const chipReady=code=>!S.g[code].busy&&!chipWhy(code);
-function chipStart(code){const w=chipWhy(code);if(S.g[code].busy)return 0;if(w){if(w!=='x')toast(w);return 0}const t=chipTot(S.g[code]);placeBet(CHIPG[code],t);return t}
+function chipStart(code){const w=chipWhy(code);if(S.g[code].busy)return 0;if(w){if(w!=='x')toast(w);return 0}const t=chipTot(S.g[code]);S.g[code].lastBets=Object.assign({},S.g[code].bets);placeBet(CHIPG[code],t);return t}
 const chipTag=(s,k)=>s.bets&&s.bets[k]?`<i class="chipm" data-ck="cm${k}-${s.bets[k]}" data-fx="pop">${chipTxt(s.bets[k])}</i>`:'';
 function chipBar(code,act,verb){const s=chipFix(S.g[code]),t=chipTot(s),why=s.busy?'':chipWhy(code);
-  return`${betBar(s.busy,'Chip size',true)}<div class="rlact"><button class="btn dim sm" data-a="chundo" data-v="${code}" ${s.busy||!s.stack.length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="chclear" data-v="${code}" ${s.busy||!t?'disabled':''}>Clear</button><button class="btn green" ${act} ${chipReady(code)?'':'disabled'}>${t?`${verb} · ${fmt(t)}`:'Place chips'}</button></div>${why&&t?`<p class="muted bwarn">${why}</p>`:''}`}
+  return`${betBar(s.busy,'Chip size',true)}<div class="rlact"><button class="btn dim sm" data-a="chundo" data-v="${code}" ${s.busy||!s.stack.length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="chclear" data-v="${code}" ${s.busy||!t?'disabled':''}>Clear</button><button class="btn green" ${act} ${chipReady(code)?'':'disabled'}>${t?`${verb} · ${fmt(t)}`:'Place chips'}</button></div>${why&&t?`<p class="muted bwarn">${why}</p>`:''}${rebetRow(s.busy||t>0,s.lastBets,'chrep',code+':')}`}
+function rebetRow(lock,lb,a,pre){const t=lb?Object.values(lb).reduce((x,y)=>x+y,0):0;if(!t)return'';
+  return`<div class="rebet"><button class="btn sm" data-a="${a}" data-v="${pre}1" ${lock||t>S.cash?'disabled':''}>Rebet · ${fmt(t)}</button><button class="btn sm" data-a="${a}" data-v="${pre}2" ${lock||t*2>S.cash?'disabled':''}>Rebet 2x · ${fmt(t*2)}</button></div>`}
 const chipWins=(arr)=>arr.length?`Paid: ${arr.join(', ')}. `:'';
 
 const SBO={small:['Small','Total 4-10, no triples',2],big:['Big','Total 11-17, no triples',2],odd:['Odd','Odd total, no triples',2],even:['Even','Even total, no triples',2],pair:['Any pair','At least two match',2.1],triple:['Any triple','All three match',31]};
@@ -3378,13 +3377,13 @@ function netWorth(){let v=S.cash+portfolio();if(S.g&&S.g.cp)v+=cpTot();if(S.sb&&
 const DEBTS_PER_HEAT=10;
 function checkClear(){if(!S||S.over||S.paid<DEBTS_PER_HEAT||S.debts.length)return;if(RM){runWon();return}setTimeout(()=>{if(S&&!S.over)runWon()},1200)}
 function runWon(){
-  const h=S.heat||0;ach('debt10');if(h>=10)ach('month');if(!S.usedLoan)ach('year');
+  const h=S.heat||0;ach('debt10');if(h>=10)ach('month');if(!S.soldAny)ach('year');
   if(!S.daily){if(h===M.heatMax&&M.heatMax<30)M.heatMax++;queueHeatEnd(h)}
   S.cleared=true;M.clears=(M.clears||0)+1;gameOver('cleared');
 }
 function payDebt(id){
   const i=S.debts.findIndex(d=>d.id===id);if(i<0)return;const d=S.debts[i];if(S.cash<d.amt)return;
-  S.cash-=d.amt;S.debts.splice(i,1);questEvent('pay');if(d.loan){toast('Loan repaid. Vinnie nods slowly.');SFX.coin();ach('loan');save();checkClear();return}S.paid++;M.debts++;{const nw=Object.keys(SHOP_REQ).filter(k=>SHOP_REQ[k]===S.paid&&k!=='mart');if(nw.length)setTimeout(()=>note(`Now open on Main Street: <b>${nw.map(k=>SHOP_N[k]).join(' & ')}</b>`),900)}{const ns=addStock(2);if(ns.length)setTimeout(()=>note(`The Pawn King got new stock: <b>${TRINKETS[ns[0]].n}</b>`),600)}if(S.debtN<DEBTS_PER_HEAT){const bal=netWorth()-S.debts.filter(x=>x.loan).reduce((a,x)=>a+x.amt,0);const nd=mkDebt(bal);S.debts.push(nd);queueDebtScene(nd,bal)}
+  S.cash-=d.amt;S.debts.splice(i,1);questEvent('pay');if(d.loan){toast('Old loan repaid.');SFX.coin();save();checkClear();return}S.paid++;M.debts++;{const nw=Object.keys(SHOP_REQ).filter(k=>SHOP_REQ[k]===S.paid&&k!=='mart');if(nw.length)setTimeout(()=>note(`Now open on Main Street: <b>${nw.map(k=>SHOP_N[k]).join(' & ')}</b>`),900)}{const ns=addStock(2);if(ns.length)setTimeout(()=>note(`The Pawn King got new stock: <b>${TRINKETS[ns[0]].n}</b>`),600)}if(S.debtN<DEBTS_PER_HEAT){const bal=netWorth()-S.debts.filter(x=>x.loan).reduce((a,x)=>a+x.amt,0);const nd=mkDebt(bal);S.debts.push(nd);queueDebtScene(nd,bal)}
   toast(`Paid ${d.who}.`);SFX.coin();
   if(S.paid>=3)ach('week');if(M.debts>=100)ach('debt100');S.mods.forEach(k=>M.modBest[k]=Math.max(M.modBest[k]||0,S.paid));M.heatBest[S.heat]=Math.max(M.heatBest[S.heat]||0,S.paid);checkTiers();
   if(S.paid===COUNTER_AT&&!mod('fasting'))toast('The Pawn King\u2019s counter is open: energy drinks and daily specials.');if(GAME_IDS.every(g=>S.paid>=gReq(g)))ach('allgames');
@@ -3398,15 +3397,15 @@ function buySkill(k){
 }
 function stockTrade(k,v){
   const st=S.stocks[k];if(k===S.tipK&&(v[0]==='b'||v[0]==='h')){const room=Math.floor((tipCap()-(st.own+st.short)*st.p)/st.p);const q0=v.endsWith('max')?Infinity:+v.slice(1);if(room<1){toast(`Tip trades are capped at ${fmt(tipCap())}, a quarter of your net worth.`);return}if(q0>room)v=v[0]+room}
-  if(v.startsWith('b')){let q=v==='bmax'?Math.floor(S.cash/st.p):+v.slice(1);q=Math.min(q,Math.floor(S.cash/st.p));if(q<1)return;S.cash-=q*st.p;st.own+=q;st.cost+=q*st.p;questEvent('stockbuy');SFX.coin()}
-  else if(v.startsWith('h')){let q=v==='hmax'?Math.floor(S.cash/st.p):+v.slice(1);q=Math.min(q,Math.floor(S.cash/st.p));if(q<1)return;S.cash-=q*st.p;st.short+=q;st.sColl+=q*st.p;SFX.coin();toast(`Shorted ${q.toLocaleString()} ${k}. You profit if it falls.`)}
-  else if(v==='cv'){if(!st.short)return;const val=Math.max(0,2*st.sColl-st.short*st.p);if(val>=1.5*st.sColl)ach('bear');S.today.stk=(S.today.stk||0)+Math.round(val-st.sColl);S.cash+=val;st.short=0;st.sColl=0;SFX.coin()}
-  else{let q=v==='sall'?st.own:Math.min(+v.slice(1),st.own);if(q<1)return;const avg=st.cost/st.own;if(st.p>=2*avg)ach('stock2');if(st.p>avg)questEvent('stockwin');S.today.stk=(S.today.stk||0)+Math.round(q*(st.p-avg));S.cash+=q*st.p;st.own-=q;st.cost-=avg*q;if(st.own===0)st.cost=0;SFX.coin()}
+  if(v.startsWith('b')){let q=v==='bmax'?Math.floor(S.cash/sp(st)):+v.slice(1);q=Math.min(q,Math.floor(S.cash/sp(st)));if(q<1)return;S.cash-=q*sp(st);st.own+=q;st.cost+=q*sp(st);questEvent('stockbuy');SFX.coin()}
+  else if(v.startsWith('h')){let q=v==='hmax'?Math.floor(S.cash/sp(st)):+v.slice(1);q=Math.min(q,Math.floor(S.cash/sp(st)));if(q<1)return;S.cash-=q*sp(st);st.short+=q;st.sColl+=q*sp(st);SFX.coin();toast(`Shorted ${q.toLocaleString()} ${k}. You profit if it falls.`)}
+  else if(v==='cv'){if(!st.short)return;const val=Math.max(0,Math.round(2*st.sColl-st.short*sp(st)));if(val>=1.5*st.sColl)ach('bear');S.today.stk=(S.today.stk||0)+Math.round(val-st.sColl);S.cash+=val;st.short=0;st.sColl=0;SFX.coin()}
+  else{let q=v==='sall'?st.own:Math.min(+v.slice(1),st.own);if(q<1)return;const avg=st.cost/st.own;if(st.p>=2*avg)ach('stock2');if(st.p>avg)questEvent('stockwin');S.today.stk=(S.today.stk||0)+Math.round(q*(st.p-avg));S.cash+=q*sp(st);st.own-=q;st.cost-=avg*q;if(st.own===0)st.cost=0;SFX.coin()}
   checkCash();
 }
 function freshTables(){
   const o=S.g||{},n=newG();
-  if(o.cp&&o.cp.bets){let back=0;for(const k in o.cp.bets)back+=o.cp.bets[k]||0;if(back>0){S.cash=Math.round((S.cash+back)*100)/100;if(!RM)setTimeout(()=>toast(`The craps crew cleared the table overnight and returned your <b>${fmt(back)}</b> in chips.`),1800)}}
+  if(o.cp&&o.cp.bets){let back=0;for(const k in o.cp.bets)back+=o.cp.bets[k]||0;if(back>0){S.cash=Math.round(S.cash+back);if(!RM)setTimeout(()=>toast(`The craps crew cleared the table overnight and returned your <b>${fmt(back)}</b> in chips.`),1800)}}
   const keep={rl:['mode'],mn:['m'],tw:['diff'],pg:['diff'],cr:['auto'],pl:['balls'],dc:['target','mode'],fl:['side']};
   for(const g in n){if(g==='pk')continue;const was=o[g]||{};
     ['hn','n','k'].forEach(c=>{if(typeof was[c]==='number')n[g][c]=was[c]});
@@ -3441,9 +3440,9 @@ function vTonight(){
   const screen=live||(UI.sbLast&&sbGame(UI.sbLast)&&sbGame(UI.sbLast).watched?sbGame(UI.sbLast):null);
   const myPicks=g=>s.bets.filter(b=>b.legs.some(l=>l.gid===g.id)).map(b=>pickName(g,b.legs.find(l=>l.gid===g.id).pick)).filter((x,i,a)=>a.indexOf(x)===i).join(', ');
   return`<section class="stack" style="padding-top:18px;gap:12px"><span class="lbl">Night ${S.day} · lights out</span><h2 class="px" style="font-size:14px;color:var(--y)">Tonight’s games</h2>
-  <p class="muted">You’re in bed. Nothing left to do tonight but watch. Bets settle when you wake up.</p>
+  <p class="muted">${hasTV()?'You’re in bed. Nothing left to do tonight but watch. Bets settle when you wake up.':'Your TV is at the Pawn King, so you’re staring at the ceiling. Your bets still settle overnight. Buy the TV back to watch.'}</p>
   ${screen?`<div class="box dark sbwatch"><canvas class="pix" data-s="sbw" data-fill data-max="4" width="160" height="90" aria-label="Live game"></canvas><p class="msg" id="sbcap">${live?sbCaption(screen,0):sbCaption(screen,1)}</p>${live?`<button class="btn dim wide" data-a="sbskip">Skip to the final</button>`:''}</div>`:''}
-  ${mine.map(g=>`<div class="row ${g.watched?'got':''}"><h3>${tName(g.sp,g.h)} <span class="muted">${g.sp==='ten'?'vs':'host'}</span> ${tName(g.sp,g.a)}</h3><p>${SPORTS[g.sp].n} · your pick: <b style="color:var(--y)">${myPicks(g)}</b></p>${SBW&&SBW.gid===g.id?`<div class="kv"><span style="color:var(--o)">● LIVE</span><b class="muted">watching now</b></div>`:g.watched?`<div class="kv"><span class="win">FINAL</span><b>${tShort(g.sp,g.h)} ${g.sp==='ten'?g.res.sets.map(x=>x.join('-')).join(' '):g.res.hs+' – '+g.res.as} ${tShort(g.sp,g.a)}</b></div>`:`<button class="btn sm" data-a="sbwatch" data-v="${g.id}" ${SBW?'disabled':''}>Watch</button>`}</div>`).join('')}
+  ${mine.map(g=>`<div class="row ${g.watched?'got':''}"><h3>${tName(g.sp,g.h)} <span class="muted">${g.sp==='ten'?'vs':'host'}</span> ${tName(g.sp,g.a)}</h3><p>${SPORTS[g.sp].n} · your pick: <b style="color:var(--y)">${myPicks(g)}</b></p>${SBW&&SBW.gid===g.id?`<div class="kv"><span style="color:var(--o)">● LIVE</span><b class="muted">watching now</b></div>`:g.watched?`<div class="kv"><span class="win">FINAL</span><b>${tShort(g.sp,g.h)} ${g.sp==='ten'?g.res.sets.map(x=>x.join('-')).join(' '):g.res.hs+' – '+g.res.as} ${tShort(g.sp,g.a)}</b></div>`:`<button class="btn sm" data-a="sbwatch" data-v="${g.id}" ${SBW||!hasTV()?'disabled':''}>${hasTV()?'Watch':'No TV'}</button>`}</div>`).join('')}
   <button class="btn blue wide" data-a="tonightsleep" ${SBW?'disabled':''}>Go to sleep · start day ${S.day+1}</button>${sbSlipBar()}</section>`;
 }
 function sbSlipBar(){
@@ -3452,7 +3451,7 @@ function sbSlipBar(){
   return`<div class="actbar sbpin"><span class="lbl">Your bet slip${slips.length>1?'s':''}</span>${slips.map(b=>{
     const legs=b.legs.map(l=>{const g=sbGame(l.gid),sn=seen(g),ok=sn&&g.res.w===l.pick,live=SBW&&g&&SBW.gid===g.id;return{g,l,sn,ok,live}});
     const lost=legs.some(x=>x.sn&&!x.ok),hit=legs.filter(x=>x.ok).length,all=legs.every(x=>x.sn);
-    const st=lost?`<b class="lose">MISSED</b>`:all?`<b class="win">HITS · pays ${fmt(Math.round(b.stake*b.mult*100)/100)}</b>`:`<b style="color:var(--y)">${hit}/${legs.length} in</b>`;
+    const st=lost?`<b class="lose">MISSED</b>`:all?`<b class="win">HITS · pays ${fmt(Math.floor(b.stake*b.mult))}</b>`:`<b style="color:var(--y)">${hit}/${legs.length} in</b>`;
     return`<div class="sbp ${lost?'dead':all?'hit':''}"><div class="kv"><span>${b.legs.length>1?b.legs.length+'-leg parlay':'Single'} · ${fmt(b.stake)} at ${b.mult.toFixed(2)}x</span>${st}</div>${legs.map(x=>`<div class="sbleg ${x.sn?(x.ok?'ok':'no'):x.live?'live':''}"><i>${x.sn?(x.ok?'✓':'✗'):x.live?'●':'○'}</i><span>${x.g?pickName(x.g,x.l.pick):'?'} <small>${x.g?SPORTS[x.g.sp].tag:''}</small></span></div>`).join('')}</div>`}).join('')}<p class="muted" style="font-size:15px;margin:0">Winnings are paid when you wake up.</p></div>`;
 }
 function vRecap(){
@@ -3560,7 +3559,7 @@ function hud(){
     <div class="hs"><span>ENERGY</span><b>${S.energy}/${maxEnergy()}</b></div>
     <div class="hs"><span>CASH</span><b class="cash">${fmt(S.cash)}</b></div>
     <button class="ib" data-a="settings" aria-label="Settings">SET</button></div>
-    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${!ribbonOn()?'':brokeChoice()?(UI.confirm==='vin'?`<div class="confirm collc"><p>You’re broke. Vinnie will spot you cash at 30%, due in 3 days. Or you can open the door to the collectors and end the run.</p><div class="g3">${[.5,1].map(f=>{const a=r5(loanLimit()*f);return`<button class="btn green sm" data-a="loan" data-v="${a}">Borrow ${fmt(a)}</button>`}).join('')}<button class="btn red sm" data-a="collyes2">Face them</button></div><button class="linkb" data-a="cancel">Not now</button></div>`:`<div class="collrow" data-after="late"><button class="btn red collbtn" data-a="vinchoice">Broke · Call Vinnie or face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}${ribbonOn()&&hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>No cash, nothing to sell, no one left to borrow from. Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<div class="collrow" data-after="late"><button class="btn red collbtn" data-a="facecoll">Broke with no way out · Face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}</header>`;
+    <div class="due ${left<=0?'hot':left===1?'warm':''}">${nd.who} wants ${fmt(nd.amt)} ${left<=0?'TODAY':left===1?'tomorrow':`in ${left} days`}</div>${questChip()}${boostBar()}${ribbonOn()&&hopeless()?(UI.confirm==='coll'?`<div class="confirm collc"><p>${brokeLeft().length?`You’re at $0. You still have ${brokeLeft().join(', ')}, so you could raise cash first.`:'You’re at $0 with nothing left to sell.'} Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:`<div class="collrow" data-after="late"><button class="btn red collbtn" data-a="facecoll">BUSTED · $0 · Face the collectors</button><button class="linkb" data-a="hidebroke">Hide</button></div>`):''}</header>`;
 }
 const scene=(k,tap)=>`<canvas class="pix ${tap?'tap':''}" data-s="${k}" data-fill data-anim width="160" height="90" aria-label="${k} scene"></canvas>`;
 const topbar=(t,to,extra)=>`<div class="top"><button class="back" data-a="nav" data-v="${to}" ${busy()?'disabled':''}>&lt; BACK</button><h2>${t}</h2>${extra||''}</div>`;
@@ -3569,7 +3568,7 @@ function betBar(lock,label,noX){
   const b=clampBet(),cap=betCap(),mn=curMin(),lb=S&&S.lastBet&&S.lastBet[UI.game],d=lock?'disabled':'';
   const ch=(v,l)=>`<button class="chip" data-a="bet" data-v="${v}" ${d}>${l}</button>`;
   return`<div class="betbar"><div class="brow">${ch('-10','−')}<span class="betin">$<input id="betin" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value="${b}" ${d} aria-label="${label||'Bet'} in dollars"></span>${ch('+10','+')}${ch('half','½')}${ch('x2','2×')}${ch('max','MAX')}</div>
-  <div class="bmeta"><span>${mn?'min '+fmt(mn)+' · ':''}max ${fmt(cap)}</span>${noX?'':`<span><button class="linkb" data-a="betrep" ${lock||!lb?'disabled':''}>Repeat${lb?' '+fmt(lb):''}</button> · <button class="linkb" data-a="betclr" ${d}>Clear</button></span>`}</div>${mn&&S.cash>0&&S.cash<mn?`<p class="bwarn" style="color:var(--y)">You’re under the ${fmt(mn)} minimum, so the table takes your whole ${fmt(S.cash)} as an all-in.</p>`:''}</div>`;
+  <div class="bmeta"><span>${mn?'min '+fmt(mn)+' · ':''}max ${fmt(cap)}</span>${noX?'':`<span><button class="linkb" data-a="betclr" ${d}>Clear</button></span>`}</div>${noX||!lb?'':`<div class="rebet"><button class="btn sm" data-a="betrep" ${lock||lb>S.cash?'disabled':''}>Rebet · ${fmt(lb)}</button><button class="btn sm" data-a="betdbl" ${lock||lb*2>S.cash?'disabled':''}>Rebet 2x · ${fmt(lb*2)}</button></div>`}${mn&&S.cash>0&&S.cash<mn?`<p class="bwarn" style="color:var(--y)">You’re under the ${fmt(mn)} minimum, so the table takes your whole ${fmt(S.cash)} as an all-in.</p>`:''}</div>`;
 }
 function lvlBar(){return`<div class="lvl"><span>${M.rep.toLocaleString()} REP</span><span class="muted">${(M.repTotal||0).toLocaleString()} earned all-time</span></div>`}
 function vTitle(){
@@ -3654,7 +3653,7 @@ function lineupCard(){const now=GAME_IDS.filter(g=>gReq(g)<=S.paid),pins=passOn(
   <p class="muted">Coming up: ${next.map(g=>`${GAMES[g].n} (${gReq(g)} debt${gReq(g)>1?'s':''})`).join(', ')}.</p><button class="btn green wide" data-a="lineupok">Let’s go</button></div>`}
 function panelHTML(){
   const p=UI.panel;if(!p)return'';const done=`<button class="btn dim sm" data-a="closep">Done</button>`;
-  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),lou:louPanel,pawn:pawnPanel,zora:zoraPanel,loans:loanPanel}[p];if(T)return T()+done;return'';
+  if(p==='pc')return pcPanel()+done;if(p==='bed')return bedPanel();if(p==='mart')return martPanel()+done;if(p==='bar')return barPanel()+done;const T={bus:()=>busPanel('casino'),bus2:()=>busPanel('home'),lou:louPanel,pawn:pawnPanel,zora:zoraPanel}[p];if(T)return T()+done;return'';
 }
 const shortVal=st=>Math.max(0,2*st.sColl-st.short*st.p);
 function pcPanel(){
@@ -3666,9 +3665,9 @@ function pcPanel(){
     const nextG=GAME_IDS.filter(g=>gReq(g)>S.paid).sort((a,b)=>gReq(a)-gReq(b))[0];
     body=`<p class="muted">Clear all ${DEBTS_PER_HEAT} debts to clear the Heat. Each paid debt opens new things around town and brings the next debt. Debts paid: <b style="color:var(--y)">${S.paid}/${DEBTS_PER_HEAT}</b>.</p>${list}
     <div class="kv"><span class="muted">Debts paid this run</span><b>${S.paid}</b></div>
-    ${brokeBase(false)?`<div class="box collpc"><span class="lbl">Out of money</span><p>${loanAvail()?'You can’t cover any table. Borrow from Vinnie, or end the run on your terms.':'You can’t cover any table and nobody will lend to you.'}</p>
+    ${brokeBase(false)?`<div class="box collpc"><span class="lbl">Out of money</span><p>You’re at $0.${brokeLeft().length?` You still have ${brokeLeft().join(', ')}.`:''} You can end the run on your terms.</p>
       ${UI.confirm==='collpc'?`<div class="confirm"><p>Face the collectors and end the run on day ${S.day}?</p><div class="g2"><button class="btn red" data-a="collpcyes">Open the door</button><button class="btn dim" data-a="cancel">Not yet</button></div></div>`:
-      `<div class="g2">${loanAvail()?`<button class="btn green sm" data-a="loan" data-v="${r5(loanLimit()*.5)}">Borrow ${fmt(r5(loanLimit()*.5))}</button>`:'<span></span>'}<button class="btn red sm" data-a="collpc">Face the collectors</button></div>`}
+      `<button class="btn red wide" data-a="collpc">Face the collectors</button>`}
       ${S.hideBroke||M.set.brokeRibbon===false?`<button class="linkb" data-a="showbroke">Show the Broke banner again</button>`:`<button class="linkb" data-a="hidebroke">Ignore this and hide the Broke banner</button>`}</div>`:''}`;
   }else if(UI.tab==='stocks'){
     let val=0;for(const k in S.stocks){const st=S.stocks[k];val+=st.own*st.p+shortVal(st)}
@@ -3689,7 +3688,7 @@ function bedPanel(){
   const dueD=S.debts.filter(d=>d.due<=S.day),bad=dueD.filter(d=>!canRoll(d)),roll=dueD.filter(d=>canRoll(d)),dueNow=bad.length>0;
   if(UI.confirm==='sleep')return`<div class="confirm"><p>${bad.map(d=>d.who).join(', ')} ${bad.length>1?'are':'is'} due today and you can\u2019t cover it. If you sleep now, the collectors come and the run is over.</p><div class="g2"><button class="btn red" data-a="sleepyes">Sleep anyway</button><button class="btn dim" data-a="cancel">Stay up</button></div></div>`;
   const tg=!dueNow&&S.sb&&sbOpenGames().length;
-  return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills, stock prices move and sports bets settle overnight.'}</p>${napBtn()}${tg?`<button class="btn green wide" data-a="tonight">Lie down and watch tonight’s games (${sbOpenGames().length})</button>`:''}<button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
+  return`<div class="box"><p>${dueNow?'<span class="lose">A debt is due today.</span> Pay it at the computer first, or the collectors come in the night.':'Get some rest. Energy refills, stock prices move and sports bets settle overnight.'}</p>${napBtn()}${tg&&hasTV()?`<button class="btn green wide" data-a="tonight">Lie down and watch tonight’s games (${sbOpenGames().length})</button>`:''}<button class="btn ${dueNow?'red':'blue'} wide" data-a="sleep">Sleep · start day ${S.day+1}</button><button class="btn dim sm" data-a="closep">Not yet</button></div>`;
 }
 const leaseCost=()=>r5(150*(1+.15*(S.heat||0)));
 function counterItems(){if(!S.counter||S.counter.day!==S.day){const sp=['charm','tip','dog'];sp.splice(Math.floor(rnd()*3),1);S.counter={day:S.day,items:['drink'].concat(sp)}}return S.counter.items}
@@ -3744,7 +3743,7 @@ function gRL(){
   const keys=Object.keys(b);
   const pick=UI.rlPick;
   const bar=pick?`<span class="lbl">${RL_MODES.find(m=>m[0]===s.mode)[1]} bets that include ${pick.n}</span><div class="g2">${pick.o.map(a=>`<button class="btn blue sm" data-a="rlpick" data-v="${ik(a)}">${betLabel(ik(a))} · ${36/a.length-1}:1</button>`).join('')}</div><button class="btn dim sm" data-a="rlcancel">Cancel</button>`
-    :`<div class="rlact rl4"><button class="btn dim sm" data-a="rlundo" ${busy||!(s.stack||[]).length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="rlclear" ${busy||!keys.length?'disabled':''}>Clear</button><button class="btn sm" data-a="rlrep" ${busy||!s.lastBets||!Object.keys(s.lastBets).length?'disabled':''}>Repeat</button><button class="btn green" data-a="rlspin" ${!busy&&tot>0&&S.energy>=ecost('roulette')&&S.energy>0&&tot<=S.cash?'':'disabled'}>${busy?'Spinning...':tot?'Spin '+fmt(tot):'Place chips'}</button></div>`;
+    :`<div class="rlact rl4"><button class="btn dim sm" data-a="rlundo" ${busy||!(s.stack||[]).length?'disabled':''}>Undo</button><button class="btn dim sm" data-a="rlclear" ${busy||!keys.length?'disabled':''}>Clear</button><button class="btn green" data-a="rlspin" ${!busy&&tot>0&&S.energy>=ecost('roulette')&&S.energy>0&&tot<=S.cash?'':'disabled'}>${busy?'Spinning...':tot?'Spin '+fmt(tot):'Place chips'}</button></div>${rebetRow(busy||tot>0,s.lastBets,'rlrb','')}`;
   return`<canvas class="pix" data-s="rwheel" data-fill data-max="2" width="160" height="160" aria-label="Roulette wheel"></canvas>
   <div class="hist">${s.hist.map(n=>`<i class="${rcls(n)}">${n}</i>`).join('')}</div>
   <p class="msg">${s.msg||'Tap the board to place chips.'}</p>
@@ -3907,14 +3906,14 @@ function vHow(){return topbar('How to play','title')+`<div class="box">
   <p><b class="px" style="font-size:10px;color:var(--y)">ENERGY.</b> You get ${maxEnergy()} energy a day (50 to start). Longer games cost more per round: ${['holdem','slots','flip','baccarat','roulette','crash','snail','bj','mines','tower','hilo'].map(g=>GAMES[g].n+' '+ecost(g)).join(', ')}. Craps costs ${ECOST.craps} per come-out, Plinko ${ECOST.plinko} per session and a Sit & Go ${SNG_E}. Sports bets and stock trades are free. Every game shows its cost at the top. Sleep to refill, or buy a Volt Energy at the Pawn King’s counter.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">THE PAWN KING.</b> His display case sells items that last the whole run: more energy, bigger wins, cheaper shopping and smarter play. Some build on each other, so you need the first one before the next. He buys anything back at half price. After you sleep, the ledger charts your day: what you won, what bonuses added, what you lost and what bonuses saved.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">GETTING AROUND.</b> Walk with the arrow buttons (or arrow keys), or tap where you want to go. Press the big button to use whatever you’re standing next to: doors, your computer, your bed, the Pawn King, the bartender and every casino game.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou is there from day 1. The rest of Main Street opens as you pay debts, the same way every run: the Pawn King & Loans at 1 debt paid, the Bar and the Pawn King’s display case at 2, the Pawn King’s counter (energy drinks and daily specials) at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Vinnie lends cash at 30% from his window in the back, and Madame Zora blesses one game per day.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">MAIN STREET.</b> Lucky Lou is there from day 1. The rest of Main Street opens as you pay debts, the same way every run: the Pawn King from day 1 (he buys your belongings for quick cash; his display case opens at 2 debts), the Bar at 2, the Pawn King’s counter (energy drinks and daily specials) at 3 and Madame Zora at 5. Every building is walk-in: go through the door, and walk back out the door to leave. Your computer\u2019s Town tab shows what\u2019s open on Main Street.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">AROUND TOWN.</b> Lucky Lou, right outside the casino, hands out a new quest every day. Finish it and walk back to him for a reward: cash, a Hot Streak or Safety Net for tomorrow, extra energy, a smaller debt and more. Further down Main Street: the Pawn King sells run-long trinkets plus energy drinks and rotating daily specials at his counter, and Madame Zora blesses one game per day.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">BETS.</b> Every bet panel has Clear, Repeat (your last bet in that game) and Double. At roulette, Repeat last and Double last rebuild your previous spin’s whole layout.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">UNLOCKS.</b> Blackjack, Roulette, Craps and Baccarat are always open on day 1, plus 4 random games. Paying off debts opens the rest, two at a time, until every game is open by your 8th debt.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">MASTERY.</b> Every win at a game counts toward its tier across all your runs: Bronze, Silver, Gold, Emerald, Ruby and Diamond. Higher tiers restyle that game\u2019s cards and table, put a gem on its casino sign and unlock cosmetics. Up to 150 wins per game count in a single run, so tiers can\u2019t be farmed in one sitting. Table minimums grow with your next debt: day-1 games ask about 2% of it, the last games up to 6%, plus 3% per Heat. If you can’t cover a table’s minimum, you can still go all in with everything you have, down to the last cent. Plinko costs ${ECOST.plinko} energy per session and has Low, Normal and High risk boards.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">CRAPS.</b> Bet the Pass Line and roll the come-out: 7 or 11 wins, 2, 3 or 12 loses, anything else sets the point. Roll the point again before a 7 to win. Back it with Odds (true odds, no house edge), add Come, Place, Field, hard ways and one-roll props. The come-out roll costs ${ECOST.craps} energy, and every roll after it is free until the shooter sevens out or makes the point.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">SPORTSBOOK.</b> Bet from the Sports tab on your home computer. Every day has a slate of games across basketball, baseball, soccer, tennis, football and hockey. Odds are shown as each side\u2019s chance to win. Pick one side for a single bet, or 2 to 6 sides for a parlay that pays the multipliers stacked together. Slips cost no energy, just like stocks. The games are played overnight and bets settle when you wake up. Lie down in bed to watch the games you bet on before you fall asleep.</p>
-  <p><b class="px" style="font-size:10px;color:var(--y)">BROKE?</b> When you have no cash, nothing to pawn, no loan left and no bets out, a Face the Collectors button appears so you can end the run on your own terms. If Vinnie will still lend, you get the choice: borrow or face them.</p>
+  <p><b class="px" style="font-size:10px;color:var(--y)">BROKE?</b> The moment you hit $0 with nothing riding on a table, a BUSTED button appears so you can face the collectors and end the run on your own terms. If you still have stocks, items to pawn or open bets, it tells you, so you can raise cash first. You can hide it from the banner or your computer’s Debts tab.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">SHUFFLED CASINO.</b> Every run deals a new casino lineup: which games are open on day 1 and which unlock as you pay off debts is random. Win a game enough times and you earn its day-one pass, which guarantees it a starting slot.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">STOCKS.</b> Four stocks move once a night. Buy to bet on a rise, or short to bet on a fall. An Insider Tip from the Pawn King’s counter (when it’s that day’s special) shows tomorrow’s move for one random stock.</p>
   <p><b class="px" style="font-size:10px;color:var(--y)">THE BAR.</b> A drink multiplies the profit on your next win, from 0.1x up to 3x.</p>
@@ -3935,7 +3934,7 @@ function vSettings(){
   <div class="box"><span class="lbl">Audio</span>
     <div class="row"><h3>Sound</h3><p>Turns all music and sound effects on or off.</p><button class="btn sm ${M.mute?'dim':'green'}" data-a="mute" aria-pressed="${!M.mute}">${M.mute?'Off':'On'}</button></div>
     ${sl('master','Master')}${sl('music','Music')}${sl('sfx','Sound effects')}
-    ${tog('musicOn','Music','Chiptune soundtrack that changes with where you are.')}
+    ${tog('musicOn','Music',hasGuitar()?'Chiptune soundtrack that changes with where you are.':'Silent right now: your guitar is at the Pawn King. Buy it back to bring the music back.')}
     ${tog('sfxOn','Sound effects','Cards, coins, spins, wins and losses.')}
     <p class="muted">Now playing: <span style="color:var(--y)">${MUS.name&&TRACKS[MUS.name]?TRACKS[MUS.name].n:MUS.want&&TRACKS[MUS.want]?TRACKS[MUS.want].n:'nothing'}</span>. Music starts after your first tap.</p></div>
   <div class="box"><span class="lbl">Effects</span>
@@ -4055,7 +4054,6 @@ function act(a,v,el){
     case 'showbroke':S.hideBroke=false;M.set.brokeRibbon=true;break;
     case 'collpc':if(brokeBase(false))UI.confirm='collpc';break;
     case 'collpcyes':if(brokeBase(false))gameOver('faced');return;
-    case 'vinchoice':if(brokeChoice())UI.confirm='vin';break;
     case 'collyes2':if(brokeChoice())gameOver('faced');return;
     case 'wake':{const m=S.recap&&S.recap.msg;if(S.recap)S.recap.msg=null;UI.scene='world';if(m){UI.room='home';render();toast(m);startDebtScene();return}break}
     case 'recap':if(S.recap){S.recap.msg=null;UI.scene='recap'}break;
@@ -4109,16 +4107,17 @@ function act(a,v,el){
     case 'tierinfo':toast(`Every win at ${GAMES[UI.game].n} counts toward its tier, across all your runs: ${TIERS.map((t,i)=>t[0]+' '+tierNeed(UI.game,i)).join(', ')}. Up to ${MAST_DAY} wins per game count each day (${(S.today.mw&&S.today.mw[UI.game])||0} so far today).`);return;
     case 'pkstake':P().stake=+v;{const bb=STAKES[+v][1];UI.bet=Math.min(Math.floor(S.cash),bb*50)}break;
     case 'pkread':{const p=P().seats[+v];if(p&&!p.out){const st=PK_STY[p.sk||'pro'];toast(`<b>${p.n}</b> · ${st.n}: ${st.d}`)}return}
+    case 'rlrb':act(v==='2'?'rldbl':'rlrep');return;
     case 'rlrep':case 'rldbl':{const s=S.g.rl,f=a==='rldbl'?2:1,lb=s.lastBets||{},t=Object.values(lb).reduce((x,y)=>x+y,0)*f;if(!t)return;if(t>S.cash||(mod('low')&&t>lowCap())){toast(`That layout costs ${fmt(t)}. Not enough cash.`);return}s.bets={};s.stack=[];for(const k in lb){s.bets[k]=lb[k]*f;s.stack.push([k,lb[k]*f])}SFX.coin();break}
     case 'betclr':UI.bet=0;break;
     case 'betrep':case 'betdbl':{const lb=(S.lastBet||{})[UI.game];if(!lb)return;let v=lb*(a==='betdbl'?2:1);const cap=betCap();if(v>cap){toast(`Only ${fmt(cap)} available, so your bet is set to that.`);v=Math.ceil(cap)}UI.bet=v;break}
     case 'qclaim':claimQuest();break;
     case 'tbuy':{const p=tprice(v);const rq=TRINKETS[v]&&TRINKETS[v].req;if((S.paid||0)<PAWN_CASE||S.trinkets[v]||S.cash<p||(rq&&!S.trinkets[rq]))return;{ach('skill');setTimeout(()=>{if(S&&Object.keys(S.trinkets).length>=8)ach('tree')},0)}S.cash-=p;S.trinkets[v]=p;questEvent('pawn');SFX.coin();toast(`Bought the ${TRINKETS[v].n}.`);if(Object.keys(S.trinkets).length>=4)ach('collector');break}
-    case 'tsell':{const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the item that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
-    case 'pawnitem':{if(S.pawned[v])return;S.pawned[v]=1;S.cash+=HOUSE[v][1];SFX.coin();toast(`The Pawn King gives you ${fmt(HOUSE[v][1])} for ${HOUSE[v][0].toLowerCase()}.`);break}
+    case 'tsell':{S.soldAny=true;const p=S.trinkets[v];if(!p||Object.keys(S.trinkets).some(x=>TRINKETS[x]&&TRINKETS[x].req===v)){if(p)toast('Sell the item that builds on it first.');return}S.cash+=Math.round(p/2);delete S.trinkets[v];SFX.coin();toast(`The Pawn King gives you ${fmt(Math.round(p/2))} for the ${TRINKETS[v].n}.`);break}
+    case 'pawnitem':{S.pawned=S.pawned||{};if(S.pawned[v]||!HOUSE[v])return;S.soldAny=true;S.pawned[v]=1;S.cash+=houseVal(v);SFX.coin();if(v==='guitar')MUS.want=null;toast(`The Pawn King gives you ${fmt(houseVal(v))} for ${HOUSE[v][0].toLowerCase()}. ${HOUSE[v][2]}`);break}
+    case 'pawnback':{if(!(S.pawned||{})[v]||!HOUSE[v])return;const c=houseBack(v);if(S.cash<c){toast(`You need ${fmt(c)}.`);return}S.cash-=c;delete S.pawned[v];SFX.coin();toast(v==='tv'?'Your TV is back home. Sports are on again tonight.':'Your guitar is back. The music’s back on.');break}
     case 'zora':zoraAct();break;
     case 'ride':{UI.panel=null;flash('rgba(26,28,44,.9)',500);SFX.thunk();UI.wx.street=v==='casino'?SX(560):52;UI.scene='world';UI.room='street';toast(v==='casino'?'The 7 Express drops you at the stop by the casino. Lucky Lou is right there.':'The bus drops you outside your apartment.');break}
-    case 'loan':UI.confirm=null;loanAct(+v);break;
     case 'pldrop':plDrop();return;
     case 'mn':mnAct(v,el.dataset.i);return;
     case 'fl':flAct(v);return;
@@ -4131,6 +4130,7 @@ function act(a,v,el){
     case 'bcpick':chipAdd('bc',v);return;
     case 'chundo':chipUndo(v);return;
     case 'chclear':chipClear(v);return;
+    case 'chrep':{const[c,f]=v.split(':');chipRebet(c,+f);return}
     case 'cr':crStart();return;
     case 'crcash':crCash();return;
     case 'crauto':S.g.cr.auto=+v;break;
@@ -4165,8 +4165,8 @@ app.addEventListener('pointerdown',e=>{
     let sp=null,bd=16;for(const s of roomSpots(UI.room)){const d=Math.abs(s.x-wx);if(d<bd){bd=d;sp=s}}
     UI.target=sp?sp.x:Math.max(8,Math.min(w-8,wx));UI.pending=sp?sp.id:null;startLoop()}
 });
-app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0;document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.round(clampBet()*+el.dataset.paym*100)/100)})});
-app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=Math.ceil(b);e.target.value=b;save();document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.round(b*+el.dataset.paym*100)/100)})});
+app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0;document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(clampBet()*+el.dataset.paym))})});
+app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=Math.ceil(b);e.target.value=b;save();document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(b*+el.dataset.paym))})});
 app.addEventListener('keydown',e=>{if(e.target.id==='betin'&&e.key==='Enter'){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusin',e=>{if(e.target.id==='betin'){try{e.target.select()}catch(_){}}});
 const stopMove=()=>{UI.move=0};
