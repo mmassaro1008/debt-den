@@ -2220,7 +2220,7 @@ function gHL(){
   return`<div class="felt"><div class="cards">${cards}</div><div class="kv"><span>Multiplier</span><b class="px" style="color:var(--y);font-size:12px">${(play||pl||s.phase==='done'?s.mult||1:1).toFixed(2)}x${play||pl?' · '+fmt(Math.round(s.bet*s.mult)):''}</b></div></div>
   <!--act--><p class="msg" ${pl?'':'data-after'}>${s.msg||'&nbsp;'}</p>
   ${pl?'':play?`<div class="g2">${pick('hi')}${pick('lo')}</div><button class="btn green wide" data-a="hl" data-v="cash" ${s.n>0?'':'disabled'}>${s.n>0?'Cash out '+fmt(Math.round(s.bet*s.mult)):'Make a call first'}</button>`
-  :`${betBar(false)}<button class="btn green wide" data-a="hl" data-v="start" ${canPlay()?'':'disabled'}>Draw a card</button>`}`;
+  :`${betBar(false)}<button class="btn green wide" data-a="hl" data-v="start" ${canPlay()?'':'disabled'} data-needbet>Draw a card</button>`}`;
 }
 /* ================= scratchers ================= */
 const SCSYM=[['7',50,.004],['$',10,.02],['★',5,.04],['♦',3,.06],['♥',2,.08]];
@@ -2245,7 +2245,7 @@ function gSC(){
   return`<div class="box scard"><span class="lbl">Lucky Scratch · ${has?fmt(s.bet):'pick a price'}</span><div class="sgrid">${grid}</div>
   <table class="odd">${SCSYM.map(([c,m])=>`<tr><td>Three ${c}</td><td>${m}x</td></tr>`).join('')}</table></div>
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>
-  ${play?`<button class="btn green wide" data-a="sc" data-v="all">Scratch them all</button>`:`${betBar(false,'Card price')}<button class="btn green wide" data-a="sc" data-v="buy" ${canPlay()?'':'disabled'}>Buy a card</button>`}`;
+  ${play?`<button class="btn green wide" data-a="sc" data-v="all">Scratch them all</button>`:`${betBar(false,'Card price')}<button class="btn green wide" data-a="sc" data-v="buy" ${canPlay()?'':'disabled'} data-needbet>Buy a card</button>`}`;
 }
 /* ================= dice ================= */
 const dcChance=s=>s.mode==='under'?s.target-1:100-s.target;
@@ -2267,7 +2267,7 @@ function gDC(){
   <div class="box"><div class="kv"><span>Roll ${s.mode==='under'?'under':'over'}</span><b class="px" style="font-size:14px;color:var(--y)">${s.target}</b></div>
   <div class="chips">${['-10','-1','+1','+10'].map(d=>`<button class="chip" data-a="dc" data-v="${d}" ${s.busy?'disabled':''}>${d}</button>`).join('')}<button class="chip" data-a="dc" data-v="mode" ${s.busy?'disabled':''}>Flip to ${s.mode==='under'?'over':'under'}</button></div>
   <div class="kv"><span>Win chance</span><b>${ch}%</b></div><div class="kv"><span>Pays</span><b>${dcMult(s).toFixed(2)}x</b></div></div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="dc" data-v="roll" ${!s.busy&&canPlay()?'':'disabled'}>Roll</button>`;
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="dc" data-v="roll" ${!s.busy&&canPlay()?'':'disabled'} data-needbet="${s.busy?'busy':''}">Roll</button>`;
 }
 /* ================= casino war ================= */
 const wrR=c=>c.r===1?14:c.r;
@@ -2293,7 +2293,7 @@ function gWR(){
   const row=(arr,who)=>arr&&arr.length?arr.map((c,i)=>face(c,`wr${s.k}${who}${i}`,who==='d'?i*2:i*2+1)).join(''):'<p class="ph">—</p>';
   return`<div class="felt"><div class="hand"><span class="hlab">DEALER</span><div class="cards">${row(s.dl,'d')}</div></div><div class="hand"><span class="hlab">YOU</span><div class="cards">${row(s.me,'m')}</div></div></div>
   <!--act--><p class="msg" ${S.peel||war?'':'data-after'}>${s.msg||'&nbsp;'}</p>
-  ${S.peel?'':war?`<div class="g2"><button class="btn red" data-a="wr" data-v="war" ${S.cash>=s.bet?'':'disabled'}>Go to war · ${fmt(s.bet)}</button><button class="btn dim" data-a="wr" data-v="surrender">Surrender</button></div>`:`${betBar(false)}<button class="btn green wide" data-a="wr" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`}`;
+  ${S.peel?'':war?`<div class="g2"><button class="btn red" data-a="wr" data-v="war" ${S.cash>=s.bet?'':'disabled'}>Go to war · ${fmt(s.bet)}</button><button class="btn dim" data-a="wr" data-v="surrender">Surrender</button></div>`:`${betBar(false)}<button class="btn green wide" data-a="wr" data-v="deal" ${canPlay()?'':'disabled'} data-needbet>Deal</button>`}`;
 }
 /* ================= sic bo ================= */
 /* ---- shared chip tables: stack any mix of bets, undo one chip at a time ---- */
@@ -3729,7 +3729,7 @@ function gBJ(){
   else if(s.phase==='play'){const h=s.hands[s.hi],canD=h.c.length===2&&S.cash>=h.bet,canS=bjCanSplit(h);
     const hint=sk('count')?`<p class="hint">Your Counting Glasses say: ${bjHint(h,s.d[0])}</p>`:'';
     ctl=hint+`<div class="g2"><button class="btn" data-a="bj" data-v="hit">Hit</button><button class="btn" data-a="bj" data-v="stand">Stand</button><button class="btn blue" data-a="bj" data-v="double" ${canD?'':'disabled'}>Double</button><button class="btn blue" data-a="bj" data-v="split" ${canS?'':'disabled'}>Split</button></div>`}
-  else ctl=betBar(false)+`<button class="btn green wide" data-a="bj" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`;
+  else ctl=betBar(false)+`<button class="btn green wide" data-a="bj" data-v="deal" ${canPlay()?'':'disabled'} data-needbet>Deal</button>`;
   return`<div class="felt"><div class="hand"><span class="hlab">DEALER${s.d.length?' · '+(hide?`<span ${totSeq([s.d[0]],()=>`bj${s.hn}d0`,hv)}>${hv([s.d[0]])}</span>`:`<span ${totSeq(s.d,(c,i)=>`bj${s.hn}d${i}`,hv)}>${hv(s.d)}</span>`):''}</span><div class="cards">${dealer||'<p class="ph">Dealer stands on 17</p>'}</div></div>${hands}</div>
   <!--act--><div class="actin" data-after><p class="msg">${s.msg||'&nbsp;'}</p>${ctl}</div>`;
 }
@@ -3764,7 +3764,7 @@ function gPL(){
   return`<canvas class="pix" data-s="plinko" width="${PLW}" height="${PLH}" data-max="4" aria-label="Plinko board"></canvas><div class="hist">${s.hist.map(m=>`<i class="m">${m}x</i>`).join('')}</div>
   <div class="opts" style="grid-template-columns:repeat(3,1fr)">${[['low','Low risk'],['normal','Normal'],['high','High risk']].map(([k,l])=>`<button class="opt ${rk===k?'on':''}" data-a="plrisk" data-v="${k}" ${s.busy?'disabled':''}>${l}<small>up to ${PRISK[k][0]}x</small></button>`).join('')}</div>
   <div class="opts">${PL_BALLS.map(k=>`<button class="opt ${(s.balls||1)===k?'on':''}" data-a="plballs" data-v="${k}" ${s.busy?'disabled':''}>${k} ball${k>1?'s':''}<small>${fmt(clampBet()*k)}</small></button>`).join('')}</div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}${(()=>{const b=clampBet(),n=plCount(b);return`<button class="btn green wide" data-a="pldrop" ${!s.busy&&canPlay()?'':'disabled'}>${n>1?`Drop ${n} balls · ${fmt(b*n)} total`:'Drop ball'}</button>`})()}`;
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}${(()=>{const b=clampBet(),n=plCount(b);return`<button class="btn green wide" data-a="pldrop" ${!s.busy&&canPlay()?'':'disabled'} data-needbet="${s.busy?'busy':''}">${n>1?`Drop ${n} balls · ${fmt(b*n)} total`:'Drop ball'}</button>`})()}`;
 }
 function gMN(){
   const s=S.g.mn,play=s.phase==='play',done=s.phase==='done';
@@ -3773,13 +3773,13 @@ function gMN(){
   return`<div class="felt dark"><div class="mgrid">${cells}</div></div>
   <div class="mopts">${MINE_OPTS.map(m=>`<button class="opt ${s.m===m?'on':''}" data-a="mn" data-v="count" data-i="${m}" ${play?'disabled':''}>${m}<small>mine${m>1?'s':''}</small></button>`).join('')}</div>
   <!--act--><p class="msg">${s.msg||''} <em>Next gem: ${nx}x</em></p>
-  ${play?`<button class="btn green wide" data-a="mn" data-v="cash" ${s.open.length?'':'disabled'}>Cash out${s.open.length?' '+fmt(s.bet*mnMult(s.open.length,s.m)):''}</button>`:betBar(false)+`<button class="btn green wide" data-a="mn" data-v="start" ${canPlay()?'':'disabled'}>Start board</button>`}`;
+  ${play?`<button class="btn green wide" data-a="mn" data-v="cash" ${s.open.length?'':'disabled'}>Cash out${s.open.length?' '+fmt(s.bet*mnMult(s.open.length,s.m)):''}</button>`:betBar(false)+`<button class="btn green wide" data-a="mn" data-v="start" ${canPlay()?'':'disabled'} data-needbet>Start board</button>`}`;
 }
 function gFL(){
   const s=S.g.fl;
   return`<div class="felt dark"><div class="coin ${s.face} ${s.busy?'flipping':''}" id="coin" data-ck="coin${s.hist.length}" data-fx="pop">${s.face.toUpperCase()}</div><div class="hist">${s.hist.map(x=>`<i class="m">${x.toUpperCase()}</i>`).join('')}</div></div>
   <div class="g2"><button class="opt ${s.side==='h'?'on':''}" data-a="fl" data-v="h" ${s.busy?'disabled':''}>Heads<small>pays 1.96x</small></button><button class="opt ${s.side==='t'?'on':''}" data-a="fl" data-v="t" ${s.busy?'disabled':''}>Tails<small>pays 1.96x</small></button></div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="fl" data-v="go" ${!s.busy&&canPlay()?'':'disabled'}>Flip</button>`;
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="fl" data-v="go" ${!s.busy&&canPlay()?'':'disabled'} data-needbet="${s.busy?'busy':''}">Flip</button>`;
 }
 function gSN(){
   const s=chipFix(S.g.sn);
@@ -3831,7 +3831,7 @@ function gSL(){
   const s=S.g.sl;
   return`<div class="felt dark"><div class="reels">${s.reels.map((x,i)=>`<div class="reel s${symC(x)}" id="r${i}">${x}</div>`).join('')}</div>
   <div class="paytable">${Object.entries(SPAY).map(([k,v])=>`<span>${k}${k==='BAR'?'':k+k} <b>${v}x</b></span>`).join('')}<span>any pair <b>1.2x</b></span><span>77 pair <b>3x</b></span></div></div>
-  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="sl" ${!s.busy&&canPlay()?'':'disabled'}>Pull the lever</button>`;
+  <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>${betBar(s.busy)}<button class="btn green wide" data-a="sl" ${!s.busy&&canPlay()?'':'disabled'} data-needbet="${s.busy?'busy':''}">Pull the lever</button>`;
 }
 function gWH(){
   const s=chipFix(S.g.wh);
@@ -3854,7 +3854,7 @@ function gCR(){
   <div class="hist">${s.hist.map(h=>`<i class="m ${h.w?'':'lose'}">${h.c.toFixed(2)}x</i>`).join('')}</div>
   <div class="opts" style="grid-template-columns:repeat(6,1fr)">${[0,1.5,2,3,5,10].map(a=>`<button class="opt ${s.auto===a?'on':''}" data-a="crauto" data-v="${a}" ${fly?'disabled':''}>${a?a+'x':'Off'}<small>auto</small></button>`).join('')}</div>
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>
-  ${fly?`<button class="btn green wide" id="crcash" data-a="crcash">Cash out ${fmt(s.bet*s.cur)}</button>`:betBar(false)+`<button class="btn green wide" data-a="cr" ${canPlay()?'':'disabled'}>Launch</button>`}`;
+  ${fly?`<button class="btn green wide" id="crcash" data-a="crcash">Cash out ${fmt(s.bet*s.cur)}</button>`:betBar(false)+`<button class="btn green wide" data-a="cr" ${canPlay()?'':'disabled'} data-needbet>Launch</button>`}`;
 }
 function gTW(){
   const s=S.g.tw,play=s.phase==='play',done=s.phase==='done',n=TDIFF[s.diff].cols;
@@ -3867,7 +3867,7 @@ function gTW(){
   return`<div class="felt dark"><div class="tw">${rows}</div></div>
   <div class="opts" style="grid-template-columns:repeat(3,1fr)">${Object.entries(TDIFF).map(([k,d])=>`<button class="opt ${s.diff===k?'on':''}" data-a="tw" data-v="diff" data-i="${k}" ${play?'disabled':''}>${d.n}<small>1 egg in ${d.cols}</small></button>`).join('')}</div>
   <!--act--><p class="msg">${s.msg||'&nbsp;'}</p>
-  ${play?`<button class="btn green wide" data-a="tw" data-v="cash" ${s.floor?'':'disabled'}>Cash out${s.floor?' '+fmt(s.bet*twMult(s.floor,s.diff)):''}</button>`:betBar(false)+`<button class="btn green wide" data-a="tw" data-v="start" ${canPlay()?'':'disabled'}>Start climbing</button>`}`;
+  ${play?`<button class="btn green wide" data-a="tw" data-v="cash" ${s.floor?'':'disabled'}>Cash out${s.floor?' '+fmt(s.bet*twMult(s.floor,s.diff)):''}</button>`:betBar(false)+`<button class="btn green wide" data-a="tw" data-v="start" ${canPlay()?'':'disabled'} data-needbet>Start climbing</button>`}`;
 }
 function gKN(){
   const s=S.g.kn;
@@ -3883,14 +3883,14 @@ function gVP(){
   return`<div class="felt"><div class="vpc">${cards}</div></div>
   <div class="box dark"><table class="odd">${VPAY.map(([n,m])=>`<tr class="${(hold&&cur===n)||(s.phase==='done'&&s.res===n)?'hit':''}"><td>${n}</td><td>${m}x</td></tr>`).join('')}</table></div>
   <!--act--><p class="msg" data-after>${hold?`Tap cards to hold. ${cur!=='Nothing'?'You have: '+cur+'.':''}`:s.msg||'&nbsp;'}</p>
-  ${hold?`<button class="btn green wide" data-a="vp" data-v="draw">Draw</button>`:betBar(false)+`<button class="btn green wide" data-a="vp" data-v="deal" ${canPlay()?'':'disabled'}>Deal</button>`}`;
+  ${hold?`<button class="btn green wide" data-a="vp" data-v="draw">Draw</button>`:betBar(false)+`<button class="btn green wide" data-a="vp" data-v="deal" ${canPlay()?'':'disabled'} data-needbet>Deal</button>`}`;
 }
 function gPG(){
   const s=S.g.pg,play=s.phase==='play';
   return`<canvas class="pix" data-s="penguin" data-anim width="160" height="60" data-max="4" aria-label="Penguin crossing the road"></canvas>
   <div class="opts" style="grid-template-columns:repeat(2,1fr)">${Object.entries(PDIFF).map(([k,d])=>`<button class="opt ${s.diff===k?'on':''}" data-a="pg" data-v="diff" data-i="${k}" ${play?'disabled':''}>${d.n}<small>${Math.round(d.p*100)}% cars · max ${pgMult(10,k)}x</small></button>`).join('')}</div>
   <!--act--><p class="msg">${s.msg||'&nbsp;'}${play?` <em>Next lane: ${pgMult(s.lane+1,s.diff)}x</em>`:''}</p>
-  ${play?`<div class="g2"><button class="btn" data-a="pg" data-v="hop">Hop</button><button class="btn green" data-a="pg" data-v="cash" ${s.lane?'':'disabled'}>Cash out${s.lane?' '+fmt(s.bet*pgMult(s.lane,s.diff)):''}</button></div>`:betBar(false)+`<button class="btn green wide" data-a="pg" data-v="start" ${canPlay()?'':'disabled'}>Start crossing</button>`}`;
+  ${play?`<div class="g2"><button class="btn" data-a="pg" data-v="hop">Hop</button><button class="btn green" data-a="pg" data-v="cash" ${s.lane?'':'disabled'}>Cash out${s.lane?' '+fmt(s.bet*pgMult(s.lane,s.diff)):''}</button></div>`:betBar(false)+`<button class="btn green wide" data-a="pg" data-v="start" ${canPlay()?'':'disabled'} data-needbet>Start crossing</button>`}`;
 }
 function vOver(){
   const o=S.over;const na=S.newAch.map(id=>`<div class="row got"><h3>★ ${ACH[id][0]}</h3><p>${ACH[id][1]}</p></div>`).join('');
@@ -4168,8 +4168,8 @@ app.addEventListener('pointerdown',e=>{
     let sp=null,bd=16;for(const s of roomSpots(UI.room)){const d=Math.abs(s.x-wx);if(d<bd){bd=d;sp=s}}
     UI.target=sp?sp.x:Math.max(8,Math.min(w-8,wx));UI.pending=sp?sp.id:null;startLoop()}
 });
-app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0;document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(clampBet()*+el.dataset.paym))})});
-app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=Math.ceil(b);e.target.value=b;save();document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(b*+el.dataset.paym))})});
+app.addEventListener('input',e=>{const sk=e.target.dataset&&e.target.dataset.set;if(sk){M.set[sk]=e.target.value/100;const o=$('#setv-'+sk);if(o)o.textContent=e.target.value;applyVolumes();return}if(e.target.id!=='betin')return;const d=e.target.value.replace(/[^0-9]/g,'');if(d!==e.target.value)e.target.value=d;UI.bet=parseInt(d,10)||0;document.querySelectorAll('button[data-needbet]').forEach(b=>{if(b.dataset.needbet!=='busy')b.disabled=!canPlay()});document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(clampBet()*+el.dataset.paym))})});
+app.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.set){save();if(e.target.dataset.set!=='music')SFX.coin();return}if(e.target.id!=='betin')return;const b=clampBet();UI.bet=Math.ceil(b);e.target.value=b;save();document.querySelectorAll('button[data-needbet]').forEach(x=>{if(x.dataset.needbet!=='busy')x.disabled=!canPlay()});document.querySelectorAll('[data-paym]').forEach(el=>{el.textContent=(el.dataset.pre||'')+fmt(Math.floor(b*+el.dataset.paym))})});
 app.addEventListener('keydown',e=>{if(e.target.id==='betin'&&e.key==='Enter'){e.preventDefault();e.target.blur()}});
 app.addEventListener('focusin',e=>{if(e.target.id==='betin'){try{e.target.select()}catch(_){}}});
 const stopMove=()=>{UI.move=0};
