@@ -1580,6 +1580,7 @@ setInterval(()=>{frame++;if(document.hidden)return;document.querySelectorAll('ca
 /* ================= cards ================= */
 function draw(){return{r:1+Math.floor(rnd()*13),s:Math.floor(rnd()*4)}}
 const SU=['♠','♥','♦','♣'];
+const BUILD='v77';
 const RN=r=>({1:'A',11:'J',12:'Q',13:'K',14:'A'}[r]||String(r));
 let PEND=null,EARLY=false,AWAY=null;
 const pendFin=f=>{const w=()=>{if(w.done)return;w.done=true;if(PEND===w)PEND=null;return f()};PEND=w;save();return w};
@@ -3959,7 +3960,7 @@ function vSettings(){
     <button class="btn sm" data-a="imp">Load save</button>
     <label class="lbl" for="resetin" style="margin-top:6px">Erase everything</label><p class="muted">Deletes your run, trophies, Rep and upgrades on this device. Type RESET to confirm.</p>
     <div class="g2"><input id="resetin" class="code" placeholder="Type RESET" autocomplete="off"><button class="btn red sm" data-a="wipe">Erase</button></div></div>
-  <p class="muted" style="text-align:center">Debt Den · music and sounds are generated live in your browser · play money only</p>
+  <p class="muted" style="text-align:center">Debt Den · build ${BUILD} · music and sounds are generated live in your browser · play money only</p>
   ${S&&!S.over&&UI.prevScene!=='title'?`<button class="btn green wide" style="padding:18px 10px;font-size:13px;margin-top:6px" data-a="saveexit">Save &amp; exit to main menu</button><p class="muted" style="text-align:center">Your run is saved. Pick it up again from the main menu.</p>`:''}`;
 }
 function showBigConfirm(a,v,i,amt){
