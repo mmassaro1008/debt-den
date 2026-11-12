@@ -1621,7 +1621,7 @@ function bjAct(v){
   if(v==='deal'){if(!canPlay())return;const b=clampBet();placeBet('bj',b);
     Object.assign(s,{hn:(s.hn||0)+1,phase:'play',hands:[{c:[draw(),draw()],bet:b,dbl:false,done:false,split:false,res:''}],hi:0,d:[draw(),draw()],msg:'',ins:0,em:false,emOffer:false,dShown:false});
     if(s.d[0].r===1){s.phase='ins';s.emOffer=hv(s.hands[0].c)===21;s.msg=s.emOffer?`Blackjack! But the dealer shows an Ace. Take even money now (${fmt(b*2)} back, a sure 1:1 win), or play it out: 3:2 if the dealer doesn’t have blackjack, a push if they do.`:'Dealer shows an Ace. Insurance pays 2:1 if the dealer has blackjack.';save();render();return}
-    if(hv(s.hands[0].c)===21||hv(s.d)===21)return bjEnd();save();render();return}
+    const ten=s.d[0].r>=10;if(hv(s.d)===21){s.peekBJ=true;return bjEnd()}s.peekBJ=false;if(hv(s.hands[0].c)===21)return bjEnd();if(ten)s.msg=`The dealer peeks under the ${RN(s.d[0].r)}... no blackjack. Your move.`;save();render();return}
   if(v==='dfirst')return bjDealerFirst();
   if(s.phase==='ins'&&s.emOffer&&(v==='em'||v==='noins')){s.em=v==='em';s.phase='play';return bjEnd()}
   if(s.phase==='ins'&&!s.emOffer&&(v==='ins'||v==='noins')){if(v==='ins'){const a=Math.floor(s.hands[0].bet/2);if(a>=1&&S.cash>=a){S.cash-=a;s.ins=a;gs('bj').bet+=a;SFX.coin()}}
@@ -1650,7 +1650,7 @@ function bjEnd(){
     h.res=r;tb+=h.bet;tg+=g;if(h.split&&g>h.bet)splitWin=true});
   if(s.ins){tb+=s.ins;if(dn)tg+=s.ins*3}
   const r=settle('bj',tb,tg);if(splitWin){ach('split');questEvent('sp','bj_split')}
-  s.phase='done';s.msg=(s.em?`Even money taken. ${dn?'Good call: the dealer had blackjack.':'The dealer didn’t have it.'} `:dn?`Dealer blackjack.${s.ins?' Insurance pays 2:1.':''} `:(s.ins?'Insurance lost. ':'')+(dh>21?'Dealer busts! ':`Dealer has ${dh}. `))+resText(r);save();render();
+  s.phase='done';s.msg=(s.em?`Even money taken. ${dn?'Good call: the dealer had blackjack.':'The dealer didn’t have it.'} `:dn?`${s.peekBJ?'The dealer peeks under the '+(s.d[0].r>10?RN(s.d[0].r):'10')+'... it’s an Ace. Dealer blackjack, hand over.':'Dealer blackjack.'}${s.ins?' Insurance pays 2:1.':''} `:(s.ins?'Insurance lost. ':'')+(dh>21?'Dealer busts! ':`Dealer has ${dh}. `))+resText(r);save();render();
 }
 
 /* ================= roulette ================= */
